@@ -221,7 +221,7 @@ td{padding:7px 10px;border-top:1px solid var(--line)}tr:nth-child(even){backgrou
 
   <div class="panel">
     <h3><span class="ic">↗</span> Inscriptos vs asistentes reales por semana</h3>
-    <div class="sub">Inscriptos (naranja) y asistentes reales (verde) por semana. El tamaño del punto naranja = cantidad de sesiones de esa semana.</div>
+    <div class="sub">Inscriptos (naranja) y asistentes reales (verde) por semana, lado a lado.</div>
     <div class="cv"><canvas id="chartW"></canvas></div>
     <div class="note">La asistencia real se carga a mano en Teacher Ratings con rezago: la línea verde llega hasta la semana del <b>11 may</b>. La asistencia promedio del período medido es ~18% de los inscriptos. Las últimas semanas de inscriptos bajan porque incluyen sesiones próximas (inscripción abierta).</div>
   </div>
@@ -357,10 +357,10 @@ function renderLive(){const from=APP.from,to=APP.to;const ss=APP.sess.filter(s=>
   let sumAs=0,sumInsAs=0;weeks.forEach((w,i)=>{if(ATT[w]!=null){sumAs+=ATT[w];sumInsAs+=wi[i];}});
   const pctAs=sumInsAs?Math.round(sumAs/sumInsAs*100):0;
   document.getElementById("kpisLive").innerHTML=kpi("Sesiones",ss.length,Object.entries(est).map(([k,v])=>(estMap[k]?estMap[k][0]:k)+": "+v).join(" · "))+kpi("Inscriptos",ins.toLocaleString("es"),ss.length?("≈ "+Math.round(ins/ss.length)+" por sesión"):"")+kpi("Asistentes reales",sumAs.toLocaleString("es"),"hasta sem. 11 may")+kpi("Asistencia",pctAs?pctAs+"%":"—","asistentes / inscriptos");
-  mk("chartW",{type:"line",data:{labels:weeks.map(fmtW),datasets:[
-    {label:"Inscriptos",data:wi,borderColor:"#F5A623",backgroundColor:"rgba(245,166,35,0.14)",fill:true,borderWidth:3,tension:.4,pointBackgroundColor:"#F5A623",pointBorderColor:"#fff",pointBorderWidth:2,pointRadius:wn.map(n=>n?Math.max(3.5,Math.min(10,3+n)):0),_n:wn},
-    {label:"Asistentes reales",data:wa,borderColor:"#15a06b",backgroundColor:"rgba(21,160,107,0.10)",fill:false,borderWidth:3,tension:.4,spanGaps:false,pointBackgroundColor:"#15a06b",pointBorderColor:"#fff",pointBorderWidth:2,pointRadius:wa.map(v=>v!=null?5:0),_ins:wi}
-  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:"top",labels:{usePointStyle:true,boxWidth:8,font:{size:12}}},tooltip:{callbacks:{label(c){if(c.datasetIndex===0)return "Inscriptos: "+c.parsed.y+"  ("+c.dataset._n[c.dataIndex]+" sesiones)";const ins=c.dataset._ins[c.dataIndex];return "Asistentes: "+c.parsed.y+(ins?"  ("+Math.round(c.parsed.y/ins*100)+"% de los inscriptos)":"");}}}},scales:{y:{beginAtZero:true,grid:{color:"#efe7da"},title:{display:true,text:"Personas"}},x:{grid:{display:false}}}}});
+  mk("chartW",{type:"bar",data:{labels:weeks.map(fmtW),datasets:[
+    {label:"Inscriptos",data:wi,backgroundColor:"#F5A623",borderRadius:4,maxBarThickness:30,_n:wn},
+    {label:"Asistentes reales",data:wa,backgroundColor:"#15a06b",borderRadius:4,maxBarThickness:30,_ins:wi}
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:"top",labels:{usePointStyle:true,boxWidth:8,font:{size:12}}},tooltip:{callbacks:{label(c){if(c.datasetIndex===0)return "Inscriptos: "+c.parsed.y+"  ("+c.dataset._n[c.dataIndex]+" sesiones)";if(c.parsed.y==null)return "Asistentes: sin dato cargado";const ins=c.dataset._ins[c.dataIndex];return "Asistentes: "+c.parsed.y+(ins?"  ("+Math.round(c.parsed.y/ins*100)+"% de los inscriptos)":"");}}}},scales:{y:{beginAtZero:true,grid:{color:"#efe7da"},title:{display:true,text:"Personas"}},x:{grid:{display:false}}}}});
   const fa=Object.entries(fac).filter(([k])=>k!=="(s/d)").sort((a,b)=>b[1]-a[1]);
   mk("chartF",{type:"bar",plugins:[barLabels],data:{labels:fa.map(f=>{const p=f[0].split(" ");return p[0]+(p[1]?" "+p[1][0]+".":"");}),datasets:[{label:"Inscriptos",data:fa.map(f=>f[1]),backgroundColor:"#F5A623",borderRadius:4,maxBarThickness:40}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label(c){return c.parsed.y+" inscriptos · "+facN[fa[c.dataIndex][0]]+" sesiones";}}}},scales:{y:{beginAtZero:true,grid:{color:"#efe7da"}},x:{grid:{display:false},ticks:{font:{size:10.5}}}}}});
   const ed=Object.entries(est).map(([k,v])=>[estMap[k]?estMap[k][0]:k,v,estMap[k]?estMap[k][1]:"#bdb1a0"]);
