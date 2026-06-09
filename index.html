@@ -98,6 +98,29 @@ td{padding:7px 10px;border-top:1px solid var(--line)}tr:nth-child(even){backgrou
 .filterbar .fl{font-weight:700;text-transform:uppercase;font-size:11px;letter-spacing:.05em;color:var(--ink2)}
 .filterbar .frange{color:var(--ink2);font-size:12px}
 .filterbar .upd{margin-left:auto;font-size:11px;color:var(--ink2)}
+/* CRM / Kanban */
+.crm-filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
+.crm-filters select,.crm-filters input{font-family:inherit;font-size:13px;border:1.5px solid var(--line);border-radius:8px;padding:6px 10px;color:var(--ink);background:#fff;outline:none}
+.crm-filters input:focus,.crm-filters select:focus{border-color:var(--coral)}
+.crm-filters .fl{font-weight:700;text-transform:uppercase;font-size:11px;letter-spacing:.05em;color:var(--ink2)}
+.sqsummary{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.sqchip{font-size:11.5px;font-weight:600;padding:5px 11px;border-radius:20px;color:#fff;display:flex;gap:7px;align-items:center}
+.sqchip .n{background:rgba(255,255,255,.32);border-radius:12px;padding:0 7px;font-weight:800}
+.kanban{display:flex;gap:14px;overflow-x:auto;padding-bottom:12px;align-items:flex-start}
+.kcol{flex:0 0 282px;background:#faf5ec;border:1px solid var(--line);border-radius:14px;padding:11px}
+.kcol-h{display:flex;align-items:center;justify-content:space-between;font-weight:800;font-size:13px;padding:3px 4px 9px;border-bottom:2px solid var(--line);margin-bottom:11px}
+.kcol-h .cnt{background:#fff;border:1px solid var(--line);border-radius:20px;font-size:11px;padding:1px 9px;color:var(--ink2);font-weight:700}
+.kcard{background:#fff;border:1px solid var(--line);border-radius:11px;padding:10px 12px;margin-bottom:9px;box-shadow:0 1px 3px rgba(0,0,0,.05);border-left:4px solid var(--coral)}
+.kcard:last-child{margin-bottom:0}
+.kcard .kt{font-size:13px;font-weight:700;line-height:1.32;color:var(--ink)}
+.kcard .ko{font-size:11px;color:var(--ink2);margin-top:4px}.kcard .ko b{color:#9a8c79;font-weight:600}
+.kcard .kf{display:flex;align-items:center;gap:6px;margin-top:10px;flex-wrap:wrap}
+.sqb{font-size:10.5px;font-weight:700;padding:2px 9px;border-radius:20px;color:#fff;white-space:nowrap}
+.pchip{font-size:10px;font-weight:800;padding:2px 8px;border-radius:20px;text-transform:uppercase;letter-spacing:.02em}
+.pr-Alta{background:#fde2dd;color:#b91c1c}.pr-Media{background:#fef3cd;color:#92400e}.pr-Baja{background:#dcfce7;color:#166534}
+.revchip{font-size:10.5px;font-weight:600;color:var(--ink2);background:var(--cream);border:1px solid var(--line);border-radius:20px;padding:2px 9px 2px 3px;display:flex;align-items:center;gap:5px;margin-left:auto}
+.revav{width:17px;height:17px;border-radius:50%;background:var(--coral);color:#fff;font-size:8.5px;font-weight:800;display:flex;align-items:center;justify-content:center}
+.kempty{font-size:12px;color:var(--ink2);font-style:italic;padding:30px}
 </style>
 </head>
 <body>
@@ -167,6 +190,7 @@ td{padding:7px 10px;border-top:1px solid var(--line)}tr:nth-child(even){backgrou
     <a class="nav active" data-sec="contenido"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg> Performance contenidos</a>
     <a class="nav" data-sec="live"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg> Live Sessions</a>
     <a class="nav" data-sec="workshops"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M10 9l4 2.5-4 2.5z" fill="currentColor" stroke="none"/><path d="M8 21h8"/></svg> Workshops on demand</a>
+    <a class="nav" data-sec="crm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="5" height="16" rx="1"/><rect x="10" y="4" width="5" height="11" rx="1"/><rect x="17" y="4" width="5" height="7" rx="1"/></svg> Renovación workshops</a>
   </nav>
 </aside>
 <main class="main">
@@ -257,6 +281,23 @@ td{padding:7px 10px;border-top:1px solid var(--line)}tr:nth-child(even){backgrou
       </div>
     </div>
   </section>
+  <section id="sec-crm" class="section">
+    <div class="sech"><h2>Renovación de Workshops · Pipeline</h2><div class="ssub">Versiones nuevas de los workshops on demand. Tablero por estado — fuente en vivo: hoja <b>workshops (nuevas versiones)</b>.</div></div>
+    <div class="note-top">Cada tarjeta es un workshop a renovar (nombre viejo → nombre nuevo), con su <b>squad</b>, <b>revisora interna</b> y <b>prioridad</b>. Las columnas se arman solas según el <b>Status</b> que vayan cargando las chicas, así que el tablero se mueve a medida que avanzan.</div>
+    <div class="kpis" id="kpisCrm"></div>
+    <div class="panel">
+      <h3>Distribución por squad</h3>
+      <div class="sub">Cantidad de workshops a renovar por squad responsable.</div>
+      <div class="sqsummary" id="crmSqSum"></div>
+    </div>
+    <div class="crm-filters">
+      <span class="fl">Filtrar:</span>
+      <select id="crmSquad"><option value="">Todos los squads</option></select>
+      <select id="crmRev"><option value="">Todas las revisoras</option></select>
+      <input type="text" id="crmSearch" placeholder="Buscar workshop…" style="min-width:200px">
+    </div>
+    <div class="kanban" id="kanban"></div>
+  </section>
 </main>
 </div>
 
@@ -265,6 +306,8 @@ const SHEET='1VvmrIcslmEZQCyW30iW7GZexcqGHuIOLP1nJNOMQ-F0';
 const TOP5=[["Data Analytics","804123bd-e8d3-483e-87f3-46af58833a15"],["Desarrollo web","29b893bc-270b-4077-86a9-870cc6dc6e25"],["AI Automation","413a121c-0781-4c10-96a3-5ace5f9fbba7"],["Excel","402b2132-ff27-4db8-8a89-53338518d099"],["Community Manager","ff37e7ed-9b04-4ff5-971b-d0a6630e6c3b"]];
 function parseCSV(t){const r=[];let row=[],c="",q=false;for(let i=0;i<t.length;i++){const ch=t[i];if(q){if(ch==='"'){if(t[i+1]==='"'){c+='"';i++;}else q=false;}else c+=ch;}else{if(ch==='"')q=true;else if(ch===","){row.push(c);c="";}else if(ch==="\n"){row.push(c);r.push(row);row=[];c="";}else if(ch==="\r"){}else c+=ch;}}if(c.length||row.length){row.push(c);r.push(row);}return r;}
 async function tab(n){const u="https://docs.google.com/spreadsheets/d/"+SHEET+"/gviz/tq?tqx=out:csv&sheet="+encodeURIComponent(n);return parseCSV(await (await fetch(u)).text());}
+async function tabGid(gid){const u="https://docs.google.com/spreadsheets/d/"+SHEET+"/gviz/tq?tqx=out:csv&gid="+gid;return parseCSV(await (await fetch(u)).text());}
+const esc=s=>(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
 const pidUrl=u=>{u=u||"";let m=u.match(/\/learn\/([a-zA-Z0-9-]+)/)||u.match(/productId=([a-zA-Z0-9-]+)/)||u.match(/\/course\/([a-zA-Z0-9-]+)/);return m?m[1]:"";};
 const cohUrl=u=>{const m=(u||"").match(/cohortId=([a-zA-Z0-9-]+)/);return m?m[1]:"";};
 const day=s=>{const m=(s||"").match(/(\d{4}-\d{2}-\d{2})/);return m?m[1]:"";};
@@ -275,7 +318,7 @@ const addDays=(ds,n)=>{const d=new Date(ds+"T00:00:00Z");d.setUTCDate(d.getUTCDa
 
 const APP={ch:{},commTotal:{},commCohort:{}};
 APP.init=async function(){
-  const [cc,vm,lc,ls]=await Promise.all([tab("comisiones_cc_nuevo"),tab("Valoraciones por Modulo"),tab("live class rating"),tab("live_sessions")]);
+  const [cc,vm,lc,ls,wr]=await Promise.all([tab("comisiones_cc_nuevo"),tab("Valoraciones por Modulo"),tab("live class rating"),tab("live_sessions"),tabGid("24053768")]);
   const Hc={};cc[0].forEach((x,i)=>Hc[x.trim()]=i);
   APP.vinc={};APP.curso={};APP.commCurso={};
   for(const r of cc.slice(1)){const pid=(r[Hc["ProductId"]]||"").trim();if(!pid)continue;const v=(r[Hc["Vinculado en BO"]]||"").trim();if(!APP.vinc[pid]||(v&&v<APP.vinc[pid]))APP.vinc[pid]=v||APP.vinc[pid];if(!APP.curso[pid])APP.curso[pid]=(r[Hc["Curso"]]||"").trim();const com=(r[Hc["Comisión"]]||"").trim();if(com){APP.commCurso[com]=pid;APP.commCohort[com]=(r[Hc["Cohort name"]]||"").trim();APP.commTotal[pid]=(APP.commTotal[pid]||0)+1;}}
@@ -294,6 +337,12 @@ APP.init=async function(){
   for(const r of ls.slice(1)){APP.sess.push({tit:(r[Hs["Título"]]||"").trim(),fac:nf(r[Hs["Facilitador"]]),fe:day(r[Hs["Fecha (UTC)"]]),est:(r[Hs["Estado"]]||"").trim(),ins:numF(r[Hs["Inscriptos (total)"]]),rec:(r[Hs["Recording URL"]]||"").trim()?1:0});}
   const allD=APP.val.map(v=>v.d).concat(APP.sess.map(s=>s.fe)).filter(Boolean).sort();
   APP.minD=allD[0];APP.maxD=allD[allD.length-1];
+  // --- Renovación de workshops (pipeline tipo CRM) ---
+  const Hw={};(wr[0]||[]).forEach((x,i)=>{if(Hw[x.trim()]===undefined)Hw[x.trim()]=i;});
+  const gw=n=>Hw[n]!==undefined?Hw[n]:-1;const cv=(r,n)=>{const i=gw(n);return i>=0?(r[i]||"").trim():"";};
+  APP.wsr=[];
+  for(const r of wr.slice(1)){const nuevo=cv(r,"Nombre nuevo"),viejo=cv(r,"Nombre viejo");if(!nuevo&&!viejo)continue;
+    APP.wsr.push({viejo,nuevo,prio:cv(r,"Priority"),rev:cv(r,"Revisión Interna"),squad:cv(r,"Squad"),status:cv(r,"Status")||"(sin status)",launched:cv(r,"Date - Launched"),bo:cv(r,"BO"),complej:cv(r,"Nivel de complejidad"),empresa:cv(r,"Pertenece a alguna empresa / Cuál?")});}
 };
 
 function genWeeks(from,to){const out=[];let m=monday(from),e=monday(to);if(!m||!e)return out;let d=new Date(m+"T00:00:00Z"),ed=new Date(e+"T00:00:00Z");while(d<=ed){out.push(d.toISOString().slice(0,10));d.setUTCDate(d.getUTCDate()+7);}return out;}
@@ -385,9 +434,47 @@ function renderWorkshops(){
   mk("chartWT",hbarChart(WS.tem.map(x=>x[0]),WS.tem.map(x=>x[1]),WS.tem.map(x=>x[1].toLocaleString("es")+" · "+x[2]+"%"),tcol,mx(WS.tem.map(x=>x[1]))*1.28));
   document.querySelector("#tblW tbody").innerHTML=WS.cont.map(c=>'<tr><td>'+c[0]+'</td><td class="num">'+c[1]+'</td><td class="num">'+c[2]+'</td></tr>').join("");
 }
+// --- Renovación de workshops (CRM / Kanban) ---
+const SQCOL={"Marketing":"#FF632B","Backend":"#2563eb","Frontend":"#F59E0B","AI":"#7C3AED","Data":"#0EA5A4","Diseño":"#EC4899","Producto":"#0891B2","Negocios":"#16A34A","Cloud Ciberseguridad":"#64748B"};
+const sqColor=s=>SQCOL[s]||"#9a8c79";
+function stRank(s){s=(s||"").toLowerCase();if(/to be assigned|sin asignar|por asignar|backlog|pendiente/.test(s))return 0;if(/assigned|asignad/.test(s))return 1;if(/progress|progreso|en curso|haciendo|doing|wip/.test(s))return 2;if(/revis|review|qa/.test(s))return 3;if(/launch|lanzad|done|listo|public|complet|finaliz/.test(s))return 4;return 2.5;}
+const stColor=s=>(["#94a3b8","#3f6fb0","#F5A623","#7C3AED","#15a06b"][Math.round(stRank(s))])||"#bdb1a0";
+const initials=n=>(n||"").split(/\s+/).filter(Boolean).slice(0,2).map(w=>w[0].toUpperCase()).join("");
+function renderCRM(){
+  const rows=APP.wsr||[];
+  const selSq=document.getElementById("crmSquad"),selRv=document.getElementById("crmRev");
+  if(selSq.options.length<=1){const sqs=[...new Set(rows.map(r=>r.squad).filter(Boolean))].sort();selSq.innerHTML='<option value="">Todos los squads</option>'+sqs.map(s=>'<option>'+esc(s)+'</option>').join("");
+    const revs=[...new Set(rows.map(r=>r.rev).filter(Boolean))].sort();selRv.innerHTML='<option value="">Todas las revisoras</option>'+revs.map(s=>'<option>'+esc(s)+'</option>').join("");}
+  const fSq=selSq.value,fRv=selRv.value,fTx=(document.getElementById("crmSearch").value||"").toLowerCase();
+  const fl=rows.filter(r=>(!fSq||r.squad===fSq)&&(!fRv||r.rev===fRv)&&(!fTx||((r.nuevo+" "+r.viejo).toLowerCase().indexOf(fTx)>=0)));
+  const total=rows.length;
+  const pend=rows.filter(r=>stRank(r.status)===0).length;
+  const proc=rows.filter(r=>{const k=stRank(r.status);return k>0&&k<4;}).length;
+  const done=rows.filter(r=>stRank(r.status)>=4||r.launched).length;
+  document.getElementById("kpisCrm").innerHTML=kpi("Workshops a renovar",total,"versiones nuevas en pipeline")+kpi("Sin asignar",pend,"esperando revisora/squad")+kpi("En proceso",proc,"asignados o en revisión")+kpi("Lanzados",done,"versión nueva publicada",1);
+  const sq={};rows.forEach(r=>{if(r.squad)sq[r.squad]=(sq[r.squad]||0)+1;});
+  document.getElementById("crmSqSum").innerHTML=Object.entries(sq).sort((a,b)=>b[1]-a[1]).map(([s,n])=>'<span class="sqchip" style="background:'+sqColor(s)+'">'+esc(s)+'<span class="n">'+n+'</span></span>').join("")||'<span class="empty">Sin squads cargados.</span>';
+  const stats={};fl.forEach(r=>{(stats[r.status]=stats[r.status]||[]).push(r);});
+  const cols=Object.keys(stats).sort((a,b)=>stRank(a)-stRank(b)||a.localeCompare(b));
+  const board=document.getElementById("kanban");
+  if(!fl.length){board.innerHTML='<div class="kempty">No hay workshops que coincidan con el filtro.</div>';return;}
+  board.innerHTML=cols.map(s=>{
+    const cards=stats[s].slice().sort((a,b)=>(a.nuevo||a.viejo).localeCompare(b.nuevo||b.viejo)).map(r=>{
+      const pr=r.prio||"";
+      return '<div class="kcard prio-'+pr+'" style="border-left-color:'+sqColor(r.squad)+'">'+
+        '<div class="kt">'+esc(r.nuevo||r.viejo||"(sin nombre)")+'</div>'+
+        (r.viejo&&r.viejo!==r.nuevo?'<div class="ko"><b>antes:</b> '+esc(r.viejo)+'</div>':'')+
+        '<div class="kf"><span class="sqb" style="background:'+sqColor(r.squad)+'">'+esc(r.squad||"sin squad")+'</span>'+
+        (pr?'<span class="pchip pr-'+esc(pr)+'">'+esc(pr)+'</span>':'')+
+        (r.rev?'<span class="revchip"><span class="revav" style="background:'+sqColor(r.squad)+'">'+initials(r.rev)+'</span>'+esc(r.rev.split(" ")[0])+'</span>':'')+
+        '</div></div>';
+    }).join("");
+    return '<div class="kcol"><div class="kcol-h" style="border-color:'+stColor(s)+'"><span>'+esc(s)+'</span><span class="cnt">'+stats[s].length+'</span></div><div>'+cards+'</div></div>';
+  }).join("");
+}
 
-APP.render=function(){document.querySelectorAll(".section").forEach(x=>x.style.display="block");renderContent();renderLive();renderWorkshops();activate(APP.cur||"contenido");document.getElementById("frange").textContent="Evolución: "+APP.from+" → "+APP.to+" · (KPIs y Top 5 = acumulado total)";};
-function activate(id){APP.cur=id;var _fb=document.querySelector(".filterbar");if(_fb)_fb.style.display=(id==="workshops")?"none":"flex";document.querySelectorAll(".section").forEach(s=>s.style.display=(s.id==="sec-"+id)?"block":"none");document.querySelectorAll(".nav").forEach(n=>{if(n.dataset.sec)n.classList.toggle("active",n.dataset.sec===id);});setTimeout(()=>window.dispatchEvent(new Event("resize")),25);}
+APP.render=function(){document.querySelectorAll(".section").forEach(x=>x.style.display="block");renderContent();renderLive();renderWorkshops();renderCRM();activate(APP.cur||"contenido");document.getElementById("frange").textContent="Evolución: "+APP.from+" → "+APP.to+" · (KPIs y Top 5 = acumulado total)";};
+function activate(id){APP.cur=id;var _fb=document.querySelector(".filterbar");if(_fb)_fb.style.display=(id==="workshops"||id==="crm")?"none":"flex";document.querySelectorAll(".section").forEach(s=>s.style.display=(s.id==="sec-"+id)?"block":"none");document.querySelectorAll(".nav").forEach(n=>{if(n.dataset.sec)n.classList.toggle("active",n.dataset.sec===id);});setTimeout(()=>window.dispatchEvent(new Event("resize")),25);}
 
 APP.start=async function(){
   document.getElementById("loading").style.display="block";
@@ -399,6 +486,7 @@ APP.start=async function(){
   df.onchange=()=>{APP.from=df.value;APP.render();};dt.onchange=()=>{APP.to=dt.value;APP.render();};
   document.querySelectorAll(".fb").forEach(b=>b.onclick=()=>{const p=b.dataset.p;if(p==="all"){APP.from=APP.minD;}else{APP.from=addDays(APP.maxD,-(+p)*7);}APP.to=APP.maxD;df.value=APP.from;dt.value=APP.to;APP.render();});
   document.getElementById("sel").onchange=function(){renderPerCourse(this.value);};
+  document.getElementById("crmSquad").onchange=renderCRM;document.getElementById("crmRev").onchange=renderCRM;document.getElementById("crmSearch").oninput=renderCRM;
   document.querySelectorAll(".nav").forEach(n=>{if(n.dataset.sec)n.onclick=()=>activate(n.dataset.sec);});
   document.getElementById("upd").textContent="Actualizado del sheet · "+new Date().toLocaleString("es");
   APP.render();
