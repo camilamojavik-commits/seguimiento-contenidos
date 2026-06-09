@@ -121,6 +121,8 @@ td{padding:7px 10px;border-top:1px solid var(--line)}tr:nth-child(even){backgrou
 .revchip{font-size:10.5px;font-weight:600;color:var(--ink2);background:var(--cream);border:1px solid var(--line);border-radius:20px;padding:2px 9px 2px 3px;display:flex;align-items:center;gap:5px;margin-left:auto}
 .revav{width:17px;height:17px;border-radius:50%;background:var(--coral);color:#fff;font-size:8.5px;font-weight:800;display:flex;align-items:center;justify-content:center}
 .kempty{font-size:12px;color:var(--ink2);font-style:italic;padding:30px}
+.comnums{font-size:10.5px;color:var(--ink2);line-height:1.55;font-variant-numeric:tabular-nums}.comnums b{color:var(--coral);font-weight:700}
+#tblCov td:last-child{max-width:280px}
 </style>
 </head>
 <body>
@@ -239,7 +241,7 @@ td{padding:7px 10px;border-top:1px solid var(--line)}tr:nth-child(even){backgrou
     <div class="top"><h3>Cobertura · 33 cursos renovados</h3></div>
     <div class="sub">Todos los cursos con contenido nuevo y sus <b>comisiones nuevas</b>: cuántas hay, cuándo arranca la primera y si ya están generando valoraciones de módulo. Así se ve cuáles ya se miden y cuáles están por arrancar.</div>
     <div id="covNote" class="note-top" style="border-left-color:var(--coral);margin:4px 0 12px"></div>
-    <table id="tblCov"><thead><tr><th>Curso</th><th class="num">Comis. nuevas</th><th class="num">Arrancadas</th><th>1ra comisión</th><th>Estado</th></tr></thead><tbody></tbody></table>
+    <table id="tblCov"><thead><tr><th>Curso</th><th class="num">Comis. nuevas</th><th class="num">Arrancadas</th><th>1ra comisión</th><th>Estado</th><th>N° de comisión</th></tr></thead><tbody></tbody></table>
   </div>
 
   </section>
@@ -328,9 +330,9 @@ const APP={ch:{},commTotal:{},commCohort:{}};
 APP.init=async function(){
   const [cc,vm,lc,ls,wr]=await Promise.all([tab("comisiones_cc_nuevo"),tab("Valoraciones por Modulo"),tab("live class rating"),tab("live_sessions"),tabGid("24053768")]);
   const Hc={};cc[0].forEach((x,i)=>Hc[x.trim()]=i);
-  APP.vinc={};APP.curso={};APP.commCurso={};APP.comIni={};
+  APP.vinc={};APP.curso={};APP.commCurso={};APP.comIni={};APP.comNums={};
   const toISO=s=>{s=(s||"").trim();let m=s.match(/(\d{4})-(\d{2})-(\d{2})/);if(m)return m[0];m=s.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);if(m)return m[3]+"-"+String(m[2]).padStart(2,"0")+"-"+String(m[1]).padStart(2,"0");return "";};
-  for(const r of cc.slice(1)){const pid=(r[Hc["ProductId"]]||"").trim();if(!pid)continue;const v=(r[Hc["Vinculado en BO"]]||"").trim();if(!APP.vinc[pid]||(v&&v<APP.vinc[pid]))APP.vinc[pid]=v||APP.vinc[pid];if(!APP.curso[pid])APP.curso[pid]=(r[Hc["Curso"]]||"").trim();const com=(r[Hc["Comisión"]]||"").trim();if(com){APP.commCurso[com]=pid;APP.commCohort[com]=(r[Hc["Cohort name"]]||"").trim();APP.commTotal[pid]=(APP.commTotal[pid]||0)+1;const ini=toISO(r[Hc["Inicio"]]);if(ini)(APP.comIni[pid]=APP.comIni[pid]||[]).push(ini);}}
+  for(const r of cc.slice(1)){const pid=(r[Hc["ProductId"]]||"").trim();if(!pid)continue;const v=(r[Hc["Vinculado en BO"]]||"").trim();if(!APP.vinc[pid]||(v&&v<APP.vinc[pid]))APP.vinc[pid]=v||APP.vinc[pid];if(!APP.curso[pid])APP.curso[pid]=(r[Hc["Curso"]]||"").trim();const com=(r[Hc["Comisión"]]||"").trim();if(com){APP.commCurso[com]=pid;APP.commCohort[com]=(r[Hc["Cohort name"]]||"").trim();APP.commTotal[pid]=(APP.commTotal[pid]||0)+1;const ini=toISO(r[Hc["Inicio"]]);if(ini)(APP.comIni[pid]=APP.comIni[pid]||[]).push(ini);(APP.comNums[pid]=APP.comNums[pid]||[]).push(com);}}
   APP.renov=Object.keys(APP.vinc);const rset=new Set(APP.renov);
   const Hv={};vm[0].forEach((x,i)=>{if(Hv[x.trim()]===undefined)Hv[x.trim()]=i;});
   APP.val=[];const first={};
@@ -401,12 +403,15 @@ function renderCoverage(ag){
     else if(n>0){rank=1;lab="Primeras valoraciones ("+n+")";col="#3f6fb0";}
     else if(started>0){rank=2;lab="En marcha, sin valoraciones aún";col="#F5A623";}
     else{rank=3;lab="Por arrancar";col="#9a8c79";}
-    return {name:APP.curso[pid]||pid,nCom,started,first:inis[0]||"—",rank,lab,col};
+    const nums=(APP.comNums[pid]||[]).slice().sort((x,y)=>(+x||0)-(+y||0));
+    return {name:APP.curso[pid]||pid,nCom,started,first:inis[0]||"—",rank,lab,col,nums};
   }).sort((a,b)=>a.rank-b.rank || (a.first<b.first?-1:a.first>b.first?1:0) || b.nCom-a.nCom);
   const c0=rows.filter(r=>r.rank===0).length,c1=rows.filter(r=>r.rank===1).length,c2=rows.filter(r=>r.rank===2).length,c3=rows.filter(r=>r.rank===3).length;
   document.getElementById("covNote").innerHTML="De los <b>"+rows.length+"</b> cursos renovados: <b>"+c0+"</b> ya se miden en el tablero · <b>"+c1+"</b> con primeras valoraciones · <b>"+c2+"</b> con comisiones en marcha sin valoraciones aún · <b>"+c3+"</b> por arrancar. Todos tienen comisiones nuevas cargadas.";
   const fI=d=>{if(!d||d==="—")return "—";const p=d.split("-");return (+p[2])+" "+MES[+p[1]-1];};
-  document.querySelector("#tblCov tbody").innerHTML=rows.map(r=>'<tr><td>'+esc(r.name)+'</td><td class="num">'+r.nCom+'</td><td class="num">'+r.started+'</td><td>'+fI(r.first)+'</td><td><span class="pchip" style="background:'+r.col+'22;color:'+r.col+'">'+r.lab+'</span></td></tr>').join("");
+  const CAP=12;
+  const numsCell=ns=>{if(!ns.length)return '<span class="empty">—</span>';const shown=ns.slice(0,CAP).join(", ");const extra=ns.length>CAP?' <b>+'+(ns.length-CAP)+' más</b>':'';return '<span class="comnums" title="'+ns.join(", ")+'">'+shown+extra+'</span>';};
+  document.querySelector("#tblCov tbody").innerHTML=rows.map(r=>'<tr><td>'+esc(r.name)+'</td><td class="num">'+r.nCom+'</td><td class="num">'+r.started+'</td><td>'+fI(r.first)+'</td><td><span class="pchip" style="background:'+r.col+'22;color:'+r.col+'">'+r.lab+'</span></td><td>'+numsCell(r.nums)+'</td></tr>').join("");
 }
 function buildSel(ag){const sel=document.getElementById("sel");const cur=sel.value;const opts=APP.renov.filter(pid=>ag[pid]&&(ag[pid].nn>0)).sort((a,b)=>APP.curso[a].localeCompare(APP.curso[b]));
   sel.innerHTML='<option value="-1">Todos (general)</option>'+opts.map(pid=>'<option value="'+pid+'">'+APP.curso[pid]+(ag[pid].nn<8?" · muestra baja":"")+'</option>').join("");
