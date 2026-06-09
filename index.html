@@ -215,15 +215,15 @@ td{padding:7px 10px;border-top:1px solid var(--line)}tr:nth-child(even){backgrou
   <section id="sec-live" class="section">
   <div class="sech"><h2>2 · Live Sessions · actividad e inscriptos</h2><div class="ssub">Sesiones / webinars en vivo (hoja live_sessions), 16 mar – 12 jun 2026.</div></div>
 
-  <div class="note-top"><b>Sobre la asistencia:</b> esta hoja registra <b>inscriptos</b>; la columna "activos" coincide con el total en las 78 filas, así que todavía no hay un dato de <b>asistencia real</b> separado. Cuando tengamos la fuente de asistentes (Zoom/BigQuery) lo sumamos acá.</div>
+  <div class="note-top"><b>Sobre la asistencia:</b> sumamos la <b>asistencia real</b> (asistentes que se conectaron) tomada del tablero <b>Teacher Ratings → Live Sessions</b>, donde se carga a mano por sesión. La asistencia se completa con rezago, así que hoy hay dato hasta la semana del <b>11 may</b>; las sesiones más recientes todavía no la tienen cargada.</div>
 
   <div class="kpis" id="kpisLive"></div>
 
   <div class="panel">
-    <h3><span class="ic">↗</span> Inscriptos por semana</h3>
-    <div class="sub">Inscriptos a las sesiones en vivo por semana. El tamaño del punto = cantidad de sesiones de esa semana.</div>
+    <h3><span class="ic">↗</span> Inscriptos vs asistentes reales por semana</h3>
+    <div class="sub">Inscriptos (naranja) y asistentes reales (verde) por semana. El tamaño del punto naranja = cantidad de sesiones de esa semana.</div>
     <div class="cv"><canvas id="chartW"></canvas></div>
-    <div class="note">Las últimas semanas bajan porque incluyen sesiones próximas/recién publicadas (inscripción abierta). La del 8 jun es parcial.</div>
+    <div class="note">La asistencia real se carga a mano en Teacher Ratings con rezago: la línea verde llega hasta la semana del <b>11 may</b>. La asistencia promedio del período medido es ~18% de los inscriptos. Las últimas semanas de inscriptos bajan porque incluyen sesiones próximas (inscripción abierta).</div>
   </div>
 
   <div class="row2">
@@ -346,13 +346,21 @@ function renderPerCourse(pid){const from=APP.from,to=APP.to;let s,base,nlab;
   let coms=cm.length?cm.map(v=>'<div class="q">"'+v.cm.replace(/</g,"&lt;").slice(0,200)+'" <b>('+v.rt.toFixed(0)+'★)</b></div>').join(""):'<div class="empty">Sin comentarios del contenido nuevo en el rango.</div>';
   document.getElementById("detail").innerHTML='<div class="dcard"><h4>Comisiones nuevas (clase en vivo) <span class="tag">en el rango</span></h4>'+rank+'<div class="note" style="margin-top:8px">'+cs.length+' de '+(APP.commTotal[pid]||0)+' comisiones nuevas con votos.</div></div><div class="dcard"><h4>Comentarios del contenido nuevo</h4>'+coms+'</div>';
 }
+// Asistencia real por semana (Monday ISO) — carga manual en Teacher Ratings · Live Sessions (snapshot 9 jun 2026, dato hasta 11 may).
+const ATT={"2026-03-16":39,"2026-03-23":41,"2026-03-30":39,"2026-04-06":52,"2026-04-13":37,"2026-04-20":44,"2026-04-27":44,"2026-05-04":36,"2026-05-11":36};
 function renderLive(){const from=APP.from,to=APP.to;const ss=APP.sess.filter(s=>s.fe&&s.fe>=from&&s.fe<=to);
   const est={};let ins=0,rec=0;const fac={},wk={};const facN={};
   ss.forEach(s=>{est[s.est||"(s/d)"]=(est[s.est||"(s/d)"]||0)+1;ins+=s.ins;if(s.rec)rec++;if(!fac[s.fac]){fac[s.fac]=0;facN[s.fac]=0;}fac[s.fac]+=s.ins;facN[s.fac]++;const m=monday(s.fe);if(m){if(!wk[m])wk[m]={n:0,ins:0};wk[m].n++;wk[m].ins+=s.ins;}});
   const estMap={ENDED:["Finalizadas","#3f6fb0"],LIVE:["En vivo","#15a06b"],UPCOMING:["Próximas","#F5A623"]};
-  document.getElementById("kpisLive").innerHTML=kpi("Sesiones",ss.length,Object.entries(est).map(([k,v])=>(estMap[k]?estMap[k][0]:k)+": "+v).join(" · "))+kpi("Inscriptos",ins.toLocaleString("es"),ss.length?("≈ "+Math.round(ins/ss.length)+" por sesión"):"")+kpi("Facilitadores",Object.keys(fac).filter(f=>f!=="(s/d)").length,"en el rango")+kpi("Con grabación",ss.length?Math.round(rec/ss.length*100)+"%":"—",rec+" de "+ss.length);
   const weeks=genWeeks(from,to);const wi=weeks.map(w=>wk[w]?wk[w].ins:0);const wn=weeks.map(w=>wk[w]?wk[w].n:0);
-  mk("chartW",{type:"line",data:{labels:weeks.map(fmtW),datasets:[{label:"Inscriptos",data:wi,borderColor:"#F5A623",backgroundColor:"rgba(245,166,35,0.14)",fill:true,borderWidth:3,tension:.4,pointBackgroundColor:"#F5A623",pointBorderColor:"#fff",pointBorderWidth:2,pointRadius:wn.map(n=>n?Math.max(3.5,Math.min(10,3+n)):0),_n:wn}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label(c){return "Inscriptos: "+c.parsed.y+"  ("+c.dataset._n[c.dataIndex]+" sesiones)";}}}},scales:{y:{beginAtZero:true,grid:{color:"#efe7da"},title:{display:true,text:"Inscriptos"}},x:{grid:{display:false}}}}});
+  const wa=weeks.map(w=>ATT[w]!=null?ATT[w]:null);
+  let sumAs=0,sumInsAs=0;weeks.forEach((w,i)=>{if(ATT[w]!=null){sumAs+=ATT[w];sumInsAs+=wi[i];}});
+  const pctAs=sumInsAs?Math.round(sumAs/sumInsAs*100):0;
+  document.getElementById("kpisLive").innerHTML=kpi("Sesiones",ss.length,Object.entries(est).map(([k,v])=>(estMap[k]?estMap[k][0]:k)+": "+v).join(" · "))+kpi("Inscriptos",ins.toLocaleString("es"),ss.length?("≈ "+Math.round(ins/ss.length)+" por sesión"):"")+kpi("Asistentes reales",sumAs.toLocaleString("es"),"hasta sem. 11 may")+kpi("Asistencia",pctAs?pctAs+"%":"—","asistentes / inscriptos");
+  mk("chartW",{type:"line",data:{labels:weeks.map(fmtW),datasets:[
+    {label:"Inscriptos",data:wi,borderColor:"#F5A623",backgroundColor:"rgba(245,166,35,0.14)",fill:true,borderWidth:3,tension:.4,pointBackgroundColor:"#F5A623",pointBorderColor:"#fff",pointBorderWidth:2,pointRadius:wn.map(n=>n?Math.max(3.5,Math.min(10,3+n)):0),_n:wn},
+    {label:"Asistentes reales",data:wa,borderColor:"#15a06b",backgroundColor:"rgba(21,160,107,0.10)",fill:false,borderWidth:3,tension:.4,spanGaps:false,pointBackgroundColor:"#15a06b",pointBorderColor:"#fff",pointBorderWidth:2,pointRadius:wa.map(v=>v!=null?5:0),_ins:wi}
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:"top",labels:{usePointStyle:true,boxWidth:8,font:{size:12}}},tooltip:{callbacks:{label(c){if(c.datasetIndex===0)return "Inscriptos: "+c.parsed.y+"  ("+c.dataset._n[c.dataIndex]+" sesiones)";const ins=c.dataset._ins[c.dataIndex];return "Asistentes: "+c.parsed.y+(ins?"  ("+Math.round(c.parsed.y/ins*100)+"% de los inscriptos)":"");}}}},scales:{y:{beginAtZero:true,grid:{color:"#efe7da"},title:{display:true,text:"Personas"}},x:{grid:{display:false}}}}});
   const fa=Object.entries(fac).filter(([k])=>k!=="(s/d)").sort((a,b)=>b[1]-a[1]);
   mk("chartF",{type:"bar",plugins:[barLabels],data:{labels:fa.map(f=>{const p=f[0].split(" ");return p[0]+(p[1]?" "+p[1][0]+".":"");}),datasets:[{label:"Inscriptos",data:fa.map(f=>f[1]),backgroundColor:"#F5A623",borderRadius:4,maxBarThickness:40}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label(c){return c.parsed.y+" inscriptos · "+facN[fa[c.dataIndex][0]]+" sesiones";}}}},scales:{y:{beginAtZero:true,grid:{color:"#efe7da"}},x:{grid:{display:false},ticks:{font:{size:10.5}}}}}});
   const ed=Object.entries(est).map(([k,v])=>[estMap[k]?estMap[k][0]:k,v,estMap[k]?estMap[k][1]:"#bdb1a0"]);
