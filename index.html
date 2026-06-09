@@ -306,7 +306,7 @@ const SHEET='1VvmrIcslmEZQCyW30iW7GZexcqGHuIOLP1nJNOMQ-F0';
 const TOP5=[["Data Analytics","804123bd-e8d3-483e-87f3-46af58833a15"],["Desarrollo web","29b893bc-270b-4077-86a9-870cc6dc6e25"],["AI Automation","413a121c-0781-4c10-96a3-5ace5f9fbba7"],["Excel","402b2132-ff27-4db8-8a89-53338518d099"],["Community Manager","ff37e7ed-9b04-4ff5-971b-d0a6630e6c3b"]];
 function parseCSV(t){const r=[];let row=[],c="",q=false;for(let i=0;i<t.length;i++){const ch=t[i];if(q){if(ch==='"'){if(t[i+1]==='"'){c+='"';i++;}else q=false;}else c+=ch;}else{if(ch==='"')q=true;else if(ch===","){row.push(c);c="";}else if(ch==="\n"){row.push(c);r.push(row);row=[];c="";}else if(ch==="\r"){}else c+=ch;}}if(c.length||row.length){row.push(c);r.push(row);}return r;}
 async function tab(n){const u="https://docs.google.com/spreadsheets/d/"+SHEET+"/gviz/tq?tqx=out:csv&sheet="+encodeURIComponent(n);return parseCSV(await (await fetch(u)).text());}
-async function tabGid(gid){const u="https://docs.google.com/spreadsheets/d/"+SHEET+"/gviz/tq?tqx=out:csv&gid="+gid;return parseCSV(await (await fetch(u)).text());}
+async function tabGid(gid){const u="https://docs.google.com/spreadsheets/d/"+SHEET+"/export?format=csv&gid="+gid;return parseCSV(await (await fetch(u)).text());}
 const esc=s=>(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
 const pidUrl=u=>{u=u||"";let m=u.match(/\/learn\/([a-zA-Z0-9-]+)/)||u.match(/productId=([a-zA-Z0-9-]+)/)||u.match(/\/course\/([a-zA-Z0-9-]+)/);return m?m[1]:"";};
 const cohUrl=u=>{const m=(u||"").match(/cohortId=([a-zA-Z0-9-]+)/);return m?m[1]:"";};
@@ -437,7 +437,7 @@ function renderWorkshops(){
 // --- Renovación de workshops (CRM / Kanban) ---
 const SQCOL={"Marketing":"#FF632B","Backend":"#2563eb","Frontend":"#F59E0B","AI":"#7C3AED","Data":"#0EA5A4","Diseño":"#EC4899","Producto":"#0891B2","Negocios":"#16A34A","Cloud Ciberseguridad":"#64748B"};
 const sqColor=s=>SQCOL[s]||"#9a8c79";
-function stRank(s){s=(s||"").toLowerCase();if(/to be assigned|sin asignar|por asignar|backlog|pendiente/.test(s))return 0;if(/assigned|asignad/.test(s))return 1;if(/progress|progreso|en curso|haciendo|doing|wip/.test(s))return 2;if(/revis|review|qa/.test(s))return 3;if(/launch|lanzad|done|listo|public|complet|finaliz/.test(s))return 4;return 2.5;}
+function stRank(s){s=(s||"").toLowerCase();if(/to be assigned|sin asignar|por asignar|backlog|pendiente/.test(s))return 0;if(/assigned|asignad/.test(s))return 1;if(/progress|progreso|en curso|haciendo|doing|wip|sent|enviad|content creator|creator|en producci/.test(s))return 2;if(/revis|review|qa/.test(s))return 3;if(/launch|lanzad|done|listo|public|complet|finaliz/.test(s))return 4;return 2.5;}
 const stColor=s=>(["#94a3b8","#3f6fb0","#F5A623","#7C3AED","#15a06b"][Math.round(stRank(s))])||"#bdb1a0";
 const initials=n=>(n||"").split(/\s+/).filter(Boolean).slice(0,2).map(w=>w[0].toUpperCase()).join("");
 function renderCRM(){
