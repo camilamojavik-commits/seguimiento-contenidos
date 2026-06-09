@@ -129,6 +129,14 @@ td{padding:7px 10px;border-top:1px solid var(--line)}tr:nth-child(even){backgrou
 .painrow .pd{font-weight:800;font-size:14px;color:#dc2626;font-variant-numeric:tabular-nums;min-width:54px;text-align:right}
 .painrow .sev{font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;padding:2px 8px;border-radius:20px}
 .painok{font-size:13px;color:#15803d;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px 14px;margin-top:10px;font-weight:600}
+.painrow{cursor:pointer;user-select:none}.painrow:hover{background:#fff6f5}
+.painrow .caret{color:#dc2626;font-size:11px;width:12px;flex-shrink:0}
+.paindet{background:#fff;border:1px solid #f3d9d4;border-top:none;border-radius:0 0 10px 10px;margin:-4px 0 8px;padding:10px 14px 12px}
+.mnote{font-size:11.5px;color:var(--ink2);margin-bottom:7px}.mnote b{color:var(--ink)}
+.mtab{width:100%;border-collapse:collapse;font-size:12px;border:none;margin:0}
+.mtab th{background:#faf5ec;color:var(--ink2);padding:6px 9px;font-size:10px}
+.mtab td{padding:6px 9px;border-top:1px solid var(--line)}.mtab tr:nth-child(even){background:#fffdf9}
+.mflag{font-size:10px;font-weight:800;color:#dc2626;background:#fde2dd;border-radius:20px;padding:1px 8px}
 </style>
 </head>
 <body>
@@ -349,7 +357,7 @@ APP.init=async function(){
   APP.renov=Object.keys(APP.vinc);const rset=new Set(APP.renov);
   const Hv={};vm[0].forEach((x,i)=>{if(Hv[x.trim()]===undefined)Hv[x.trim()]=i;});
   APP.val=[];const first={};
-  for(const r of vm.slice(1)){const url=r[Hv["url"]];const pid=pidUrl(url);if(!rset.has(pid))continue;const rt=parseFloat(r[Hv["rating"]]);if(isNaN(rt))continue;const cid=cohUrl(url);const d=day(r[Hv["timestamp"]]);if(!d)continue;const k=pid+"|"+cid;if(!first[k]||d<first[k])first[k]=d;APP.val.push({pid:pid,cid:cid,rt:rt,d:d,cm:(r[Hv["comment"]]||"").trim()});}
+  for(const r of vm.slice(1)){const url=r[Hv["url"]];const pid=pidUrl(url);if(!rset.has(pid))continue;const rt=parseFloat(r[Hv["rating"]]);if(isNaN(rt))continue;const cid=cohUrl(url);const d=day(r[Hv["timestamp"]]);if(!d)continue;const k=pid+"|"+cid;if(!first[k]||d<first[k])first[k]=d;APP.val.push({pid:pid,cid:cid,rt:rt,d:d,cm:(r[Hv["comment"]]||"").trim(),mod:(r[Hv["module_name"]]||"").trim()});}
   APP.val.forEach(v=>{v.isNew=first[v.pid+"|"+v.cid]>=APP.vinc[v.pid];});
   const Hl={};lc[0].forEach((x,i)=>{if(Hl[x.trim()]===undefined)Hl[x.trim()]=i;});
   APP.lc=[];
@@ -419,8 +427,21 @@ function renderPain(ag){
   const cols=pain.map(p=>meta(p)[1]);
   const labText=pain.map(p=>p.vv.toFixed(2)+" → "+p.nv.toFixed(2)+"  (−"+Math.abs(p.dl).toFixed(2)+", n="+p.n+")");
   mk("chartPain",hbarChart(labs,vals,labText,cols,Math.max.apply(null,vals)*2.0));
-  list.innerHTML=pain.map(p=>{const m=meta(p);return '<div class="painrow" style="border-left-color:'+m[1]+'"><span class="sev" style="background:'+m[1]+'22;color:'+m[1]+'">'+m[0]+'</span><span class="pn">'+esc(p.name)+(p.n<8?' <span style="color:#b91c1c;font-weight:800">*</span>':'')+'</span><span class="pv">viejo '+p.vv.toFixed(2)+' → nuevo '+p.nv.toFixed(2)+' · n='+p.n+'</span><span class="pd">−'+Math.abs(p.dl).toFixed(2)+'</span></div>';}).join("");
+  list.innerHTML=pain.map((p,i)=>{const m=meta(p);
+    return '<div class="painrow" style="border-left-color:'+m[1]+'" onclick="APP.painTog('+i+')"><span class="caret" id="pc'+i+'">▸</span><span class="sev" style="background:'+m[1]+'22;color:'+m[1]+'">'+m[0]+'</span><span class="pn">'+esc(p.name)+(p.n<8?' <span style="color:#b91c1c;font-weight:800">*</span>':'')+'</span><span class="pv">viejo '+p.vv.toFixed(2)+' → nuevo '+p.nv.toFixed(2)+' · n='+p.n+'</span><span class="pd">−'+Math.abs(p.dl).toFixed(2)+'</span></div>'+
+      '<div class="paindet" id="pd'+i+'" style="display:none">'+modBreakdown(p.pid,p.vv)+'</div>';
+  }).join("");
 }
+function modBreakdown(pid,base){
+  const m={};for(const v of APP.val){if(v.pid!==pid||!v.isNew)continue;const k=v.mod||"(sin módulo)";const o=m[k]||(m[k]={s:0,n:0});o.s+=v.rt;o.n++;}
+  const arr=Object.entries(m).map(([mod,o])=>({mod,n:o.n,avg:o.s/o.n})).sort((a,b)=>a.avg-b.avg);
+  if(!arr.length)return '<div class="mnote">Sin valoraciones de módulo en el rango.</div>';
+  const rowsH=arr.map(x=>{const bad=x.avg<base;const col=x.avg<base?"#dc2626":(x.avg>=base+0.2?"#15a06b":"#b8860b");
+    return '<tr><td>'+esc(x.mod)+'</td><td class="num">'+x.n+'</td><td class="num" style="color:'+col+';font-weight:800">'+x.avg.toFixed(2)+'</td><td>'+(bad?'<span class="mflag">↓ bajo el viejo</span>':'')+'</td></tr>';}).join("");
+  return '<div class="mnote">Valoraciones del contenido nuevo por módulo (línea de base = viejo del curso: <b>'+base.toFixed(2)+'</b>). Ordenado del más flojo al mejor.</div>'+
+    '<table class="mtab"><thead><tr><th>Módulo</th><th class="num">n</th><th class="num">Prom.</th><th></th></tr></thead><tbody>'+rowsH+'</tbody></table>';
+}
+APP.painTog=function(i){const d=document.getElementById("pd"+i),c=document.getElementById("pc"+i);if(!d)return;const open=d.style.display==="none";d.style.display=open?"block":"none";if(c)c.textContent=open?"▾":"▸";};
 function renderCoverage(ag){
   const TODAY=new Date().toISOString().slice(0,10);
   const nv={};for(const v of APP.val){if(v.isNew)nv[v.pid]=(nv[v.pid]||0)+1;}
