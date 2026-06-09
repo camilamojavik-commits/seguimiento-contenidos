@@ -316,7 +316,7 @@ function lineDs(nD,nN,oD,oN,na,oa){return [
 function mk(id,cfg){if(APP.ch[id])APP.ch[id].destroy();APP.ch[id]=new Chart(document.getElementById(id),cfg);}
 const kpi=(l,v,d,g)=>'<div class="kpi'+(g?" good":"")+'"><div class="l">'+l+'</div><div class="v">'+v+'</div><div class="d">'+d+'</div></div>';
 
-function renderContent(){const from=APP.from,to=APP.to,ag=prodAgg(from,to);
+function renderContent(){const from=APP.from,to=APP.to,ag=prodAgg(APP.minD,APP.maxD);
   let TN=0,TS=0,VN=0,VS=0,med=0;for(const pid in ag){const o=ag[pid];TN+=o.nn;TS+=o.ns;VN+=o.vn;VS+=o.vs;if(o.nn>=8)med++;}
   const ovN=TN?TS/TN:null,ovV=VN?VS/VN:null;
   document.getElementById("kpisCont").innerHTML=kpi("Cursos medibles",med,"con n≥8 valoraciones nuevas")+kpi("Avg viejo",ovV!=null?ovV.toFixed(2):"—",VN.toLocaleString("es")+" valoraciones")+kpi("Avg nuevo",ovN!=null?ovN.toFixed(2):"—",TN.toLocaleString("es")+" valoraciones",1)+kpi("Δ nuevo − viejo",(ovN!=null&&ovV!=null)?((ovN-ovV>=0?"+":"")+(ovN-ovV).toFixed(2)):"—","el contenido nuevo rinde mejor",1);
@@ -378,7 +378,7 @@ function renderWorkshops(){
   document.querySelector("#tblW tbody").innerHTML=WS.cont.map(c=>'<tr><td>'+c[0]+'</td><td class="num">'+c[1]+'</td><td class="num">'+c[2]+'</td></tr>').join("");
 }
 
-APP.render=function(){document.querySelectorAll(".section").forEach(x=>x.style.display="block");renderContent();renderLive();renderWorkshops();activate(APP.cur||"contenido");document.getElementById("frange").textContent="Mostrando "+APP.from+" → "+APP.to;};
+APP.render=function(){document.querySelectorAll(".section").forEach(x=>x.style.display="block");renderContent();renderLive();renderWorkshops();activate(APP.cur||"contenido");document.getElementById("frange").textContent="Evolución: "+APP.from+" → "+APP.to+" · (KPIs y Top 5 = acumulado total)";};
 function activate(id){APP.cur=id;var _fb=document.querySelector(".filterbar");if(_fb)_fb.style.display=(id==="workshops")?"none":"flex";document.querySelectorAll(".section").forEach(s=>s.style.display=(s.id==="sec-"+id)?"block":"none");document.querySelectorAll(".nav").forEach(n=>{if(n.dataset.sec)n.classList.toggle("active",n.dataset.sec===id);});setTimeout(()=>window.dispatchEvent(new Event("resize")),25);}
 
 APP.start=async function(){
