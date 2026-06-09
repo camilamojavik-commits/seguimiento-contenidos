@@ -414,7 +414,7 @@ function renderContent(){const from=APP.from,to=APP.to,ag=prodAgg(APP.minD,APP.m
 }
 function renderPain(ag){
   // sólido = n>=8 (dato confiable). Prioridad: primero sólidos por mayor caída, luego muestra baja.
-  const pain=APP.renov.map(pid=>{const o=ag[pid];if(!o||!o.nn||!o.vn)return null;const nv=o.ns/o.nn,vv=o.vs/o.vn,dl=nv-vv;if(dl>=0)return null;return {name:APP.curso[pid]||pid,nv,vv,dl,n:o.nn,solido:o.nn>=8};}).filter(Boolean)
+  const pain=APP.renov.map(pid=>{const o=ag[pid];if(!o||!o.nn||!o.vn)return null;const nv=o.ns/o.nn,vv=o.vs/o.vn,dl=nv-vv;if(dl>=0)return null;return {pid,name:APP.curso[pid]||pid,nv,vv,dl,n:o.nn,solido:o.nn>=8};}).filter(Boolean)
     .sort((a,b)=>(a.solido===b.solido?0:(a.solido?-1:1)) || (a.dl-b.dl));
   // estilo por prioridad: sólido = rojo (severidad por caída); muestra baja = ámbar (a confirmar)
   const meta=p=>{ if(!p.solido) return ["A CONFIRMAR","#d97706"]; return Math.abs(p.dl)>=0.3?["PRIORIDAD ALTA","#991b1b"]:Math.abs(p.dl)>=0.15?["PRIORIDAD","#dc2626"]:["LEVE","#e8714e"]; };
