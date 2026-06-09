@@ -230,7 +230,7 @@ td{padding:7px 10px;border-top:1px solid var(--line)}tr:nth-child(even){backgrou
 
   <div class="panel pain">
     <div class="top"><h3><span class="ic" style="color:#dc2626">⚠</span> Pain points · contenido nuevo por debajo del viejo <span id="painCount" class="alertbadge"></span></h3></div>
-    <div class="sub">Cursos renovados donde la valoración del <b>contenido nuevo</b> quedó <b>por debajo</b> del viejo. Son los que conviene priorizar para revisión. <span style="color:#b91c1c">(*)</span> = muestra baja (n&lt;8), tomar con cautela.</div>
+    <div class="sub">Cursos renovados donde el <b>contenido nuevo</b> quedó <b>por debajo</b> del viejo. Ordenados por <b>prioridad</b>: primero los de <b>muestra sólida (n≥8)</b> por mayor caída — esos son los accionables ya; los de <b>muestra baja</b> <span style="color:#b91c1c">(*)</span> van al final, a confirmar cuando junten más datos.</div>
     <div class="cv bar"><canvas id="chartPain"></canvas></div>
     <div id="painList"></div>
   </div>
@@ -405,18 +405,21 @@ function renderContent(){const from=APP.from,to=APP.to,ag=prodAgg(APP.minD,APP.m
   buildSel(ag);renderPerCourse(document.getElementById("sel").value||"-1");renderCoverage(ag);renderPain(ag);
 }
 function renderPain(ag){
-  const pain=APP.renov.map(pid=>{const o=ag[pid];if(!o||!o.nn||!o.vn)return null;const nv=o.ns/o.nn,vv=o.vs/o.vn,dl=nv-vv;if(dl>=0)return null;return {name:APP.curso[pid]||pid,nv,vv,dl,n:o.nn};}).filter(Boolean).sort((a,b)=>a.dl-b.dl);
-  const sev=d=>Math.abs(d)>=0.3?["ALTA","#b91c1c"]:Math.abs(d)>=0.15?["MEDIA","#dc2626"]:["BAJA","#e8714e"];
+  // sólido = n>=8 (dato confiable). Prioridad: primero sólidos por mayor caída, luego muestra baja.
+  const pain=APP.renov.map(pid=>{const o=ag[pid];if(!o||!o.nn||!o.vn)return null;const nv=o.ns/o.nn,vv=o.vs/o.vn,dl=nv-vv;if(dl>=0)return null;return {name:APP.curso[pid]||pid,nv,vv,dl,n:o.nn,solido:o.nn>=8};}).filter(Boolean)
+    .sort((a,b)=>(a.solido===b.solido?0:(a.solido?-1:1)) || (a.dl-b.dl));
+  // estilo por prioridad: sólido = rojo (severidad por caída); muestra baja = ámbar (a confirmar)
+  const meta=p=>{ if(!p.solido) return ["A CONFIRMAR","#d97706"]; return Math.abs(p.dl)>=0.3?["PRIORIDAD ALTA","#991b1b"]:Math.abs(p.dl)>=0.15?["PRIORIDAD","#dc2626"]:["LEVE","#e8714e"]; };
   document.getElementById("painCount").textContent=pain.length;
   const list=document.getElementById("painList");
   if(!pain.length){document.getElementById("painCount").style.display="none";if(APP.ch.chartPain){APP.ch.chartPain.destroy();delete APP.ch.chartPain;}list.innerHTML='<div class="painok">✓ Sin pain points: en el período no hay cursos con el contenido nuevo por debajo del viejo.</div>';return;}
   document.getElementById("painCount").style.display="";
   const labs=pain.map(p=>p.name+(p.n<8?" *":""));
   const vals=pain.map(p=>+Math.abs(p.dl).toFixed(2));
-  const cols=pain.map(p=>sev(p.dl)[1]);
-  const labText=pain.map(p=>p.vv.toFixed(2)+" → "+p.nv.toFixed(2)+"  (−"+Math.abs(p.dl).toFixed(2)+")");
-  mk("chartPain",hbarChart(labs,vals,labText,cols,Math.max.apply(null,vals)*1.9));
-  list.innerHTML=pain.map(p=>{const s=sev(p.dl);return '<div class="painrow" style="border-left-color:'+s[1]+'"><span class="sev" style="background:'+s[1]+'22;color:'+s[1]+'">'+s[0]+'</span><span class="pn">'+esc(p.name)+(p.n<8?' <span style="color:#b91c1c;font-weight:800">*</span>':'')+'</span><span class="pv">viejo '+p.vv.toFixed(2)+' → nuevo '+p.nv.toFixed(2)+' · n='+p.n+'</span><span class="pd">−'+Math.abs(p.dl).toFixed(2)+'</span></div>';}).join("");
+  const cols=pain.map(p=>meta(p)[1]);
+  const labText=pain.map(p=>p.vv.toFixed(2)+" → "+p.nv.toFixed(2)+"  (−"+Math.abs(p.dl).toFixed(2)+", n="+p.n+")");
+  mk("chartPain",hbarChart(labs,vals,labText,cols,Math.max.apply(null,vals)*2.0));
+  list.innerHTML=pain.map(p=>{const m=meta(p);return '<div class="painrow" style="border-left-color:'+m[1]+'"><span class="sev" style="background:'+m[1]+'22;color:'+m[1]+'">'+m[0]+'</span><span class="pn">'+esc(p.name)+(p.n<8?' <span style="color:#b91c1c;font-weight:800">*</span>':'')+'</span><span class="pv">viejo '+p.vv.toFixed(2)+' → nuevo '+p.nv.toFixed(2)+' · n='+p.n+'</span><span class="pd">−'+Math.abs(p.dl).toFixed(2)+'</span></div>';}).join("");
 }
 function renderCoverage(ag){
   const TODAY=new Date().toISOString().slice(0,10);
