@@ -250,6 +250,12 @@ td{padding:7px 10px;border-top:1px solid var(--line)}tr:nth-child(even){backgrou
     <div class="note">Los cursos con pocas valoraciones del contenido nuevo (comisiones recién arrancadas) hay que tomarlos con cautela.</div>
   </div>
 
+  <div class="panel">
+    <div class="top"><h3><span class="ic" style="color:#c04200">🎯</span> Foco comercial · módulos más flojos de los Top 5 vendidos</h3></div>
+    <div class="sub">Los 5 cursos de mayor venta, ordenados del rating de contenido nuevo <b>más bajo al más alto</b>. Clic en cada uno para ver sus <b>módulos más flojos</b> — son los que conviene reforzar primero por impacto en ventas (aunque el promedio del curso esté ok).</div>
+    <div id="topPainList"></div>
+  </div>
+
   <div class="panel win">
     <div class="top"><h3><span class="ic" style="color:#15a06b">★</span> Cursos destacados · contenido nuevo por encima del viejo <span id="winCount" class="winbadge"></span></h3></div>
     <div class="sub">Cursos renovados donde el <b>contenido nuevo</b> rinde <b>mejor</b> que el viejo. Mismo criterio que pain points: primero los de <b>muestra sólida (n≥8)</b> por mayor mejora; los de <b>muestra baja</b> <span style="color:#166534">(*)</span> al final. Clic en cada uno para ver el desglose por módulo.</div>
@@ -452,7 +458,7 @@ function renderContent(){const from=APP.from,to=APP.to,ag=prodAgg(APP.minD,APP.m
   const rows=APP.renov.filter(pid=>ag[pid]&&(ag[pid].nn>0||ag[pid].vn>0)).map(pid=>{const o=ag[pid];const nv=o.nn?o.ns/o.nn:null,vv=o.vn?o.vs/o.vn:null;return {name:APP.curso[pid],nn:o.nn,nv:nv,vv:vv,dl:(nv!=null&&vv!=null)?nv-vv:null,med:o.nn>=8};});
   rows.sort((a,b)=>(b.med-a.med)|| ((b.dl==null?-9:b.dl)-(a.dl==null?-9:a.dl)) || b.nn-a.nn);
   document.querySelector("#tbl tbody").innerHTML=rows.map(r=>'<tr><td>'+r.name+'</td><td class="num">'+(r.vv!=null?r.vv.toFixed(2):"—")+'</td><td class="num">'+(r.nv!=null?r.nv.toFixed(2):"—")+'</td><td class="num">'+r.nn+'</td><td class="num '+(r.dl>=0?"up":"dn")+'">'+(r.dl!=null?((r.dl>=0?"+":"")+r.dl.toFixed(2)):"—")+'</td></tr>').join("");
-  buildSel(ag);renderPerCourse(document.getElementById("sel").value||"-1");renderCoverage(ag);renderHighlights(ag);renderPain(ag);
+  buildSel(ag);renderPerCourse(document.getElementById("sel").value||"-1");renderCoverage(ag);renderTopPain(ag);renderHighlights(ag);renderPain(ag);
 }
 function renderPain(ag){
   // sólido = n>=8 (dato confiable). Prioridad: primero sólidos por mayor caída, luego muestra baja.
@@ -488,6 +494,21 @@ function modBreakdown(pid,base,mode){
 }
 APP.painTog=function(i){const d=document.getElementById("pd"+i),c=document.getElementById("pc"+i);if(!d)return;const open=d.style.display==="none";d.style.display=open?"block":"none";if(c)c.textContent=open?"▾":"▸";};
 APP.winTog=function(i){const d=document.getElementById("wd"+i),c=document.getElementById("wc"+i);if(!d)return;const open=d.style.display==="none";d.style.display=open?"block":"none";if(c)c.textContent=open?"▾":"▸";};
+APP.tpTog=function(i){const d=document.getElementById("tpd"+i),c=document.getElementById("tpc"+i);if(!d)return;const open=d.style.display==="none";d.style.display=open?"block":"none";if(c)c.textContent=open?"▾":"▸";};
+function renderTopPain(ag){
+  const list=document.getElementById("topPainList");if(!list)return;
+  const rows=TOP5.map(([name,pid])=>{const o=ag[pid];const nv=o&&o.nn?o.ns/o.nn:null,vv=o&&o.vn?o.vs/o.vn:null;return {name,pid,nv,vv,nN:o?o.nn:0,dl:(nv!=null&&vv!=null)?nv-vv:null};});
+  const withData=rows.filter(r=>r.nv!=null&&r.nN>0).sort((a,b)=>a.nv-b.nv);
+  const noData=rows.filter(r=>r.nv==null||!r.nN);
+  let html=withData.map((r,i)=>{
+    const col=r.nv<4.0?"#991b1b":r.nv<4.6?"#dc2626":"#15a06b";
+    const dl=r.dl!=null?((r.dl>=0?"+":"")+r.dl.toFixed(2)):"—";const dcol=(r.dl>=0)?"#15803d":"#dc2626";
+    return '<div class="painrow" style="border-left-color:'+col+'" onclick="APP.tpTog('+i+')"><span class="caret" id="tpc'+i+'">▸</span><span class="sev" style="background:'+col+'22;color:'+col+'">'+r.nv.toFixed(2)+'</span><span class="pn">'+esc(r.name)+'</span><span class="pv">viejo '+(r.vv!=null?r.vv.toFixed(2):"—")+' → nuevo '+r.nv.toFixed(2)+' · n='+r.nN+'</span><span class="pd" style="color:'+dcol+'">'+dl+'</span></div>'+
+      '<div class="paindet" id="tpd'+i+'" style="display:none">'+modBreakdown(r.pid,(r.vv!=null?r.vv:4.6),"pain")+'</div>';
+  }).join("");
+  if(noData.length) html+='<div class="mnote" style="margin-top:10px">Sin valoraciones del contenido nuevo aún: <b>'+noData.map(r=>esc(r.name)).join(", ")+'</b>.</div>';
+  list.innerHTML=html;
+}
 function renderHighlights(ag){
   const wins=APP.renov.map(pid=>{const o=ag[pid];if(!o||!o.nn||!o.vn)return null;const nv=o.ns/o.nn,vv=o.vs/o.vn,dl=nv-vv;if(dl<=0)return null;return {pid,name:APP.curso[pid]||pid,nv,vv,dl,n:o.nn,solido:o.nn>=8};}).filter(Boolean)
     .sort((a,b)=>(a.solido===b.solido?0:(a.solido?-1:1)) || (b.dl-a.dl));
