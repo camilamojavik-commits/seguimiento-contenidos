@@ -259,7 +259,7 @@ td{padding:7px 10px;border-top:1px solid var(--line)}tr:nth-child(even){backgrou
 
   <div class="panel pain">
     <div class="top"><h3><span class="ic" style="color:#dc2626">⚠</span> Pain points · contenido nuevo por debajo del viejo <span id="painCount" class="alertbadge"></span></h3></div>
-    <div class="sub">Cursos renovados donde el <b>contenido nuevo</b> quedó <b>por debajo</b> del viejo. Ordenados por <b>prioridad</b>: primero los de <b>muestra sólida (n≥8)</b> por mayor caída — esos son los accionables ya; los de <b>muestra baja</b> <span style="color:#b91c1c">(*)</span> van al final, a confirmar cuando junten más datos.</div>
+    <div class="sub">Cursos renovados donde el <b>contenido nuevo</b> quedó <b>por debajo</b> del viejo <b>y además por debajo de 4.60</b> (umbral de calidad: de 4.60 para arriba el curso está bien, aunque esté algo abajo del viejo). Ordenados por <b>prioridad</b>: primero los de <b>muestra sólida (n≥8)</b> por mayor caída; los de <b>muestra baja</b> <span style="color:#b91c1c">(*)</span> al final, a confirmar.</div>
     <div class="cv bar"><canvas id="chartPain"></canvas></div>
     <div id="painList"></div>
   </div>
@@ -456,7 +456,8 @@ function renderContent(){const from=APP.from,to=APP.to,ag=prodAgg(APP.minD,APP.m
 }
 function renderPain(ag){
   // sólido = n>=8 (dato confiable). Prioridad: primero sólidos por mayor caída, luego muestra baja.
-  const pain=APP.renov.map(pid=>{const o=ag[pid];if(!o||!o.nn||!o.vn)return null;const nv=o.ns/o.nn,vv=o.vs/o.vn,dl=nv-vv;if(dl>=0)return null;return {pid,name:APP.curso[pid]||pid,nv,vv,dl,n:o.nn,solido:o.nn>=8};}).filter(Boolean)
+  const FLOOR=4.60; // umbral de calidad: con nuevo >= 4.60 el curso está bien, no es pain point aunque esté algo por debajo del viejo
+  const pain=APP.renov.map(pid=>{const o=ag[pid];if(!o||!o.nn||!o.vn)return null;const nv=o.ns/o.nn,vv=o.vs/o.vn,dl=nv-vv;if(dl>=0)return null;if(nv>=FLOOR)return null;return {pid,name:APP.curso[pid]||pid,nv,vv,dl,n:o.nn,solido:o.nn>=8};}).filter(Boolean)
     .sort((a,b)=>(a.solido===b.solido?0:(a.solido?-1:1)) || (a.dl-b.dl));
   // estilo por prioridad: sólido = rojo (severidad por caída); muestra baja = ámbar (a confirmar)
   const meta=p=>{ if(!p.solido) return ["A CONFIRMAR","#d97706"]; return Math.abs(p.dl)>=0.3?["PRIORIDAD ALTA","#991b1b"]:Math.abs(p.dl)>=0.15?["PRIORIDAD","#dc2626"]:["LEVE","#e8714e"]; };
