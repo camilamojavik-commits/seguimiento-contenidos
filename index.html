@@ -121,6 +121,8 @@ td{padding:7px 10px;border-top:1px solid var(--line)}tr:nth-child(even){backgrou
 .revchip{font-size:10.5px;font-weight:600;color:var(--ink2);background:var(--cream);border:1px solid var(--line);border-radius:20px;padding:2px 9px 2px 3px;display:flex;align-items:center;gap:5px;margin-left:auto}
 .revav{width:17px;height:17px;border-radius:50%;background:var(--coral);color:#fff;font-size:8.5px;font-weight:800;display:flex;align-items:center;justify-content:center}
 .kempty{font-size:12px;color:var(--ink2);font-style:italic;padding:30px}
+#kpisCrm{grid-template-columns:repeat(5,1fr)}
+@media(max-width:760px){#kpisCrm{grid-template-columns:repeat(2,1fr)}}
 .panel.pain{border-left:5px solid #dc2626;background:#fffaf9}
 .alertbadge{background:#dc2626;color:#fff;font-size:11px;font-weight:800;border-radius:20px;padding:1px 9px;margin-left:6px;vertical-align:middle}
 .painrow{display:flex;align-items:center;gap:10px;padding:9px 12px;border:1px solid #f3d9d4;border-left:4px solid #dc2626;border-radius:10px;margin-top:8px;background:#fff}
@@ -546,9 +548,10 @@ function renderCRM(){
   const fl=rows.filter(r=>(!fSt||r.status===fSt)&&(!fSq||r.squad===fSq)&&(!fRv||r.rev===fRv)&&(!fTx||((r.nuevo+" "+r.viejo).toLowerCase().indexOf(fTx)>=0)));
   const total=rows.length;
   const pend=rows.filter(r=>{const i=stIdx(r.status);return i===0||i===1;}).length;
-  const prod=rows.filter(r=>{const i=stIdx(r.status);return i===2||i===3||i<0;}).length;
+  const prod=rows.filter(r=>{const i=stIdx(r.status);return i===2||i<0;}).length;
+  const qa=rows.filter(r=>stIdx(r.status)===3).length;
   const done=rows.filter(r=>stIdx(r.status)===4||r.launched).length;
-  document.getElementById("kpisCrm").innerHTML=kpi("Workshops a renovar",total,"versiones nuevas en pipeline")+kpi("Sin asignar",pend,"To be assigned + Sent to content creator")+kpi("En producción",prod,"Creating workshop / Internal QA")+kpi("Lanzados",done,"versión nueva publicada",1);
+  document.getElementById("kpisCrm").innerHTML=kpi("Workshops a renovar",total,"versiones nuevas en pipeline")+kpi("Sin asignar",pend,"To be assigned + Sent to content creator")+kpi("En producción",prod,"Creating workshop")+kpi("En revisión",qa,"Internal QA · revisa contenidos")+kpi("Lanzados",done,"versión nueva publicada",1);
   const sq={};rows.forEach(r=>{if(r.squad)sq[r.squad]=(sq[r.squad]||0)+1;});
   document.getElementById("crmSqSum").innerHTML=Object.entries(sq).sort((a,b)=>b[1]-a[1]).map(([s,n])=>'<span class="sqchip" style="background:'+sqColor(s)+'">'+esc(s)+'<span class="n">'+n+'</span></span>').join("")||'<span class="empty">Sin squads cargados.</span>';
   const stats={};fl.forEach(r=>{(stats[r.status]=stats[r.status]||[]).push(r);});
