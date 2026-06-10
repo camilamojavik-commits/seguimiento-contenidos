@@ -142,6 +142,21 @@ td{padding:7px 10px;border-top:1px solid var(--line)}tr:nth-child(even){backgrou
 .winrow .sev{font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;padding:2px 8px;border-radius:20px}
 .paindet.windet{border-color:#cce9d8}
 .mflag.up{color:#15803d;background:#dcfce7}
+.mbars{margin:4px 0 6px}
+.mbar{display:flex;align-items:center;gap:9px;padding:4px 0}
+.mbar .mbl{flex:0 0 230px;font-size:11.5px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mbar .mbt{flex:1;background:#eee6da;border-radius:6px;height:14px;overflow:hidden}
+.mbar .mbf{display:block;height:100%;border-radius:6px}
+.mbar .mbv{flex:0 0 38px;text-align:right;font-weight:800;font-size:12px;font-variant-numeric:tabular-nums}
+.mbar .mbn{flex:0 0 42px;text-align:right;font-size:10.5px;color:var(--ink2);font-variant-numeric:tabular-nums}
+.qch{font-size:12px;font-weight:800;color:var(--ink);margin:14px 0 8px;border-top:1px solid var(--line);padding-top:11px}
+.qc{display:flex;gap:9px;align-items:flex-start;padding:7px 0;border-top:1px solid #f1ece3}
+.qc:first-of-type{border-top:none}
+.qcr{flex:0 0 auto;font-size:11px;font-weight:800;border-radius:8px;padding:2px 7px;font-variant-numeric:tabular-nums}
+.qcb{flex:1}
+.qcm{font-size:12.5px;color:#3f372e;line-height:1.45}
+.qcs{font-size:10.5px;color:var(--ink2);margin-top:2px;font-weight:600}
+@media(max-width:680px){.mbar .mbl{flex-basis:130px}}
 .painrow{cursor:pointer;user-select:none}.painrow:hover{background:#fff6f5}
 .painrow .caret{color:#dc2626;font-size:11px;width:12px;flex-shrink:0}
 .paindet{background:#fff;border:1px solid #f3d9d4;border-top:none;border-radius:0 0 10px 10px;margin:-4px 0 8px;padding:10px 14px 12px}
@@ -256,20 +271,6 @@ td{padding:7px 10px;border-top:1px solid var(--line)}tr:nth-child(even){backgrou
     <div id="topPainList"></div>
   </div>
 
-  <div class="panel win">
-    <div class="top"><h3><span class="ic" style="color:#15a06b">★</span> Cursos destacados · contenido nuevo por encima del viejo <span id="winCount" class="winbadge"></span></h3></div>
-    <div class="sub">Cursos renovados donde el <b>contenido nuevo</b> rinde <b>mejor</b> que el viejo. Mismo criterio que pain points: primero los de <b>muestra sólida (n≥8)</b> por mayor mejora; los de <b>muestra baja</b> <span style="color:#166534">(*)</span> al final. Clic en cada uno para ver el desglose por módulo.</div>
-    <div class="cv bar"><canvas id="chartWin"></canvas></div>
-    <div id="winList"></div>
-  </div>
-
-  <div class="panel pain">
-    <div class="top"><h3><span class="ic" style="color:#dc2626">⚠</span> Pain points · contenido nuevo por debajo del viejo <span id="painCount" class="alertbadge"></span></h3></div>
-    <div class="sub">Cursos renovados donde el <b>contenido nuevo</b> quedó <b>por debajo</b> del viejo <b>y además por debajo de 4.60</b> (umbral de calidad: de 4.60 para arriba el curso está bien, aunque esté algo abajo del viejo). Ordenados por <b>prioridad</b>: primero los de <b>muestra sólida (n≥8)</b> por mayor caída; los de <b>muestra baja</b> <span style="color:#b91c1c">(*)</span> al final, a confirmar.</div>
-    <div class="cv bar"><canvas id="chartPain"></canvas></div>
-    <div id="painList"></div>
-  </div>
-
   <div class="panel">
     <div class="top"><h3><span class="ic">↗</span> Evolución por curso</h3>
       <div><label class="flt">Filtrar curso:</label><select id="sel"></select></div></div>
@@ -281,7 +282,7 @@ td{padding:7px 10px;border-top:1px solid var(--line)}tr:nth-child(even){backgrou
 
   <div class="panel">
     <div class="top"><h3>Resumen · viejo → nuevo (contenido)</h3></div>
-    <div class="sub">Cada curso con contenido nuevo (medibles primero; los de muestra baja, n&lt;8, al final).</div>
+    <div class="sub">Cada curso con contenido nuevo, ordenado del <b>rating nuevo más bajo al más alto</b>. Δ = nuevo − viejo.</div>
     <table id="tbl"><thead><tr><th>Curso</th><th class="num">Viejo</th><th class="num">Nuevo</th><th class="num">n nuevo</th><th class="num">Δ</th></tr></thead><tbody></tbody></table>
   </div>
 
@@ -456,9 +457,9 @@ function renderContent(){const from=APP.from,to=APP.to,ag=prodAgg(APP.minD,APP.m
   mk("chartT",{type:"bar",plugins:[barLabels],data:{labels:TOP5.map(t=>t[0]),datasets:[{label:"Viejo",data:vie,backgroundColor:"#bdb1a0",borderRadius:4,maxBarThickness:46},{label:"Nuevo",data:nue,backgroundColor:"#F5A623",borderRadius:4,maxBarThickness:46}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"top",labels:{usePointStyle:true,boxWidth:8,font:{size:12}}}},scales:{y:{min:3.5,max:5,ticks:{stepSize:0.5},grid:{color:"#efe7da"}},x:{grid:{display:false},ticks:{font:{size:11.5}}}}}});
   // table
   const rows=APP.renov.filter(pid=>ag[pid]&&(ag[pid].nn>0||ag[pid].vn>0)).map(pid=>{const o=ag[pid];const nv=o.nn?o.ns/o.nn:null,vv=o.vn?o.vs/o.vn:null;return {name:APP.curso[pid],nn:o.nn,nv:nv,vv:vv,dl:(nv!=null&&vv!=null)?nv-vv:null,med:o.nn>=8};});
-  rows.sort((a,b)=>(b.med-a.med)|| ((b.dl==null?-9:b.dl)-(a.dl==null?-9:a.dl)) || b.nn-a.nn);
+  rows.sort((a,b)=>{const av=a.nv==null?99:a.nv,bv=b.nv==null?99:b.nv;return av-bv;});
   document.querySelector("#tbl tbody").innerHTML=rows.map(r=>'<tr><td>'+r.name+'</td><td class="num">'+(r.vv!=null?r.vv.toFixed(2):"—")+'</td><td class="num">'+(r.nv!=null?r.nv.toFixed(2):"—")+'</td><td class="num">'+r.nn+'</td><td class="num '+(r.dl>=0?"up":"dn")+'">'+(r.dl!=null?((r.dl>=0?"+":"")+r.dl.toFixed(2)):"—")+'</td></tr>').join("");
-  buildSel(ag);renderPerCourse(document.getElementById("sel").value||"-1");renderCoverage(ag);renderTopPain(ag);renderHighlights(ag);renderPain(ag);
+  buildSel(ag);renderPerCourse(document.getElementById("sel").value||"-1");renderCoverage(ag);renderTopPain(ag);
 }
 function renderPain(ag){
   // sólido = n>=8 (dato confiable). Prioridad: primero sólidos por mayor caída, luego muestra baja.
@@ -481,16 +482,21 @@ function renderPain(ag){
       '<div class="paindet" id="pd'+i+'" style="display:none">'+modBreakdown(p.pid,p.vv)+'</div>';
   }).join("");
 }
-function modBreakdown(pid,base,mode){
-  const m={};for(const v of APP.val){if(v.pid!==pid||!v.isNew)continue;const k=v.mod||"(sin módulo)";const o=m[k]||(m[k]={s:0,n:0});o.s+=v.rt;o.n++;}
-  let arr=Object.entries(m).map(([mod,o])=>({mod,n:o.n,avg:o.s/o.n}));
-  arr.sort((a,b)=>mode==="win"?b.avg-a.avg:a.avg-b.avg);
-  if(!arr.length)return '<div class="mnote">Sin valoraciones de módulo en el rango.</div>';
-  const rowsH=arr.map(x=>{const col=x.avg<base?"#dc2626":(x.avg>=base+0.2?"#15a06b":"#b8860b");
-    let flag="";if(mode==="win"){if(x.avg>=base)flag='<span class="mflag up">↑ sobre el viejo</span>';}else{if(x.avg<base)flag='<span class="mflag">↓ bajo el viejo</span>';}
-    return '<tr><td>'+esc(x.mod)+'</td><td class="num">'+x.n+'</td><td class="num" style="color:'+col+';font-weight:800">'+x.avg.toFixed(2)+'</td><td>'+flag+'</td></tr>';}).join("");
-  return '<div class="mnote">Valoraciones del contenido nuevo por módulo (línea de base = viejo del curso: <b>'+base.toFixed(2)+'</b>). Ordenado '+(mode==="win"?"del mejor al más flojo":"del más flojo al mejor")+'.</div>'+
-    '<table class="mtab"><thead><tr><th>Módulo</th><th class="num">n</th><th class="num">Prom.</th><th></th></tr></thead><tbody>'+rowsH+'</tbody></table>';
+function modBreakdown(pid,base){
+  const m={};const coms=[];
+  for(const v of APP.val){if(v.pid!==pid||!v.isNew)continue;const k=v.mod||"(sin módulo)";const o=m[k]||(m[k]={s:0,n:0});o.s+=v.rt;o.n++;if(v.cm&&v.cm.trim().length>1)coms.push({mod:k,rt:v.rt,cm:v.cm.trim()});}
+  let arr=Object.entries(m).map(([mod,o])=>({mod,n:o.n,avg:o.s/o.n})).sort((a,b)=>a.avg-b.avg);
+  if(!arr.length)return '<div class="mnote">Sin valoraciones del contenido nuevo en el rango.</div>';
+  const bc=a=>a<base-0.15?"#dc2626":(a>=base+0.15?"#15a06b":"#e8954a");
+  const bars=arr.map(x=>'<div class="mbar"><span class="mbl" title="'+esc(x.mod)+'">'+esc(x.mod)+'</span><span class="mbt"><span class="mbf" style="width:'+(x.avg/5*100).toFixed(0)+'%;background:'+bc(x.avg)+'"></span></span><span class="mbv" style="color:'+bc(x.avg)+'">'+x.avg.toFixed(2)+'</span><span class="mbn">n='+x.n+'</span></div>').join("");
+  coms.sort((a,b)=>a.rt-b.rt);
+  const CAP=10;
+  let comHtml;
+  if(!coms.length){comHtml='<div class="mnote">Sin comentarios escritos todavía en el contenido nuevo.</div>';}
+  else{comHtml=coms.slice(0,CAP).map(c=>{const bg=c.rt<=3?"#fde2dd":c.rt>=5?"#dcfce7":"#fef3cd",fg=c.rt<=3?"#b91c1c":c.rt>=5?"#166534":"#92400e";return '<div class="qc"><span class="qcr" style="background:'+bg+';color:'+fg+'">'+c.rt.toFixed(0)+'★</span><div class="qcb"><div class="qcm">“'+esc(c.cm).slice(0,260)+'”</div><div class="qcs">'+esc(c.mod)+'</div></div></div>';}).join("")+(coms.length>CAP?'<div class="mnote">+ '+(coms.length-CAP)+' comentarios más</div>':'');}
+  return '<div class="mnote">Valoración del contenido nuevo por módulo (línea de base = viejo del curso: <b>'+base.toFixed(2)+'</b>), del más flojo al mejor.</div>'+
+    '<div class="mbars">'+bars+'</div>'+
+    '<div class="qch">💬 Qué dicen los alumnos · '+coms.length+' comentario'+(coms.length===1?'':'s')+' (peor calificados primero)</div>'+comHtml;
 }
 APP.painTog=function(i){const d=document.getElementById("pd"+i),c=document.getElementById("pc"+i);if(!d)return;const open=d.style.display==="none";d.style.display=open?"block":"none";if(c)c.textContent=open?"▾":"▸";};
 APP.winTog=function(i){const d=document.getElementById("wd"+i),c=document.getElementById("wc"+i);if(!d)return;const open=d.style.display==="none";d.style.display=open?"block":"none";if(c)c.textContent=open?"▾":"▸";};
