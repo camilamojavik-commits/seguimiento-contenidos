@@ -509,13 +509,15 @@ const REC={
  "AI Automation (V2)|||Construcción práctica de workflows con Make y n8n":{n:2,src:1,tips:["En la unidad de Error Handling se explican por texto las buenas prácticas (naming de nodos/variables, registro de errores) pero el alumno pide verlas: agregar un video corto mostrando en Make el 'Add error handler' → Break/reintentos → y la notificación a Slack/email que funciona como log.","El módulo es muy de texto y con analogías (cafetería, repartidor): sumar un screencast construyendo un workflow real de punta a punta — apunta directo al 'genérico, sin ejemplos claros'.","Detallar el paso a paso de instalación y conexión de las apps (OAuth, API key de OpenAI) con capturas: hoy se mencionan pero no se muestran."]},
  "AI Automation (V2)|||Ecosistema No-Code y Low-Code":{n:3,src:1,tips:["Arreglar la tabla comparativa No-Code vs Low-Code en 'Diferencias clave': hoy quedó vacía (solo está la imagen, la tabla de texto está en blanco).","Alinear la actividad/integrador con lo explicado: el alumno dice que los conceptos 'no van acorde con los ejercicios solicitados' — el módulo es muy conceptual, sumar ejemplos prácticos resueltos."]},
  "Excel (V2)|||Procesamiento de datos en Excel":{n:2,tips:["Alinear la corrección automática (IA) con lo enseñado: que no marque como faltante lo que no se vio en el módulo.","Sumar ayudas de texto y material de apoyo dentro de la actividad."]},
- "Creación de contenido con AI (V2)|||Actividad práctica":{n:41,tips:["Explicar paso a paso el procedimiento para resolver la actividad.","Reforzar la respuesta de tutores y profes a las dudas durante la semana.","Acortar la introducción y segmentar el contenido para perfiles principiantes (hoy se siente mucha info mezclada)."]},
+ "Creación de contenido con AI (V2)|||Actividad práctica":{n:41,tips:["Explicar paso a paso el procedimiento para resolver la actividad: las consignas no quedan claras.","Acortar la introducción y segmentar el contenido para perfiles principiantes — hoy se siente 'mucha info mezclada'.","Alinear las entregas con lo explicado: varios alumnos sienten que el entregable pide más de lo visto en el material."]},
  "Growth Marketing (V2)|||Growth strategy: el framework AARRR y métricas de negocio":{n:1,tips:["Desarrollar más el módulo yendo de lo general a lo particular; no dar por sentado conocimientos previos.","Agregar ejemplos concretos del framework AARRR aplicado a un caso real."]}
 };
 APP.recTog=function(id){const d=document.getElementById(id);if(d)d.style.display=d.style.display==="none"?"block":"none";};
+// comentarios sobre profe/clase/tutor (no sobre el contenido) → se ocultan del desglose
+const DELIV=/\bprofe(s|sor|sora|sores)?\b|\btutor(a|es|as)?\b|docente|no respond|se llamaba|mala explicand|explicand[oa].{0,8}mal|p[ée]sim/i;
 function modBreakdown(pid,base){
-  const m={};const coms=[];
-  for(const v of APP.val){if(v.pid!==pid||!v.isNew)continue;const k=v.mod||"(sin módulo)";const o=m[k]||(m[k]={s:0,n:0,c:0});o.s+=v.rt;o.n++;if(v.cm&&v.cm.trim().length>1){o.c++;coms.push({mod:k,rt:v.rt,cm:v.cm.trim()});}}
+  const m={};const coms=[];let hid=0;
+  for(const v of APP.val){if(v.pid!==pid||!v.isNew)continue;const k=v.mod||"(sin módulo)";const o=m[k]||(m[k]={s:0,n:0,c:0});o.s+=v.rt;o.n++;if(v.cm&&v.cm.trim().length>1){o.c++;if(DELIV.test(v.cm)){hid++;}else coms.push({mod:k,rt:v.rt,cm:v.cm.trim()});}}
   let arr=Object.entries(m).map(([mod,o])=>({mod,n:o.n,avg:o.s/o.n,c:o.c})).sort((a,b)=>a.avg-b.avg);
   if(!arr.length)return '<div class="mnote">Sin valoraciones del contenido nuevo en el rango.</div>';
   const bc=a=>a<base-0.15?"#dc2626":(a>=base+0.15?"#15a06b":"#e8954a");
@@ -536,7 +538,7 @@ function modBreakdown(pid,base){
   else{comHtml=coms.slice(0,CAP).map(c=>{const bg=c.rt<=3?"#fde2dd":c.rt>=5?"#dcfce7":"#fef3cd",fg=c.rt<=3?"#b91c1c":c.rt>=5?"#166534":"#92400e";return '<div class="qc"><span class="qcr" style="background:'+bg+';color:'+fg+'">'+c.rt.toFixed(0)+'★</span><div class="qcb"><div class="qcm">“'+esc(c.cm).slice(0,260)+'”</div><div class="qcs">'+esc(c.mod)+'</div></div></div>';}).join("")+(coms.length>CAP?'<div class="mnote">+ '+(coms.length-CAP)+' comentarios más</div>':'');}
   return '<div class="mnote">Valoración del contenido nuevo por módulo (línea de base = viejo del curso: <b>'+base.toFixed(2)+'</b>), del más flojo al mejor.</div>'+
     '<div class="mbars">'+bars+'</div>'+
-    '<div class="qch">💬 Qué dicen los alumnos · '+coms.length+' comentario'+(coms.length===1?'':'s')+' (peor calificados primero)</div>'+comHtml;
+    '<div class="qch">💬 Qué dicen los alumnos · solo contenido · '+coms.length+' comentario'+(coms.length===1?'':'s')+' (peor primero)'+(hid>0?' <span style="font-weight:600;color:var(--ink2)">· '+hid+' sobre clase/profe ocultados</span>':'')+'</div>'+comHtml;
 }
 APP.painTog=function(i){const d=document.getElementById("pd"+i),c=document.getElementById("pc"+i);if(!d)return;const open=d.style.display==="none";d.style.display=open?"block":"none";if(c)c.textContent=open?"▾":"▸";};
 APP.winTog=function(i){const d=document.getElementById("wd"+i),c=document.getElementById("wc"+i);if(!d)return;const open=d.style.display==="none";d.style.display=open?"block":"none";if(c)c.textContent=open?"▾":"▸";};
