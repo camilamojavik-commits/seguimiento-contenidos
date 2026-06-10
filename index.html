@@ -158,6 +158,13 @@ td{padding:7px 10px;border-top:1px solid var(--line)}tr:nth-child(even){backgrou
 .qcm{font-size:12.5px;color:#3f372e;line-height:1.45}
 .qcs{font-size:10.5px;color:var(--ink2);margin-top:2px;font-weight:600}
 @media(max-width:680px){.mbar .mbl{flex-basis:130px}}
+.recbtn{flex:0 0 auto;font-size:9.5px;font-weight:800;color:#7c3aed;background:#f3e8ff;border:1px solid #e2cffc;border-radius:20px;padding:3px 9px;cursor:pointer;white-space:nowrap;margin-left:6px;font-family:inherit}
+.recbtn:hover{background:#e9d5ff}
+.recbox{background:#faf5ff;border:1px solid #e2cffc;border-left:3px solid #7c3aed;border-radius:8px;padding:9px 13px;margin:2px 0 9px}
+.rech{font-size:11.5px;font-weight:800;color:#6b21a8;margin-bottom:5px}
+.recbox ul{margin:0;padding-left:17px}
+.recbox li{font-size:12px;color:#3f372e;line-height:1.5;margin-bottom:3px}
+.recf{font-size:10px;color:var(--ink2);margin-top:7px;font-style:italic}
 .painrow{cursor:pointer;user-select:none}.painrow:hover{background:#fff6f5}
 .painrow .caret{color:#dc2626;font-size:11px;width:12px;flex-shrink:0}
 .paindet{background:#fff;border:1px solid #f3d9d4;border-top:none;border-radius:0 0 10px 10px;margin:-4px 0 8px;padding:10px 14px 12px}
@@ -483,13 +490,29 @@ function renderPain(ag){
       '<div class="paindet" id="pd'+i+'" style="display:none">'+modBreakdown(p.pid,p.vv)+'</div>';
   }).join("");
 }
+// Recomendaciones AI pre-generadas (a partir del feedback real de los alumnos · snapshot)
+const REC={
+ "Data Analytics (V4)|||Modelos y Diseño de Bases de Datos":{n:3,tips:["Reordenar la teoría: explicar los esquemas y conceptos clave al inicio del módulo, no recién en la última unidad.","Alinear el entregable con lo dictado: el integrador pide temas (permisos y roles en SQL) que todavía no se vieron — moverlos antes o quitarlos.","Sumar una guía paso a paso para resolver los ejercicios y el integrador."]},
+ "Data Analytics (V4)|||Introducción al Análisis de Datos":{n:3,tips:["Aclarar las consignas de las actividades: dejar explícito qué se espera entregar.","Agregar una capa introductoria más simple para perfiles principiantes antes del contenido técnico.","Cubrir en el módulo todo lo que se evalúa en el quiz/integrador (hoy hay temas que el alumno busca por fuera)."]},
+ "AI Automation (V2)|||Construcción práctica de workflows con Make y n8n":{n:2,tips:["Agregar un ejemplo guiado construyendo un workflow real de punta a punta.","Mostrar en video las buenas prácticas que se mencionan: naming de nodos/variables y logging de eventos y errores.","Incluir un paso a paso de instalación y configuración de las herramientas."]},
+ "AI Automation (V2)|||Ecosistema No-Code y Low-Code":{n:3,tips:["Sumar ejemplos prácticos alineados a los ejercicios que se piden (hoy hay desajuste entre concepto y ejercicio).","Bajar el ritmo de la clase: ampliar las demos de las herramientas en vez de un pantallazo rápido."]},
+ "Excel (V2)|||Procesamiento de datos en Excel":{n:2,tips:["Alinear la corrección automática (IA) con lo enseñado: que no marque como faltante lo que no se vio en el módulo.","Sumar ayudas de texto y material de apoyo dentro de la actividad."]},
+ "Creación de contenido con AI (V2)|||Actividad práctica":{n:41,tips:["Explicar paso a paso el procedimiento para resolver la actividad.","Reforzar la respuesta de tutores y profes a las dudas durante la semana.","Acortar la introducción y segmentar el contenido para perfiles principiantes (hoy se siente mucha info mezclada)."]},
+ "Growth Marketing (V2)|||Growth strategy: el framework AARRR y métricas de negocio":{n:1,tips:["Desarrollar más el módulo yendo de lo general a lo particular; no dar por sentado conocimientos previos.","Agregar ejemplos concretos del framework AARRR aplicado a un caso real."]}
+};
+APP.recTog=function(id){const d=document.getElementById(id);if(d)d.style.display=d.style.display==="none"?"block":"none";};
 function modBreakdown(pid,base){
   const m={};const coms=[];
   for(const v of APP.val){if(v.pid!==pid||!v.isNew)continue;const k=v.mod||"(sin módulo)";const o=m[k]||(m[k]={s:0,n:0});o.s+=v.rt;o.n++;if(v.cm&&v.cm.trim().length>1)coms.push({mod:k,rt:v.rt,cm:v.cm.trim()});}
   let arr=Object.entries(m).map(([mod,o])=>({mod,n:o.n,avg:o.s/o.n})).sort((a,b)=>a.avg-b.avg);
   if(!arr.length)return '<div class="mnote">Sin valoraciones del contenido nuevo en el rango.</div>';
   const bc=a=>a<base-0.15?"#dc2626":(a>=base+0.15?"#15a06b":"#e8954a");
-  const bars=arr.map(x=>'<div class="mbar"><span class="mbl" title="'+esc(x.mod)+'">'+esc(x.mod)+'</span><span class="mbt"><span class="mbf" style="width:'+(x.avg/5*100).toFixed(0)+'%;background:'+bc(x.avg)+'"></span></span><span class="mbv" style="color:'+bc(x.avg)+'">'+x.avg.toFixed(2)+'</span><span class="mbn">n='+x.n+'</span></div>').join("");
+  const cn=(APP.curso[pid]||"");const pfx='rec_'+String(pid).replace(/[^a-z0-9]/gi,'');
+  const bars=arr.map((x,bi)=>{const rec=REC[cn+"|||"+x.mod];const rid=pfx+'_'+bi;
+    const btn=rec?'<button class="recbtn" onclick="APP.recTog(\''+rid+'\')">✨ Recomendaciones AI</button>':'';
+    let row='<div class="mbar"><span class="mbl" title="'+esc(x.mod)+'">'+esc(x.mod)+'</span><span class="mbt"><span class="mbf" style="width:'+(x.avg/5*100).toFixed(0)+'%;background:'+bc(x.avg)+'"></span></span><span class="mbv" style="color:'+bc(x.avg)+'">'+x.avg.toFixed(2)+'</span><span class="mbn">n='+x.n+'</span>'+btn+'</div>';
+    if(rec){row+='<div class="recbox" id="'+rid+'" style="display:none"><div class="rech">✨ Cómo mejorar este módulo · basado en '+rec.n+' comentario'+(rec.n===1?'':'s')+' de alumnos</div><ul>'+rec.tips.map(t=>'<li>'+esc(t)+'</li>').join('')+'</ul><div class="recf">Generado con IA a partir del feedback de los alumnos (snapshot, no en vivo).</div></div>';}
+    return row;}).join("");
   coms.sort((a,b)=>a.rt-b.rt);
   const CAP=10;
   let comHtml;
