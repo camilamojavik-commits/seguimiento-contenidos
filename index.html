@@ -514,7 +514,7 @@ const REC={
 };
 APP.recTog=function(id){const d=document.getElementById(id);if(d)d.style.display=d.style.display==="none"?"block":"none";};
 // comentarios sobre profe/clase/tutor (no sobre el contenido) → se ocultan del desglose
-const DELIV=/\bprofe(s|sor|sora|sores)?\b|\btutor(a|es|as)?\b|docente|no respond|se llamaba|mala explicand|explicand[oa].{0,8}mal|p[ée]sim/i;
+const DELIV=/\bprofe|\btutor|docente|expositor|\bclase(s)?\b|muletilla|cansad|aburrid|poca onda|mala onda|no se (le )?entend|lo que (habla|dec[ií])|micr[oó]fono|alumnos|interrump|\britmo\b|muy r[aá]pid|muy lent|avanz|por las ramas|se llamaba|no respond|p[ée]sim|explicand/i;
 function modBreakdown(pid,base){
   const m={};const coms=[];let hid=0;
   for(const v of APP.val){if(v.pid!==pid||!v.isNew)continue;const k=v.mod||"(sin módulo)";const o=m[k]||(m[k]={s:0,n:0,c:0});o.s+=v.rt;o.n++;if(v.cm&&v.cm.trim().length>1){o.c++;if(DELIV.test(v.cm)){hid++;}else coms.push({mod:k,rt:v.rt,cm:v.cm.trim()});}}
