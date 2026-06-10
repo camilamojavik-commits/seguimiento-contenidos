@@ -298,6 +298,11 @@ td{padding:7px 10px;border-top:1px solid var(--line)}tr:nth-child(even){backgrou
   <section id="sec-workshops" class="section">
     <div class="sech"><h2>Workshops on demand</h2><div class="ssub">Performance del catálogo de workshops grabados · últimos 365 días · fuente PostHog (snapshot).</div></div>
     <div class="note-top">Alto volumen de inscriptos pero <b>completion rate bajo (~2,7%)</b>. Acá se ve qué temáticas y títulos funcionan y cuáles conviene revisar.</div>
+    <div class="panel" style="border-left:5px solid var(--coral)">
+      <div class="top"><h3><span class="ic">🔄</span> Renovación en curso · <span id="wsRenovN">—</span> workshops</h3></div>
+      <div class="sub">Workshops on demand que estamos actualizando a nueva versión, por squad responsable (fuente en vivo: hoja workshops nuevas versiones). El detalle por estado está en la sección <b>Renovación workshops</b>.</div>
+      <div class="sqsummary" id="wsRenovSq"></div>
+    </div>
     <div class="kpis" id="kpisWs"></div>
     <div class="panel"><h3><span class="ic">★</span> Top workshops por inscriptos</h3><div class="sub">Los más elegidos del catálogo.</div><div class="cv" style="height:300px"><canvas id="chartWI"></canvas></div></div>
     <div class="row2">
@@ -507,6 +512,10 @@ const WS={
 const hbar={id:"hbar",afterDatasetsDraw(ch){const ctx=ch.ctx;ctx.save();ctx.font="700 11px 'Plus Jakarta Sans',sans-serif";ctx.fillStyle="#5b5147";ctx.textAlign="left";ctx.textBaseline="middle";const lab=ch.data.datasets[0]._lab;ch.getDatasetMeta(0).data.forEach((b,i)=>{if(lab&&lab[i]!=null)ctx.fillText(lab[i],b.x+5,b.y);});ctx.restore();}};
 function hbarChart(labels,vals,labText,colors,maxx){return {type:"bar",plugins:[hbar],data:{labels:labels,datasets:[{data:vals,backgroundColor:colors,borderRadius:4,_lab:labText}]},options:{indexAxis:"y",responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{enabled:false}},layout:{padding:{right:50}},scales:{x:{display:false,max:maxx},y:{grid:{display:false},ticks:{font:{size:11}}}}}};}
 function renderWorkshops(){
+  const wr=APP.wsr||[];
+  document.getElementById("wsRenovN").textContent=wr.length;
+  const rsq={};wr.forEach(r=>{if(r.squad)rsq[r.squad]=(rsq[r.squad]||0)+1;});
+  document.getElementById("wsRenovSq").innerHTML=Object.entries(rsq).sort((a,b)=>b[1]-a[1]).map(([s,n])=>'<span class="sqchip" style="background:'+sqColor(s)+'">'+esc(s)+'<span class="n">'+n+'</span></span>').join("")||'<span class="empty">—</span>';
   document.getElementById("kpisWs").innerHTML=kpi("Workshops","167","con actividad · 365 días")+kpi("Inscriptos","24.237","total")+kpi("Contenido completado","650","terminaron el contenido",1)+kpi("Completion rate","2,7%","promedio del catálogo");
   const mx=a=>Math.max.apply(null,a);
   mk("chartWI",hbarChart(WS.insc.map(x=>x[0]),WS.insc.map(x=>x[1]),WS.insc.map(x=>x[1].toLocaleString("es")),"#F5A623",mx(WS.insc.map(x=>x[1]))*1.14));
