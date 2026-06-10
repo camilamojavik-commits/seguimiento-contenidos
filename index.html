@@ -275,7 +275,7 @@ td{padding:7px 10px;border-top:1px solid var(--line)}tr:nth-child(even){backgrou
 
   <div class="panel">
     <div class="top"><h3><span class="ic" style="color:#c04200">🎯</span> Foco comercial · módulos más flojos de los Top 10 vendidos</h3></div>
-    <div class="sub">Los 10 cursos de mayor venta, ordenados del rating de contenido nuevo <b>más bajo al más alto</b>. Clic en cada uno para ver sus <b>módulos más flojos</b> — son los que conviene reforzar primero por impacto en ventas. Abajo, los que todavía no se renovaron o no tienen valoraciones aún.</div>
+    <div class="sub">Los 10 cursos de mayor venta, ordenados <b>de peor a mejor según Δ</b> (los que cayeron respecto del viejo, primero). Clic en cada uno para ver sus <b>módulos más flojos</b> — son los que conviene reforzar primero por impacto en ventas. Abajo, los que todavía no se renovaron o no tienen valoraciones aún.</div>
     <div id="topPainList"></div>
   </div>
 
@@ -546,7 +546,7 @@ APP.tpTog=function(i){const d=document.getElementById("tpd"+i),c=document.getEle
 function renderTopPain(ag){
   const list=document.getElementById("topPainList");if(!list)return;
   const rows=TOP10.map(t=>{const o=t.pid?ag[t.pid]:null;const nv=o&&o.nn?o.ns/o.nn:null,vv=o&&o.vn?o.vs/o.vn:null;return {name:t.n,pid:t.pid,pend:t.pend,nv,vv,nN:o?o.nn:0,dl:(nv!=null&&vv!=null)?nv-vv:null};});
-  const withData=rows.filter(r=>!r.pend&&r.nv!=null&&r.nN>0).sort((a,b)=>a.nv-b.nv);
+  const withData=rows.filter(r=>!r.pend&&r.nv!=null&&r.nN>0).sort((a,b)=>{const ad=a.dl==null?9:a.dl,bd=b.dl==null?9:b.dl;return ad-bd;});
   const sinData=rows.filter(r=>!r.pend&&(r.nv==null||!r.nN));
   const pend=rows.filter(r=>r.pend);
   let html=withData.map((r,i)=>{
