@@ -503,15 +503,19 @@ const REC={
 APP.recTog=function(id){const d=document.getElementById(id);if(d)d.style.display=d.style.display==="none"?"block":"none";};
 function modBreakdown(pid,base){
   const m={};const coms=[];
-  for(const v of APP.val){if(v.pid!==pid||!v.isNew)continue;const k=v.mod||"(sin módulo)";const o=m[k]||(m[k]={s:0,n:0});o.s+=v.rt;o.n++;if(v.cm&&v.cm.trim().length>1)coms.push({mod:k,rt:v.rt,cm:v.cm.trim()});}
-  let arr=Object.entries(m).map(([mod,o])=>({mod,n:o.n,avg:o.s/o.n})).sort((a,b)=>a.avg-b.avg);
+  for(const v of APP.val){if(v.pid!==pid||!v.isNew)continue;const k=v.mod||"(sin módulo)";const o=m[k]||(m[k]={s:0,n:0,c:0});o.s+=v.rt;o.n++;if(v.cm&&v.cm.trim().length>1){o.c++;coms.push({mod:k,rt:v.rt,cm:v.cm.trim()});}}
+  let arr=Object.entries(m).map(([mod,o])=>({mod,n:o.n,avg:o.s/o.n,c:o.c})).sort((a,b)=>a.avg-b.avg);
   if(!arr.length)return '<div class="mnote">Sin valoraciones del contenido nuevo en el rango.</div>';
   const bc=a=>a<base-0.15?"#dc2626":(a>=base+0.15?"#15a06b":"#e8954a");
+  const GEN=["Revisar la claridad de las consignas: que quede explícito qué se espera entregar.","Sumar ejemplos prácticos y demos paso a paso.","Alinear lo evaluado (quiz/integrador) con lo efectivamente enseñado en el módulo.","Cuidar el ritmo y la progresión: de lo simple a lo complejo."];
   const cn=(APP.curso[pid]||"");const pfx='rec_'+String(pid).replace(/[^a-z0-9]/gi,'');
-  const bars=arr.map((x,bi)=>{const rec=REC[cn+"|||"+x.mod];const rid=pfx+'_'+bi;
-    const btn=rec?'<button class="recbtn" onclick="APP.recTog(\''+rid+'\')">✨ Recomendaciones AI</button>':'';
+  const bars=arr.map((x,bi)=>{const rec=REC[cn+"|||"+x.mod];const low=x.avg<base;const rid=pfx+'_'+bi;
+    const btn=low?'<button class="recbtn" onclick="APP.recTog(\''+rid+'\')">✨ Recomendaciones AI</button>':'';
     let row='<div class="mbar"><span class="mbl" title="'+esc(x.mod)+'">'+esc(x.mod)+'</span><span class="mbt"><span class="mbf" style="width:'+(x.avg/5*100).toFixed(0)+'%;background:'+bc(x.avg)+'"></span></span><span class="mbv" style="color:'+bc(x.avg)+'">'+x.avg.toFixed(2)+'</span><span class="mbn">n='+x.n+'</span>'+btn+'</div>';
-    if(rec){row+='<div class="recbox" id="'+rid+'" style="display:none"><div class="rech">✨ Cómo mejorar este módulo · basado en '+rec.n+' comentario'+(rec.n===1?'':'s')+' de alumnos</div><ul>'+rec.tips.map(t=>'<li>'+esc(t)+'</li>').join('')+'</ul><div class="recf">Generado con IA a partir del feedback de los alumnos (snapshot, no en vivo).</div></div>';}
+    if(low){let inner;
+      if(rec){inner='<div class="rech">✨ Cómo mejorar este módulo · basado en '+rec.n+' comentario'+(rec.n===1?'':'s')+' de alumnos</div><ul>'+rec.tips.map(t=>'<li>'+esc(t)+'</li>').join('')+'</ul><div class="recf">Generado con IA a partir del feedback de los alumnos (snapshot, no en vivo).</div>';}
+      else{const nota=x.c>0?'Este módulo tiene '+x.c+' comentario'+(x.c===1?'':'s')+' pero todavía no generé su recomendación puntual — pedímelo y la sumo.':'Sin comentarios escritos todavía (n='+x.n+').';inner='<div class="rech">✨ Recomendación general</div><ul>'+GEN.map(t=>'<li>'+esc(t)+'</li>').join('')+'</ul><div class="recf">'+nota+' Recomendación general; se afina cuando haya feedback de los alumnos.</div>';}
+      row+='<div class="recbox" id="'+rid+'" style="display:none">'+inner+'</div>';}
     return row;}).join("");
   coms.sort((a,b)=>a.rt-b.rt);
   const CAP=10;
