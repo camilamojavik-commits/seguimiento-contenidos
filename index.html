@@ -391,6 +391,8 @@ function parseCSV(t){const r=[];let row=[],c="",q=false;for(let i=0;i<t.length;i
 async function tab(n){const u="https://docs.google.com/spreadsheets/d/"+SHEET+"/gviz/tq?tqx=out:csv&sheet="+encodeURIComponent(n);return parseCSV(await (await fetch(u)).text());}
 async function tabGid(gid){const u="https://docs.google.com/spreadsheets/d/"+SHEET+"/export?format=csv&gid="+gid;return parseCSV(await (await fetch(u)).text());}
 const esc=s=>(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+// Valoraciones cuyo comentario es sobre la clase/profe (no el contenido): se excluyen del cálculo del rating de contenido.
+const DELIV=/\bprofe|\btutor|docente|expositor|\bclase(s)?\b|muletilla|cansad|aburrid|poca onda|mala onda|no se (le )?entend|lo que (habla|dec[ií])|micr[oó]fono|alumnos|interrump|\britmo\b|muy r[aá]pid|muy lent|avanz|por las ramas|se llamaba|no respond|p[ée]sim|explicand/i;
 const pidUrl=u=>{u=u||"";let m=u.match(/\/learn\/([a-zA-Z0-9-]+)/)||u.match(/productId=([a-zA-Z0-9-]+)/)||u.match(/\/course\/([a-zA-Z0-9-]+)/);return m?m[1]:"";};
 const cohUrl=u=>{const m=(u||"").match(/cohortId=([a-zA-Z0-9-]+)/);return m?m[1]:"";};
 const day=s=>{const m=(s||"").match(/(\d{4}-\d{2}-\d{2})/);return m?m[1]:"";};
@@ -417,8 +419,8 @@ APP.init=async function(){
   // CONTENIDO = valoración de módulo + actividad práctica, clasificado por comisión (en comisiones_cc_nuevo => nuevo)
   APP.val=[];
   const Hv={};vm[0].forEach((x,i)=>{if(Hv[x.trim()]===undefined)Hv[x.trim()]=i;});
-  for(const r of vm.slice(1)){const url=r[Hv["url"]];const pid=pidUrl(url);if(!rset.has(pid))continue;const rt=parseFloat(r[Hv["rating"]]);if(isNaN(rt))continue;const com=resolveCom(url,r[Hv["comision"]]);if(!com)continue;const d=day(r[Hv["timestamp"]]);if(!d)continue;APP.val.push({pid:pid,cid:cohUrl(url),com:com,rt:rt,d:d,cm:(r[Hv["comment"]]||"").trim(),mod:(r[Hv["module_name"]]||"").trim()||"(módulo s/d)",tipo:"mod",isNew:newComis.has(com)});}
-  for(const r of lc.slice(1)){const url=r[Hl["url"]];const pid=pidUrl(url);if(!rset.has(pid))continue;const a=parseFloat(r[Hl["activity"]]);if(isNaN(a))continue;const com=resolveCom(url,r[Hl["comision"]]);if(!com)continue;const d=day(r[Hl["timestamp"]]);if(!d)continue;APP.val.push({pid:pid,cid:cohUrl(url),com:com,rt:a,d:d,cm:(r[Hl["comment"]]||"").trim(),mod:"Actividad práctica",tipo:"act",isNew:newComis.has(com)});}
+  for(const r of vm.slice(1)){const url=r[Hv["url"]];const pid=pidUrl(url);if(!rset.has(pid))continue;const rt=parseFloat(r[Hv["rating"]]);if(isNaN(rt))continue;const com=resolveCom(url,r[Hv["comision"]]);if(!com)continue;const d=day(r[Hv["timestamp"]]);if(!d)continue;const cmt=(r[Hv["comment"]]||"").trim();if(cmt&&DELIV.test(cmt))continue;APP.val.push({pid:pid,cid:cohUrl(url),com:com,rt:rt,d:d,cm:cmt,mod:(r[Hv["module_name"]]||"").trim()||"(módulo s/d)",tipo:"mod",isNew:newComis.has(com)});}
+  for(const r of lc.slice(1)){const url=r[Hl["url"]];const pid=pidUrl(url);if(!rset.has(pid))continue;const a=parseFloat(r[Hl["activity"]]);if(isNaN(a))continue;const com=resolveCom(url,r[Hl["comision"]]);if(!com)continue;const d=day(r[Hl["timestamp"]]);if(!d)continue;const cmt=(r[Hl["comment"]]||"").trim();if(cmt&&DELIV.test(cmt))continue;APP.val.push({pid:pid,cid:cohUrl(url),com:com,rt:a,d:d,cm:cmt,mod:"Actividad práctica",tipo:"act",isNew:newComis.has(com)});}
   // ranking de comisiones (clase en vivo: profe + actividad) — se mantiene aparte
   APP.lc=[];
   for(const r of lc.slice(1)){const com=validC(r[Hl["comision"]]);const pid=APP.commCurso[com];if(!pid)continue;const p=parseFloat(r[Hl["professor_guidance"]]),a=parseFloat(r[Hl["activity"]]);let s=0,n=0;if(!isNaN(p)){s+=p;n++;}if(!isNaN(a)){s+=a;n++;}if(!n)continue;APP.lc.push({com:com,pid:pid,sc:s/n,d:day(r[Hl["timestamp"]])});}
@@ -513,11 +515,9 @@ const REC={
  "Growth Marketing (V2)|||Growth strategy: el framework AARRR y métricas de negocio":{n:1,tips:["Desarrollar más el módulo yendo de lo general a lo particular; no dar por sentado conocimientos previos.","Agregar ejemplos concretos del framework AARRR aplicado a un caso real."]}
 };
 APP.recTog=function(id){const d=document.getElementById(id);if(d)d.style.display=d.style.display==="none"?"block":"none";};
-// comentarios sobre profe/clase/tutor (no sobre el contenido) → se ocultan del desglose
-const DELIV=/\bprofe|\btutor|docente|expositor|\bclase(s)?\b|muletilla|cansad|aburrid|poca onda|mala onda|no se (le )?entend|lo que (habla|dec[ií])|micr[oó]fono|alumnos|interrump|\britmo\b|muy r[aá]pid|muy lent|avanz|por las ramas|se llamaba|no respond|p[ée]sim|explicand/i;
 function modBreakdown(pid,base){
-  const m={};const coms=[];let hid=0;
-  for(const v of APP.val){if(v.pid!==pid||!v.isNew)continue;const k=v.mod||"(sin módulo)";const o=m[k]||(m[k]={s:0,n:0,c:0});o.s+=v.rt;o.n++;if(v.cm&&v.cm.trim().length>1){o.c++;if(DELIV.test(v.cm)){hid++;}else coms.push({mod:k,rt:v.rt,cm:v.cm.trim()});}}
+  const m={};const coms=[];
+  for(const v of APP.val){if(v.pid!==pid||!v.isNew)continue;const k=v.mod||"(sin módulo)";const o=m[k]||(m[k]={s:0,n:0,c:0});o.s+=v.rt;o.n++;if(v.cm&&v.cm.trim().length>1){o.c++;coms.push({mod:k,rt:v.rt,cm:v.cm.trim()});}}
   let arr=Object.entries(m).map(([mod,o])=>({mod,n:o.n,avg:o.s/o.n,c:o.c})).sort((a,b)=>a.avg-b.avg);
   if(!arr.length)return '<div class="mnote">Sin valoraciones del contenido nuevo en el rango.</div>';
   const bc=a=>a<base-0.15?"#dc2626":(a>=base+0.15?"#15a06b":"#e8954a");
@@ -538,7 +538,7 @@ function modBreakdown(pid,base){
   else{comHtml=coms.slice(0,CAP).map(c=>{const bg=c.rt<=3?"#fde2dd":c.rt>=5?"#dcfce7":"#fef3cd",fg=c.rt<=3?"#b91c1c":c.rt>=5?"#166534":"#92400e";return '<div class="qc"><span class="qcr" style="background:'+bg+';color:'+fg+'">'+c.rt.toFixed(0)+'★</span><div class="qcb"><div class="qcm">“'+esc(c.cm).slice(0,260)+'”</div><div class="qcs">'+esc(c.mod)+'</div></div></div>';}).join("")+(coms.length>CAP?'<div class="mnote">+ '+(coms.length-CAP)+' comentarios más</div>':'');}
   return '<div class="mnote">Valoración del contenido nuevo por módulo (línea de base = viejo del curso: <b>'+base.toFixed(2)+'</b>), del más flojo al mejor.</div>'+
     '<div class="mbars">'+bars+'</div>'+
-    '<div class="qch">💬 Qué dicen los alumnos · solo contenido · '+coms.length+' comentario'+(coms.length===1?'':'s')+' (peor primero)'+(hid>0?' <span style="font-weight:600;color:var(--ink2)">· '+hid+' sobre clase/profe ocultados</span>':'')+'</div>'+comHtml;
+    '<div class="qch">💬 Qué dicen los alumnos · '+coms.length+' comentario'+(coms.length===1?'':'s')+' (peor primero)</div>'+comHtml;
 }
 APP.painTog=function(i){const d=document.getElementById("pd"+i),c=document.getElementById("pc"+i);if(!d)return;const open=d.style.display==="none";d.style.display=open?"block":"none";if(c)c.textContent=open?"▾":"▸";};
 APP.winTog=function(i){const d=document.getElementById("wd"+i),c=document.getElementById("wc"+i);if(!d)return;const open=d.style.display==="none";d.style.display=open?"block":"none";if(c)c.textContent=open?"▾":"▸";};
