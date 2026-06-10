@@ -443,7 +443,7 @@ function renderContent(){const from=APP.from,to=APP.to,ag=prodAgg(APP.minD,APP.m
   for(const v of APP.val){if(!APP.matchedSet.has(v.pid))continue;const o=br[v.tipo];if(!o)continue;if(v.isNew){o.nn++;o.ns+=v.rt;}else{o.vn++;o.vs+=v.rt;}}
   const fa=(o,k)=>o[k+"n"]?(o[k+"s"]/o[k+"n"]).toFixed(2):"—";
   document.getElementById("cBreak").innerHTML="<b>Desglose:</b> Módulo → nuevo <b>"+fa(br.mod,"n")+"</b> vs viejo "+fa(br.mod,"v")+" (n nuevo "+br.mod.nn+") · Actividad práctica → nuevo <b>"+fa(br.act,"n")+"</b> vs viejo "+fa(br.act,"v")+" (n nuevo "+br.act.nn+"). El nuevo por módulo todavía tiene poca muestra porque las comisiones recién arrancaron.";
-  const g=series(null,from,to);mk("chartG",{type:"line",data:{labels:g.labels,datasets:lineDs(g.newD,g.newN,g.oldD,g.oldN,g.newAvg,g.oldAvg)},plugins:[refLines,lineLabels],options:lineOpts(3.4,5.05)});
+  const g=series(null,from,to);mk("chartG",{type:"line",data:{labels:g.labels,datasets:lineDs(g.newD,g.newN,g.oldD,g.oldN,ovN,ovV)},plugins:[refLines,lineLabels],options:lineOpts(3.4,5.05)});
   // top5
   const vie=TOP5.map(t=>{const o=ag[t[1]];return o&&o.vn?+(o.vs/o.vn).toFixed(3):null;});
   const nue=TOP5.map(t=>{const o=ag[t[1]];return o&&o.nn?+(o.ns/o.nn).toFixed(3):null;});
