@@ -267,15 +267,15 @@ td{padding:7px 10px;border-top:1px solid var(--line)}tr:nth-child(even){backgrou
   </div>
 
   <div class="panel">
-    <div class="top"><h3><span class="ic">★</span> Top 5 más vendidos · viejo → nuevo</h3></div>
-    <div class="sub">Rating del contenido viejo vs. nuevo (módulo + actividad práctica) en los 5 cursos de mayor venta.</div>
+    <div class="top"><h3><span class="ic">★</span> Top 10 más vendidos · viejo → nuevo</h3></div>
+    <div class="sub">Rating del contenido viejo vs. nuevo (módulo + actividad práctica) en los cursos de mayor venta. Solo aparecen los <b>renovados con valoraciones</b>; los que aún no se renovaron o no tienen datos se listan abajo.</div>
     <div class="cv bar"><canvas id="chartT"></canvas></div>
     <div class="note">Los cursos con pocas valoraciones del contenido nuevo (comisiones recién arrancadas) hay que tomarlos con cautela.</div>
   </div>
 
   <div class="panel">
-    <div class="top"><h3><span class="ic" style="color:#c04200">🎯</span> Foco comercial · módulos más flojos de los Top 5 vendidos</h3></div>
-    <div class="sub">Los 5 cursos de mayor venta, ordenados del rating de contenido nuevo <b>más bajo al más alto</b>. Clic en cada uno para ver sus <b>módulos más flojos</b> — son los que conviene reforzar primero por impacto en ventas (aunque el promedio del curso esté ok).</div>
+    <div class="top"><h3><span class="ic" style="color:#c04200">🎯</span> Foco comercial · módulos más flojos de los Top 10 vendidos</h3></div>
+    <div class="sub">Los 10 cursos de mayor venta, ordenados del rating de contenido nuevo <b>más bajo al más alto</b>. Clic en cada uno para ver sus <b>módulos más flojos</b> — son los que conviene reforzar primero por impacto en ventas. Abajo, los que todavía no se renovaron o no tienen valoraciones aún.</div>
     <div id="topPainList"></div>
   </div>
 
@@ -375,7 +375,18 @@ td{padding:7px 10px;border-top:1px solid var(--line)}tr:nth-child(even){backgrou
 
 <script>
 const SHEET='1VvmrIcslmEZQCyW30iW7GZexcqGHuIOLP1nJNOMQ-F0';
-const TOP5=[["Data Analytics","804123bd-e8d3-483e-87f3-46af58833a15"],["Desarrollo web","29b893bc-270b-4077-86a9-870cc6dc6e25"],["AI Automation","413a121c-0781-4c10-96a3-5ace5f9fbba7"],["Excel","402b2132-ff27-4db8-8a89-53338518d099"],["Community Manager","ff37e7ed-9b04-4ff5-971b-d0a6630e6c3b"]];
+const TOP10=[
+ {n:"Data Analytics",pid:"804123bd-e8d3-483e-87f3-46af58833a15"},
+ {n:"Marketing Digital: CM & Publicidad",pid:"ff37e7ed-9b04-4ff5-971b-d0a6630e6c3b"},
+ {n:"AI Automation",pid:"413a121c-0781-4c10-96a3-5ace5f9fbba7"},
+ {n:"Excel",pid:"402b2132-ff27-4db8-8a89-53338518d099"},
+ {n:"Power BI",pend:1},
+ {n:"Diseño UX/UI",pid:"262ecc6e-3158-49bc-9d77-5c344208ab42"},
+ {n:"Creación de contenido con AI",pid:"6ddf312c-00da-47ad-b81e-cfc735deeb04"},
+ {n:"Publicidad en Redes Avanzado",pid:"c911701d-746c-45cf-898f-28e74f3317dc"},
+ {n:"Introducción a la Inteligencia Artificial",pend:1},
+ {n:"Curso de AI Agents",pend:1}
+];
 function parseCSV(t){const r=[];let row=[],c="",q=false;for(let i=0;i<t.length;i++){const ch=t[i];if(q){if(ch==='"'){if(t[i+1]==='"'){c+='"';i++;}else q=false;}else c+=ch;}else{if(ch==='"')q=true;else if(ch===","){row.push(c);c="";}else if(ch==="\n"){row.push(c);r.push(row);row=[];c="";}else if(ch==="\r"){}else c+=ch;}}if(c.length||row.length){row.push(c);r.push(row);}return r;}
 async function tab(n){const u="https://docs.google.com/spreadsheets/d/"+SHEET+"/gviz/tq?tqx=out:csv&sheet="+encodeURIComponent(n);return parseCSV(await (await fetch(u)).text());}
 async function tabGid(gid){const u="https://docs.google.com/spreadsheets/d/"+SHEET+"/export?format=csv&gid="+gid;return parseCSV(await (await fetch(u)).text());}
@@ -459,10 +470,11 @@ function renderContent(){const from=APP.from,to=APP.to,ag=prodAgg(APP.minD,APP.m
   const fa=(o,k)=>o[k+"n"]?(o[k+"s"]/o[k+"n"]).toFixed(2):"—";
   document.getElementById("cBreak").innerHTML="<b>Desglose:</b> Módulo → nuevo <b>"+fa(br.mod,"n")+"</b> vs viejo "+fa(br.mod,"v")+" (n nuevo "+br.mod.nn+") · Actividad práctica → nuevo <b>"+fa(br.act,"n")+"</b> vs viejo "+fa(br.act,"v")+" (n nuevo "+br.act.nn+"). El nuevo por módulo todavía tiene poca muestra porque las comisiones recién arrancaron.";
   const g=series(null,from,to);mk("chartG",{type:"line",data:{labels:g.labels,datasets:lineDs(g.newD,g.newN,g.oldD,g.oldN,ovN,ovV)},plugins:[refLines,lineLabels],options:lineOpts(3.4,5.05)});
-  // top5
-  const vie=TOP5.map(t=>{const o=ag[t[1]];return o&&o.vn?+(o.vs/o.vn).toFixed(3):null;});
-  const nue=TOP5.map(t=>{const o=ag[t[1]];return o&&o.nn?+(o.ns/o.nn).toFixed(3):null;});
-  mk("chartT",{type:"bar",plugins:[barLabels],data:{labels:TOP5.map(t=>t[0]),datasets:[{label:"Viejo",data:vie,backgroundColor:"#bdb1a0",borderRadius:4,maxBarThickness:46},{label:"Nuevo",data:nue,backgroundColor:"#F5A623",borderRadius:4,maxBarThickness:46}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"top",labels:{usePointStyle:true,boxWidth:8,font:{size:12}}}},scales:{y:{min:3.5,max:5,ticks:{stepSize:0.5},grid:{color:"#efe7da"}},x:{grid:{display:false},ticks:{font:{size:11.5}}}}}});
+  // top10 ventas (solo los renovados con datos para el gráfico viejo→nuevo)
+  const chartItems=TOP10.filter(t=>t.pid&&ag[t.pid]&&(ag[t.pid].nn||ag[t.pid].vn));
+  const vie=chartItems.map(t=>{const o=ag[t.pid];return o.vn?+(o.vs/o.vn).toFixed(3):null;});
+  const nue=chartItems.map(t=>{const o=ag[t.pid];return o.nn?+(o.ns/o.nn).toFixed(3):null;});
+  mk("chartT",{type:"bar",plugins:[barLabels],data:{labels:chartItems.map(t=>t.n),datasets:[{label:"Viejo",data:vie,backgroundColor:"#bdb1a0",borderRadius:4,maxBarThickness:46},{label:"Nuevo",data:nue,backgroundColor:"#F5A623",borderRadius:4,maxBarThickness:46}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"top",labels:{usePointStyle:true,boxWidth:8,font:{size:12}}}},scales:{y:{min:3.5,max:5,ticks:{stepSize:0.5},grid:{color:"#efe7da"}},x:{grid:{display:false},ticks:{font:{size:11}}}}}});
   // table
   const rows=APP.renov.filter(pid=>ag[pid]&&(ag[pid].nn>0||ag[pid].vn>0)).map(pid=>{const o=ag[pid];const nv=o.nn?o.ns/o.nn:null,vv=o.vn?o.vs/o.vn:null;return {name:APP.curso[pid],nn:o.nn,nv:nv,vv:vv,dl:(nv!=null&&vv!=null)?nv-vv:null,med:o.nn>=8};});
   rows.sort((a,b)=>{const av=a.nv==null?99:a.nv,bv=b.nv==null?99:b.nv;return av-bv;});
@@ -531,16 +543,18 @@ APP.winTog=function(i){const d=document.getElementById("wd"+i),c=document.getEle
 APP.tpTog=function(i){const d=document.getElementById("tpd"+i),c=document.getElementById("tpc"+i);if(!d)return;const open=d.style.display==="none";d.style.display=open?"block":"none";if(c)c.textContent=open?"▾":"▸";};
 function renderTopPain(ag){
   const list=document.getElementById("topPainList");if(!list)return;
-  const rows=TOP5.map(([name,pid])=>{const o=ag[pid];const nv=o&&o.nn?o.ns/o.nn:null,vv=o&&o.vn?o.vs/o.vn:null;return {name,pid,nv,vv,nN:o?o.nn:0,dl:(nv!=null&&vv!=null)?nv-vv:null};});
-  const withData=rows.filter(r=>r.nv!=null&&r.nN>0).sort((a,b)=>a.nv-b.nv);
-  const noData=rows.filter(r=>r.nv==null||!r.nN);
+  const rows=TOP10.map(t=>{const o=t.pid?ag[t.pid]:null;const nv=o&&o.nn?o.ns/o.nn:null,vv=o&&o.vn?o.vs/o.vn:null;return {name:t.n,pid:t.pid,pend:t.pend,nv,vv,nN:o?o.nn:0,dl:(nv!=null&&vv!=null)?nv-vv:null};});
+  const withData=rows.filter(r=>!r.pend&&r.nv!=null&&r.nN>0).sort((a,b)=>a.nv-b.nv);
+  const sinData=rows.filter(r=>!r.pend&&(r.nv==null||!r.nN));
+  const pend=rows.filter(r=>r.pend);
   let html=withData.map((r,i)=>{
     const col=r.nv<4.0?"#991b1b":r.nv<4.6?"#dc2626":"#15a06b";
     const dl=r.dl!=null?((r.dl>=0?"+":"")+r.dl.toFixed(2)):"—";const dcol=(r.dl>=0)?"#15803d":"#dc2626";
     return '<div class="painrow" style="border-left-color:'+col+'" onclick="APP.tpTog('+i+')"><span class="caret" id="tpc'+i+'">▸</span><span class="sev" style="background:'+col+'22;color:'+col+'">'+r.nv.toFixed(2)+'</span><span class="pn">'+esc(r.name)+'</span><span class="pv">viejo '+(r.vv!=null?r.vv.toFixed(2):"—")+' → nuevo '+r.nv.toFixed(2)+' · n='+r.nN+'</span><span class="pd" style="color:'+dcol+'">'+dl+'</span></div>'+
       '<div class="paindet" id="tpd'+i+'" style="display:none">'+modBreakdown(r.pid,(r.vv!=null?r.vv:4.6),"pain")+'</div>';
   }).join("");
-  if(noData.length) html+='<div class="mnote" style="margin-top:10px">Sin valoraciones del contenido nuevo aún: <b>'+noData.map(r=>esc(r.name)).join(", ")+'</b>.</div>';
+  if(sinData.length) html+='<div class="mnote" style="margin-top:10px">↻ Renovados, sin valoraciones del contenido nuevo aún (comisiones recién arrancando): <b>'+sinData.map(r=>esc(r.name)).join(", ")+'</b>.</div>';
+  if(pend.length) html+='<div class="mnote" style="margin-top:6px">⏳ Todavía no actualizados (renovación pendiente, sin contenido nuevo aún): <b>'+pend.map(r=>esc(r.name)).join(", ")+'</b>.</div>';
   list.innerHTML=html;
 }
 function renderHighlights(ag){
