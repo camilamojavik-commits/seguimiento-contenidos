@@ -131,6 +131,17 @@ td{padding:7px 10px;border-top:1px solid var(--line)}tr:nth-child(even){backgrou
 .painrow .pd{font-weight:800;font-size:14px;color:#dc2626;font-variant-numeric:tabular-nums;min-width:54px;text-align:right}
 .painrow .sev{font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;padding:2px 8px;border-radius:20px}
 .painok{font-size:13px;color:#15803d;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px 14px;margin-top:10px;font-weight:600}
+.panel.win{border-left:5px solid #15a06b;background:#f6fdf9}
+.winbadge{background:#15a06b;color:#fff;font-size:11px;font-weight:800;border-radius:20px;padding:1px 9px;margin-left:6px;vertical-align:middle}
+.winrow{display:flex;align-items:center;gap:10px;padding:9px 12px;border:1px solid #cdeBD8;border:1px solid #cce9d8;border-left:4px solid #15a06b;border-radius:10px;margin-top:8px;background:#fff;cursor:pointer;user-select:none}
+.winrow:hover{background:#f3fbf6}
+.winrow .caret{color:#15a06b;font-size:11px;width:12px;flex-shrink:0}
+.winrow .pn{flex:1;font-weight:700;font-size:13px}
+.winrow .pv{font-size:12px;color:var(--ink2);font-variant-numeric:tabular-nums}
+.winrow .pd{font-weight:800;font-size:14px;color:#15803d;font-variant-numeric:tabular-nums;min-width:54px;text-align:right}
+.winrow .sev{font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;padding:2px 8px;border-radius:20px}
+.paindet.windet{border-color:#cce9d8}
+.mflag.up{color:#15803d;background:#dcfce7}
 .painrow{cursor:pointer;user-select:none}.painrow:hover{background:#fff6f5}
 .painrow .caret{color:#dc2626;font-size:11px;width:12px;flex-shrink:0}
 .paindet{background:#fff;border:1px solid #f3d9d4;border-top:none;border-radius:0 0 10px 10px;margin:-4px 0 8px;padding:10px 14px 12px}
@@ -237,6 +248,13 @@ td{padding:7px 10px;border-top:1px solid var(--line)}tr:nth-child(even){backgrou
     <div class="sub">Rating del contenido viejo vs. nuevo (módulo + actividad práctica) en los 5 cursos de mayor venta.</div>
     <div class="cv bar"><canvas id="chartT"></canvas></div>
     <div class="note">Los cursos con pocas valoraciones del contenido nuevo (comisiones recién arrancadas) hay que tomarlos con cautela.</div>
+  </div>
+
+  <div class="panel win">
+    <div class="top"><h3><span class="ic" style="color:#15a06b">★</span> Cursos destacados · contenido nuevo por encima del viejo <span id="winCount" class="winbadge"></span></h3></div>
+    <div class="sub">Cursos renovados donde el <b>contenido nuevo</b> rinde <b>mejor</b> que el viejo. Mismo criterio que pain points: primero los de <b>muestra sólida (n≥8)</b> por mayor mejora; los de <b>muestra baja</b> <span style="color:#166534">(*)</span> al final. Clic en cada uno para ver el desglose por módulo.</div>
+    <div class="cv bar"><canvas id="chartWin"></canvas></div>
+    <div id="winList"></div>
   </div>
 
   <div class="panel pain">
@@ -434,7 +452,7 @@ function renderContent(){const from=APP.from,to=APP.to,ag=prodAgg(APP.minD,APP.m
   const rows=APP.renov.filter(pid=>ag[pid]&&(ag[pid].nn>0||ag[pid].vn>0)).map(pid=>{const o=ag[pid];const nv=o.nn?o.ns/o.nn:null,vv=o.vn?o.vs/o.vn:null;return {name:APP.curso[pid],nn:o.nn,nv:nv,vv:vv,dl:(nv!=null&&vv!=null)?nv-vv:null,med:o.nn>=8};});
   rows.sort((a,b)=>(b.med-a.med)|| ((b.dl==null?-9:b.dl)-(a.dl==null?-9:a.dl)) || b.nn-a.nn);
   document.querySelector("#tbl tbody").innerHTML=rows.map(r=>'<tr><td>'+r.name+'</td><td class="num">'+(r.vv!=null?r.vv.toFixed(2):"—")+'</td><td class="num">'+(r.nv!=null?r.nv.toFixed(2):"—")+'</td><td class="num">'+r.nn+'</td><td class="num '+(r.dl>=0?"up":"dn")+'">'+(r.dl!=null?((r.dl>=0?"+":"")+r.dl.toFixed(2)):"—")+'</td></tr>').join("");
-  buildSel(ag);renderPerCourse(document.getElementById("sel").value||"-1");renderCoverage(ag);renderPain(ag);
+  buildSel(ag);renderPerCourse(document.getElementById("sel").value||"-1");renderCoverage(ag);renderHighlights(ag);renderPain(ag);
 }
 function renderPain(ag){
   // sólido = n>=8 (dato confiable). Prioridad: primero sólidos por mayor caída, luego muestra baja.
@@ -456,16 +474,37 @@ function renderPain(ag){
       '<div class="paindet" id="pd'+i+'" style="display:none">'+modBreakdown(p.pid,p.vv)+'</div>';
   }).join("");
 }
-function modBreakdown(pid,base){
+function modBreakdown(pid,base,mode){
   const m={};for(const v of APP.val){if(v.pid!==pid||!v.isNew)continue;const k=v.mod||"(sin módulo)";const o=m[k]||(m[k]={s:0,n:0});o.s+=v.rt;o.n++;}
-  const arr=Object.entries(m).map(([mod,o])=>({mod,n:o.n,avg:o.s/o.n})).sort((a,b)=>a.avg-b.avg);
+  let arr=Object.entries(m).map(([mod,o])=>({mod,n:o.n,avg:o.s/o.n}));
+  arr.sort((a,b)=>mode==="win"?b.avg-a.avg:a.avg-b.avg);
   if(!arr.length)return '<div class="mnote">Sin valoraciones de módulo en el rango.</div>';
-  const rowsH=arr.map(x=>{const bad=x.avg<base;const col=x.avg<base?"#dc2626":(x.avg>=base+0.2?"#15a06b":"#b8860b");
-    return '<tr><td>'+esc(x.mod)+'</td><td class="num">'+x.n+'</td><td class="num" style="color:'+col+';font-weight:800">'+x.avg.toFixed(2)+'</td><td>'+(bad?'<span class="mflag">↓ bajo el viejo</span>':'')+'</td></tr>';}).join("");
-  return '<div class="mnote">Valoraciones del contenido nuevo por módulo (línea de base = viejo del curso: <b>'+base.toFixed(2)+'</b>). Ordenado del más flojo al mejor.</div>'+
+  const rowsH=arr.map(x=>{const col=x.avg<base?"#dc2626":(x.avg>=base+0.2?"#15a06b":"#b8860b");
+    let flag="";if(mode==="win"){if(x.avg>=base)flag='<span class="mflag up">↑ sobre el viejo</span>';}else{if(x.avg<base)flag='<span class="mflag">↓ bajo el viejo</span>';}
+    return '<tr><td>'+esc(x.mod)+'</td><td class="num">'+x.n+'</td><td class="num" style="color:'+col+';font-weight:800">'+x.avg.toFixed(2)+'</td><td>'+flag+'</td></tr>';}).join("");
+  return '<div class="mnote">Valoraciones del contenido nuevo por módulo (línea de base = viejo del curso: <b>'+base.toFixed(2)+'</b>). Ordenado '+(mode==="win"?"del mejor al más flojo":"del más flojo al mejor")+'.</div>'+
     '<table class="mtab"><thead><tr><th>Módulo</th><th class="num">n</th><th class="num">Prom.</th><th></th></tr></thead><tbody>'+rowsH+'</tbody></table>';
 }
 APP.painTog=function(i){const d=document.getElementById("pd"+i),c=document.getElementById("pc"+i);if(!d)return;const open=d.style.display==="none";d.style.display=open?"block":"none";if(c)c.textContent=open?"▾":"▸";};
+APP.winTog=function(i){const d=document.getElementById("wd"+i),c=document.getElementById("wc"+i);if(!d)return;const open=d.style.display==="none";d.style.display=open?"block":"none";if(c)c.textContent=open?"▾":"▸";};
+function renderHighlights(ag){
+  const wins=APP.renov.map(pid=>{const o=ag[pid];if(!o||!o.nn||!o.vn)return null;const nv=o.ns/o.nn,vv=o.vs/o.vn,dl=nv-vv;if(dl<=0)return null;return {pid,name:APP.curso[pid]||pid,nv,vv,dl,n:o.nn,solido:o.nn>=8};}).filter(Boolean)
+    .sort((a,b)=>(a.solido===b.solido?0:(a.solido?-1:1)) || (b.dl-a.dl));
+  const meta=p=>{ if(!p.solido) return ["A CONFIRMAR","#d97706"]; return p.dl>=0.3?["GRAN MEJORA","#166534"]:p.dl>=0.15?["MEJORA","#15a06b"]:["LEVE","#5a9e6f"]; };
+  document.getElementById("winCount").textContent=wins.length;
+  const list=document.getElementById("winList");
+  if(!wins.length){document.getElementById("winCount").style.display="none";if(APP.ch.chartWin){APP.ch.chartWin.destroy();delete APP.ch.chartWin;}list.innerHTML='<div class="painok">Todavía no hay cursos con el contenido nuevo por encima del viejo en el período.</div>';return;}
+  document.getElementById("winCount").style.display="";
+  const labs=wins.map(p=>p.name+(p.n<8?" *":""));
+  const vals=wins.map(p=>+p.dl.toFixed(2));
+  const cols=wins.map(p=>meta(p)[1]);
+  const labText=wins.map(p=>p.vv.toFixed(2)+" → "+p.nv.toFixed(2)+"  (+"+p.dl.toFixed(2)+", n="+p.n+")");
+  mk("chartWin",hbarChart(labs,vals,labText,cols,Math.max.apply(null,vals)*2.0));
+  list.innerHTML=wins.map((p,i)=>{const m=meta(p);
+    return '<div class="winrow" style="border-left-color:'+m[1]+'" onclick="APP.winTog('+i+')"><span class="caret" id="wc'+i+'">▸</span><span class="sev" style="background:'+m[1]+'22;color:'+m[1]+'">'+m[0]+'</span><span class="pn">'+esc(p.name)+(p.n<8?' <span style="color:#166534;font-weight:800">*</span>':'')+'</span><span class="pv">viejo '+p.vv.toFixed(2)+' → nuevo '+p.nv.toFixed(2)+' · n='+p.n+'</span><span class="pd">+'+p.dl.toFixed(2)+'</span></div>'+
+      '<div class="paindet windet" id="wd'+i+'" style="display:none">'+modBreakdown(p.pid,p.vv,"win")+'</div>';
+  }).join("");
+}
 function renderCoverage(ag){
   const TODAY=new Date().toISOString().slice(0,10);
   const nv={};for(const v of APP.val){if(v.isNew)nv[v.pid]=(nv[v.pid]||0)+1;}
