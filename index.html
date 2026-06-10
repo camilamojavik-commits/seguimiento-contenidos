@@ -553,8 +553,8 @@ function renderTopPain(ag){
     return '<div class="painrow" style="border-left-color:'+col+'" onclick="APP.tpTog('+i+')"><span class="caret" id="tpc'+i+'">▸</span><span class="sev" style="background:'+col+'22;color:'+col+'">'+r.nv.toFixed(2)+'</span><span class="pn">'+esc(r.name)+'</span><span class="pv">viejo '+(r.vv!=null?r.vv.toFixed(2):"—")+' → nuevo '+r.nv.toFixed(2)+' · n='+r.nN+'</span><span class="pd" style="color:'+dcol+'">'+dl+'</span></div>'+
       '<div class="paindet" id="tpd'+i+'" style="display:none">'+modBreakdown(r.pid,(r.vv!=null?r.vv:4.6),"pain")+'</div>';
   }).join("");
-  if(sinData.length) html+='<div class="mnote" style="margin-top:10px">↻ Renovados, sin valoraciones del contenido nuevo aún (comisiones recién arrancando): <b>'+sinData.map(r=>esc(r.name)).join(", ")+'</b>.</div>';
-  if(pend.length) html+='<div class="mnote" style="margin-top:6px">⏳ Todavía no actualizados (renovación pendiente, sin contenido nuevo aún): <b>'+pend.map(r=>esc(r.name)).join(", ")+'</b>.</div>';
+  html+=sinData.map(r=>'<div class="painrow" style="border-left-color:#bdb1a0;cursor:default"><span class="caret" style="visibility:hidden">▸</span><span class="sev" style="background:#ece4d8;color:#8a7d6c">↻ s/d</span><span class="pn">'+esc(r.name)+'</span><span class="pv">renovado · sin valoraciones del contenido nuevo aún (comisiones recién arrancando)</span><span class="pd" style="color:#b3a795">—</span></div>').join("");
+  html+=pend.map(r=>'<div class="painrow" style="border-left-color:#cbbfae;cursor:default"><span class="caret" style="visibility:hidden">▸</span><span class="sev" style="background:#efe7da;color:#8a7d6c">⏳ pendiente</span><span class="pn">'+esc(r.name)+'</span><span class="pv">renovación pendiente · todavía sin contenido nuevo</span><span class="pd" style="color:#b3a795">—</span></div>').join("");
   list.innerHTML=html;
 }
 function renderHighlights(ag){
