@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: logo-centrado -->
+<!-- build: bot-asistente -->
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -42,6 +42,19 @@ label.flt{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing
 .evobig{text-align:right;line-height:1}
 .evonum{font-size:30px;font-weight:800;color:var(--amber)}
 .evolab{display:block;font-size:11px;color:var(--ink2);margin-top:2px}
+#botBtn{position:fixed;bottom:22px;right:22px;width:54px;height:54px;border-radius:50%;background:var(--coral);color:#fff;border:none;cursor:pointer;box-shadow:0 6px 22px rgba(0,0,0,.20);font-size:22px;z-index:200}
+#botPanel{position:fixed;bottom:88px;right:22px;width:360px;max-width:92vw;background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:0 14px 44px rgba(0,0,0,.20);z-index:200;display:none;overflow:hidden}
+#botPanel.open{display:block}
+.bot-h{background:var(--ink);color:#fff;padding:12px 15px;font-weight:700;font-size:14px;display:flex;justify-content:space-between;align-items:center}
+.bot-body{padding:14px 15px;max-height:52vh;overflow:auto}
+.bot-out{font-size:13px;color:var(--ink);line-height:1.55}
+.bot-out .big{font-size:15px;font-weight:800}
+.bot-in{display:flex;gap:6px;border-top:1px solid var(--line);padding:10px 12px}
+.bot-in input{flex:1;border:1px solid var(--line);border-radius:10px;padding:9px 11px;font-family:inherit;font-size:13px;outline:none}
+.bot-in input:focus{border-color:var(--coral)}
+.bot-in button{background:var(--coral);color:#fff;border:none;border-radius:10px;padding:0 14px;font-weight:700;cursor:pointer;font-family:inherit}
+.bot-chip{display:inline-block;background:var(--cream);border:1px solid var(--line);border-radius:14px;padding:4px 10px;font-size:11.5px;margin:0 4px 5px 0;cursor:pointer;color:var(--ink2)}
+.bot-chip:hover{border-color:var(--coral);color:var(--coral)}
 .detail{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:14px}
 .dcard{border:1px solid var(--line);border-radius:12px;padding:12px 13px;background:#fffdf9}
 .dcard h4{font-size:12.5px;font-weight:800;margin-bottom:7px;display:flex;align-items:center;gap:6px}
@@ -433,6 +446,15 @@ td{padding:7px 10px;border-top:1px solid var(--line)}tr:nth-child(even){backgrou
     <div class="kanban" id="kanban"></div>
   </section>
 </main>
+</div>
+
+<button id="botBtn" title="Preguntá sobre los números">💬</button>
+<div id="botPanel">
+  <div class="bot-h"><span>Preguntá sobre los números</span><span id="botX" style="cursor:pointer">✕</span></div>
+  <div class="bot-body">
+    <div class="bot-out" id="botOut">Hola 👋 Preguntame sobre los datos del tablero. Por ejemplo:<div id="botChips" style="margin-top:8px"></div></div>
+  </div>
+  <div class="bot-in"><input id="botInput" placeholder="Ej: rating de Excel" autocomplete="off"><button id="botSend">Ir</button></div>
 </div>
 
 <script>
@@ -869,6 +891,51 @@ function renderProfTut(){
   mk("chartEvo",{type:"line",data:{labels:days.map(fmtW),datasets:[{label:"Rating profe",data:vals,borderColor:"#F5A623",backgroundColor:"rgba(245,166,35,0.14)",fill:true,borderWidth:3,tension:.4,spanGaps:true,pointRadius:cnts.map(n=>n?3.5:0),pointHoverRadius:5,pointBackgroundColor:"#F5A623",_cnt:cnts}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label(c){const n=c.dataset._cnt[c.dataIndex];return "Rating profe: "+(c.parsed.y!=null?c.parsed.y.toFixed(2):"—")+(n?"  (n="+n+")":"");}}}},scales:{y:{min:3.5,max:5,ticks:{stepSize:0.5},grid:{color:"#efe7da"},title:{display:true,text:"Rating (1–5)"}},x:{grid:{display:false},ticks:{maxRotation:0,autoSkip:true,maxTicksLimit:12}}}}});
 }
 APP.render=function(){document.querySelectorAll(".section").forEach(x=>x.style.display="block");renderContent();renderProfes();renderProfTut();renderLive();renderWorkshops();renderCRM();activate(APP.cur||"contenido");document.getElementById("frange").textContent="Rango: "+APP.from+" → "+APP.to+" · todo (KPIs, gráficos y foco) se calcula en este rango";};
+function botAnswer(q){
+  const norm=s=>(s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
+  const Q=norm(q);
+  if(!Q.trim())return "Escribí una pregunta. Ej: <b>rating de Excel</b>, <b>cuáles bajaron</b>, <b>profe de Data Analytics</b>.";
+  if(typeof APP==='undefined'||!APP.val)return "Estoy cargando los datos, probá en unos segundos.";
+  const from=APP.from,to=APP.to,ag=prodAgg(from,to);
+  const fmt=x=>x!=null?x.toFixed(2):"—";
+  let pid=null,plen=0;
+  APP.renov.forEach(p=>{let nm=norm(APP.curso[p]||"").replace(/\(v\d+\)/g,"").replace(/[:·]/g," ").replace(/\s+/g," ").trim();if(nm.length<4)return;
+    if(Q.includes(nm)&&nm.length>plen){pid=p;plen=nm.length;}
+    else{nm.split(" ").forEach(t=>{if(t.length>=4&&Q.includes(t)&&t.length>plen){pid=p;plen=t.length;}});}});
+  const isProf=/prof|docente|instructor/.test(Q), isTut=/tutor/.test(Q);
+  const wantWorst=/peor|flojo|baj|cay|caid|rojo/.test(Q), wantBest=/mejor|top|sub|destac|alto/.test(Q);
+  const wk=/semana|hoy|ultim|reciente/.test(Q);
+  const matched=Object.keys(ag).filter(p=>ag[p].nn>0&&ag[p].vn>0);
+  const ov=set=>{let TN=0,TS=0,VN=0,VS=0;set.forEach(p=>{const o=ag[p];TN+=o.nn;TS+=o.ns;VN+=o.vn;VS+=o.vs;});return{n:TN?TS/TN:null,v:VN?VS/VN:null,nn:TN};};
+  if(isProf){
+    if(pid){let ns=0,nn=0,vs=0,vn=0;APP.prof.forEach(r=>{if(r.pid!==pid||r.d<from||r.d>to)return;if(r.isNew){ns+=r.pg;nn++;}else{vs+=r.pg;vn++;}});
+      return "<b>"+APP.curso[pid]+"</b> · rating del profe:<br>nuevo <span class='big'>"+(nn?fmt(ns/nn):"—")+"</span> (n="+nn+") · viejo "+(vn?fmt(vs/vn):"—")+" (n="+vn+")";}
+    let s=0,n=0;APP.profRows.forEach(r=>{if(r.d<from||r.d>to)return;s+=r.pg;n++;});
+    return "Rating del profe (todas las comisiones, en el rango): <span class='big'>"+(n?fmt(s/n):"—")+"</span> · "+n+" valoraciones";}
+  if(isTut){let s=0,n=0;APP.tutRows.forEach(r=>{if(r.d<from||r.d>to)return;s+=r.tu;n++;});
+    return "Rating de tutores (en el rango): <span class='big'>"+(n?fmt(s/n):"—")+"</span> · "+n+" valoraciones";}
+  if(wantWorst||wantBest){
+    const rows=matched.filter(p=>ag[p].nn>=8).map(p=>({n:APP.curso[p],d:ag[p].ns/ag[p].nn-ag[p].vs/ag[p].vn}));
+    rows.sort((a,b)=>wantWorst?a.d-b.d:b.d-a.d);
+    return (wantWorst?"Los que más bajaron":"Los que más subieron")+" (nuevo vs viejo, muestra n≥8):<br>"+rows.slice(0,5).map(r=>"• "+r.n+" ("+(r.d>=0?"+":"")+fmt(r.d)+")").join("<br>");}
+  if(pid){const o=ag[pid];if(!o||(!o.nn&&!o.vn))return "<b>"+APP.curso[pid]+"</b>: sin valoraciones en el rango elegido.";
+    const nv=o.nn?o.ns/o.nn:null,vv=o.vn?o.vs/o.vn:null,dl=(nv!=null&&vv!=null)?nv-vv:null;
+    return "<b>"+APP.curso[pid]+"</b> · contenido:<br>nuevo <span class='big'>"+fmt(nv)+"</span> vs viejo "+fmt(vv)+(dl!=null?" · Δ "+(dl>=0?"+":"")+fmt(dl):"")+"<br>n nuevo="+o.nn;}
+  const o=ov(matched);
+  return "Contenido (rango elegido): nuevo <span class='big'>"+fmt(o.n)+"</span> vs viejo "+fmt(o.v)+" · "+matched.length+" cursos comparables.<br><span style='color:#6b7079'>Probá: \"rating de Excel\", \"cuáles bajaron\", \"profe de Data Analytics\", \"tutores\".</span>";
+}
+function setupBot(){
+  const btn=document.getElementById("botBtn"),panel=document.getElementById("botPanel"),inp=document.getElementById("botInput"),out=document.getElementById("botOut"),send=document.getElementById("botSend"),x=document.getElementById("botX"),chips=document.getElementById("botChips");
+  if(!btn||btn._wired)return;btn._wired=1;
+  const EX=["rating de Excel","cuáles bajaron","mejores cursos","profe de Data Analytics","tutores"];
+  if(chips)chips.innerHTML=EX.map(e=>'<span class="bot-chip">'+e+'</span>').join("");
+  const go=()=>{out.innerHTML=botAnswer(inp.value);};
+  btn.onclick=()=>{panel.classList.toggle("open");if(panel.classList.contains("open"))inp.focus();};
+  if(x)x.onclick=()=>panel.classList.remove("open");
+  send.onclick=go;
+  inp.addEventListener("keydown",e=>{if(e.key==="Enter")go();});
+  if(chips)chips.addEventListener("click",e=>{if(e.target.classList.contains("bot-chip")){inp.value=e.target.textContent;go();}});
+}
 function activate(id){APP.cur=id;var _fb=document.querySelector(".filterbar");if(_fb)_fb.style.display=(id==="workshops"||id==="crm")?"none":"flex";document.querySelectorAll(".section").forEach(s=>s.style.display=(s.id==="sec-"+id)?"block":"none");document.querySelectorAll(".nav").forEach(n=>{if(n.dataset.sec)n.classList.toggle("active",n.dataset.sec===id);});setTimeout(()=>window.dispatchEvent(new Event("resize")),25);}
 
 APP.start=async function(){
@@ -886,6 +953,7 @@ APP.start=async function(){
   document.querySelectorAll(".nav").forEach(n=>{if(n.dataset.sec)n.onclick=()=>activate(n.dataset.sec);});
   document.getElementById("upd").textContent="Actualizado del sheet · "+new Date().toLocaleString("es");
   APP.render();
+  setupBot();
 };
 // gate
 (function(){var g=document.getElementById("gate"),pw=document.getElementById("pw"),b=document.getElementById("enter"),e=document.getElementById("gerr");
