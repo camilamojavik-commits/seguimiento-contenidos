@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: gate-ratings-ops -->
+<!-- build: staff-rating -->
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -315,7 +315,7 @@ td{padding:7px 10px;border-top:1px solid var(--line)}tr:nth-child(even){backgrou
     <div class="top"><h3><span class="ic">★</span> Top 10 más vendidos · viejo → nuevo</h3></div>
     <div class="sub">Rating del contenido viejo vs. nuevo (módulo + actividad práctica) en los cursos de mayor venta. Solo aparecen los renovados con valoraciones; los que aún no se renovaron o no tienen datos se listan abajo.</div>
     <div class="cv bar"><canvas id="chartT"></canvas></div>
-    <div class="note">Los cursos con pocas valoraciones del contenido nuevo (comisiones recién arrancadas) hay que tomarlos con cautela.</div>
+    <div class="note">Se grafican los del top 10 que ya tienen contenido nuevo. 4 todavía no se renovaron y por eso no aparecen acá: Power BI, Diseño UX/UI, Introducción a la IA y Curso de AI Agents. Los cursos con pocas valoraciones nuevas (comisiones recién arrancadas) tomarlos con cautela.</div>
   </div>
 
   <div class="panel">
@@ -382,7 +382,7 @@ td{padding:7px 10px;border-top:1px solid var(--line)}tr:nth-child(even){backgrou
   </div>
 
   <div class="panel">
-    <div class="top"><h3><span class="ic">↗</span> Evolución del rating del profe · por día</h3>
+    <div class="top"><h3><span class="ic">↗</span> Evolución del rating de staff (profe + tutor) · por día</h3>
       <div class="evobig"><span class="evonum" id="evoTotal">—</span><span class="evolab" id="evoN"></span></div></div>
     <div class="sub">Rating promedio del profe (professor_guidance) por día, en el rango elegido. Usá el filtro de fechas de arriba (4 / 8 / 12 sem) para acercarte a una semana y ver los picos y caídas. El número grande es el promedio del período seleccionado.</div>
     <div class="cv"><canvas id="chartEvo"></canvas></div>
@@ -886,7 +886,7 @@ function renderProfTut(){
     if(r.np>=2){g2.s+=r.pg;g2.n++;if(r.com)g2.c[r.com]=1;}
     else if(r.np===1){g1.s+=r.pg;g1.n++;if(r.com)g1.c[r.com]=1;}
   }
-  for(const r of APP.tutRows){if(r.d<from||r.d>to)continue;tut.s+=r.tu;tut.n++;}
+  for(const r of APP.tutRows){if(r.d<from||r.d>to)continue;tut.s+=r.tu;tut.n++;const pd=byDay[r.d]||(byDay[r.d]={s:0,n:0});pd.s+=r.tu;pd.n++;}
   const a1=g1.n?g1.s/g1.n:null, a2=g2.n?g2.s/g2.n:null, at=tut.n?tut.s/tut.n:null;
   document.getElementById("kpisPT").innerHTML=
     kpi("Profe · comis. 1 profe",a1!=null?a1.toFixed(2):"—",Object.keys(g1.c).length+" comis · "+g1.n.toLocaleString("es")+" valoraciones")+
@@ -901,7 +901,7 @@ function renderProfTut(){
   const days=[];let dd=from;for(let i=0;i<400&&dd<=to;i++){days.push(dd);dd=addDays(dd,1);}
   const vals=days.map(d=>{const pd=byDay[d];return pd&&pd.n?+(pd.s/pd.n).toFixed(3):null;});
   const cnts=days.map(d=>{const pd=byDay[d];return pd?pd.n:0;});
-  mk("chartEvo",{type:"line",data:{labels:days.map(fmtW),datasets:[{label:"Rating profe",data:vals,borderColor:"#F5A623",backgroundColor:"rgba(245,166,35,0.14)",fill:true,borderWidth:3,tension:.4,spanGaps:true,pointRadius:cnts.map(n=>n?3.5:0),pointHoverRadius:5,pointBackgroundColor:"#F5A623",_cnt:cnts}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label(c){const n=c.dataset._cnt[c.dataIndex];return "Rating profe: "+(c.parsed.y!=null?c.parsed.y.toFixed(2):"—")+(n?"  (n="+n+")":"");}}}},scales:{y:{min:3.5,max:5,ticks:{stepSize:0.5},grid:{color:"#efe7da"},title:{display:true,text:"Rating (1–5)"}},x:{grid:{display:false},ticks:{maxRotation:0,autoSkip:true,maxTicksLimit:12}}}}});
+  mk("chartEvo",{type:"line",data:{labels:days.map(fmtW),datasets:[{label:"Rating staff",data:vals,borderColor:"#F5A623",backgroundColor:"rgba(245,166,35,0.14)",fill:true,borderWidth:3,tension:.4,spanGaps:true,pointRadius:cnts.map(n=>n?3.5:0),pointHoverRadius:5,pointBackgroundColor:"#F5A623",_cnt:cnts}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label(c){const n=c.dataset._cnt[c.dataIndex];return "Rating staff: "+(c.parsed.y!=null?c.parsed.y.toFixed(2):"—")+(n?"  (n="+n+")":"");}}}},scales:{y:{min:3.5,max:5,ticks:{stepSize:0.5},grid:{color:"#efe7da"},title:{display:true,text:"Rating (1–5)"}},x:{grid:{display:false},ticks:{maxRotation:0,autoSkip:true,maxTicksLimit:12}}}}});
 }
 APP.render=function(){document.querySelectorAll(".section").forEach(x=>x.style.display="block");renderContent();renderProfes();renderProfTut();renderLive();renderWorkshops();renderCRM();activate(APP.cur||"contenido");document.getElementById("frange").textContent="Rango: "+APP.from+" → "+APP.to+" · todo (KPIs, gráficos y foco) se calcula en este rango";};
 function verify(){
