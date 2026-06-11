@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: percourse-acumulado -->
+<!-- build: contenido-por-rango -->
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -558,7 +558,7 @@ function renderMovements(ag){
   const row=(lab,ups,dns)=>'<div class="mvrow"><span class="mvlab">'+lab+'</span>'+(ups.map(x=>chip(x,1)).join('')||'<span class="mvnone">sin subas relevantes</span>')+(dns.map(x=>chip(x,0)).join('')||(ups.length?'':'<span class="mvnone">sin bajas</span>'))+'</div>';
   el.innerHTML=row("Últimos 7 días",wkUp,wkDn)+row("Nuevo vs viejo",nvUp,nvDn);
 }
-function renderContent(){const from=APP.from,to=APP.to,ag=prodAgg(APP.minD,APP.maxD);
+function renderContent(){const from=APP.from,to=APP.to,ag=prodAgg(from,to);
   // Comparar SOLO cursos que ya tienen contenido nuevo Y viejo (viejo vs nuevo del MISMO curso), no global mezclado.
   const matched=Object.keys(ag).filter(p=>ag[p].nn>0&&ag[p].vn>0);
   APP.matchedSet=new Set(matched);
@@ -700,11 +700,8 @@ function buildSel(ag){const sel=document.getElementById("sel");const cur=sel.val
   sel.innerHTML='<option value="-1">Todos (general)</option>'+opts.map(pid=>'<option value="'+pid+'">'+APP.curso[pid]+(ag[pid].nn<8?" · muestra baja":"")+'</option>').join("");
   if(cur&&[...sel.options].some(o=>o.value===cur))sel.value=cur;}
 function renderPerCourse(pid){const from=APP.from,to=APP.to;let s,base,nlab;
-  // Promedios de la leyenda = ACUMULADO total (igual que el gráfico General), no el rango filtrado.
-  const agF=prodAgg(APP.minD,APP.maxD);let na,oa;
-  if(pid==="-1"){s=series(null,from,to);let TN=0,TS=0,VN=0,VS=0;(APP.matchedSet?[...APP.matchedSet]:[]).forEach(p=>{const o=agF[p];if(o){TN+=o.nn;TS+=o.ns;VN+=o.vn;VS+=o.vs;}});na=TN?TS/TN:s.newAvg;oa=VN?VS/VN:s.oldAvg;base=oa;}
-  else{s=series(pid,from,to);const o=agF[pid];na=(o&&o.nn)?o.ns/o.nn:s.newAvg;oa=(o&&o.vn)?o.vs/o.vn:s.oldAvg;base=oa;}
-  mk("chartC",{type:"line",data:{labels:s.labels,datasets:lineDs(s.newD,s.newN,s.oldD,s.oldN,na,oa)},plugins:[refLines,lineLabels],options:lineOpts(3.2,5.08)});
+  if(pid==="-1"){s=series(null,from,to);base=s.oldAvg;}else{s=series(pid,from,to);base=s.oldAvg;}
+  mk("chartC",{type:"line",data:{labels:s.labels,datasets:lineDs(s.newD,s.newN,s.oldD,s.oldN,s.newAvg,s.oldAvg)},plugins:[refLines,lineLabels],options:lineOpts(3.2,5.08)});
   // detail
   if(pid==="-1"){document.getElementById("detail").innerHTML="";return;}
   const com={};for(const r of APP.lc){if(r.pid!==pid)continue;if(r.d&&(r.d<from||r.d>to))continue;const o=com[r.com]||(com[r.com]={s:0,n:0});o.s+=r.sc;o.n++;}
@@ -867,7 +864,7 @@ function renderProfTut(){
   const cnts=days.map(d=>{const pd=byDay[d];return pd?pd.n:0;});
   mk("chartEvo",{type:"line",data:{labels:days.map(fmtW),datasets:[{label:"Rating profe",data:vals,borderColor:"#F5A623",backgroundColor:"rgba(245,166,35,0.14)",fill:true,borderWidth:3,tension:.4,spanGaps:true,pointRadius:cnts.map(n=>n?3.5:0),pointHoverRadius:5,pointBackgroundColor:"#F5A623",_cnt:cnts}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label(c){const n=c.dataset._cnt[c.dataIndex];return "Rating profe: "+(c.parsed.y!=null?c.parsed.y.toFixed(2):"—")+(n?"  (n="+n+")":"");}}}},scales:{y:{min:3.5,max:5,ticks:{stepSize:0.5},grid:{color:"#efe7da"},title:{display:true,text:"Rating (1–5)"}},x:{grid:{display:false},ticks:{maxRotation:0,autoSkip:true,maxTicksLimit:12}}}}});
 }
-APP.render=function(){document.querySelectorAll(".section").forEach(x=>x.style.display="block");renderContent();renderProfes();renderProfTut();renderLive();renderWorkshops();renderCRM();activate(APP.cur||"contenido");document.getElementById("frange").textContent="Gráfico de evolución: "+APP.from+" → "+APP.to+" · (KPIs y Foco = acumulado total)";};
+APP.render=function(){document.querySelectorAll(".section").forEach(x=>x.style.display="block");renderContent();renderProfes();renderProfTut();renderLive();renderWorkshops();renderCRM();activate(APP.cur||"contenido");document.getElementById("frange").textContent="Rango: "+APP.from+" → "+APP.to+" · todo (KPIs, gráficos y foco) se calcula en este rango";};
 function activate(id){APP.cur=id;var _fb=document.querySelector(".filterbar");if(_fb)_fb.style.display=(id==="workshops"||id==="crm")?"none":"flex";document.querySelectorAll(".section").forEach(s=>s.style.display=(s.id==="sec-"+id)?"block":"none");document.querySelectorAll(".nav").forEach(n=>{if(n.dataset.sec)n.classList.toggle("active",n.dataset.sec===id);});setTimeout(()=>window.dispatchEvent(new Event("resize")),25);}
 
 APP.start=async function(){
