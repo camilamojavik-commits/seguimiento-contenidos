@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: bot-contextual -->
+<!-- build: bot-contextual2 -->
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -914,8 +914,9 @@ function wsOdAns(Q){if(/completion|complet/.test(Q))return "Completion rate del 
 function botAnswer(q){
   const norm=s=>(s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
   const Q=norm(q);
-  if(!Q.trim())return "Escribí una pregunta. Ej: <b>rating de Excel</b>, <b>cuáles bajaron</b>, <b>profe de Data Analytics</b>.";
   if(typeof APP==='undefined'||!APP.val)return "Estoy cargando los datos, probá en unos segundos.";
+  const _cur=APP.cur||"contenido";
+  if(!Q.trim()){if(_cur==="crm")return pipeAns("");if(_cur==="live")return liveAns("");if(_cur==="workshops")return wsOdAns("");if(_cur==="profes"||_cur==="proftut")return "Preguntá por un profe (ej. \"profe de Data Analytics\") o por \"tutores\".";return "Preguntá por un curso (ej. \"rating de Excel\"), \"cuáles bajaron\" o \"mejores cursos\".";}
   const from=APP.from,to=APP.to,ag=prodAgg(from,to);
   const fmt=x=>x!=null?x.toFixed(2):"—";
   const cur=APP.cur||"contenido";
