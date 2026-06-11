@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: profe-deprecado-actualizado -->
+<!-- build: contenido-movimientos -->
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -31,6 +31,13 @@ select{font-family:inherit;font-size:13px;font-weight:600;color:var(--ink);backg
 label.flt{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--ink2);margin-right:8px}
 .cv{position:relative;height:320px}.cv.bar{height:280px}
 .note{font-size:11.5px;color:var(--ink2);margin-top:10px}.note b{color:var(--ink)}
+.movewrap{display:flex;flex-direction:column;gap:8px}
+.mvrow{display:flex;align-items:center;flex-wrap:wrap;gap:7px}
+.mvlab{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--ink2);min-width:118px}
+.mvup,.mvdn{font-size:12px;font-weight:700;padding:3px 9px;border-radius:20px}
+.mvup{background:#15a06b18;color:#15a06b}
+.mvdn{background:#d6432b18;color:#d6432b}
+.mvnone{font-size:11.5px;color:var(--ink2);font-style:italic}
 .detail{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:14px}
 .dcard{border:1px solid var(--line);border-radius:12px;padding:12px 13px;background:#fffdf9}
 .dcard h4{font-size:12.5px;font-weight:800;margin-bottom:7px;display:flex;align-items:center;gap:6px}
@@ -257,62 +264,67 @@ td{padding:7px 10px;border-top:1px solid var(--line)}tr:nth-child(even){backgrou
   <div id="loading" style="padding:40px;text-align:center;color:var(--ink2);font-size:14px">Cargando datos del sheet…</div>
   <section id="sec-contenido" class="section">
 
-  <div class="sech" style="border-top:none;margin-top:6px;padding-top:0"><h2>Performance nuevos contenidos</h2><div class="ssub">Valoración de contenido (1–5) = <b>módulo + actividad práctica</b>, de los 33 cursos renovados. Nuevo vs viejo según el <b>número de comisión</b> (las comisiones de comisiones_cc_nuevo = contenido nuevo).</div></div>
+  <div class="sech" style="border-top:none;margin-top:6px;padding-top:0"><h2>Performance nuevos contenidos</h2><div class="ssub">Valoración de contenido (1–5) = módulo + actividad práctica, de los 33 cursos renovados. Nuevo vs viejo según el número de comisión (las comisiones de comisiones_cc_nuevo = contenido nuevo).</div></div>
   <div class="kpis" id="kpisCont"></div>
+
+  <div class="panel" style="border-left:5px solid var(--coral)">
+    <div class="top"><h3>Qué se movió</h3></div>
+    <div id="moveAlert" class="movewrap"></div>
+  </div>
 
   <div class="panel">
     <div class="top"><h3><span class="ic">↗</span> General · contenido nuevo vs. viejo</h3></div>
-    <div class="sub">Comparación <b>manzana con manzana</b>: solo los cursos que ya tienen contenido nuevo corriendo, su contenido viejo (azul) vs el nuevo (naranja) — del mismo curso, no todos mezclados. Incluye módulo + actividad práctica.</div>
+    <div class="sub">Solo cursos con contenido nuevo corriendo: su viejo (azul) vs nuevo (naranja), del mismo curso. Módulo + actividad práctica.</div>
     <div id="cBreak" class="note-top" style="border-left-color:var(--coral);margin:2px 0 12px"></div>
     <div class="cv"><canvas id="chartG"></canvas></div>
-    <div class="note"><b>Ojo con las últimas semanas:</b> desde fines de mayo quedan muy pocas valoraciones de contenido viejo (las comisiones viejas están terminando), así que esos puntos del viejo son de muestra chica y poco representativos. La última semana (8 jun) es parcial en ambos.</div>
+    <div class="note">Últimas semanas: quedan pocas valoraciones de contenido viejo (las comisiones viejas terminan), así que esos puntos son de muestra chica.</div>
   </div>
 
   <div class="panel">
     <div class="top"><h3><span class="ic">★</span> Top 10 más vendidos · viejo → nuevo</h3></div>
-    <div class="sub">Rating del contenido viejo vs. nuevo (módulo + actividad práctica) en los cursos de mayor venta. Solo aparecen los <b>renovados con valoraciones</b>; los que aún no se renovaron o no tienen datos se listan abajo.</div>
+    <div class="sub">Rating del contenido viejo vs. nuevo (módulo + actividad práctica) en los cursos de mayor venta. Solo aparecen los renovados con valoraciones; los que aún no se renovaron o no tienen datos se listan abajo.</div>
     <div class="cv bar"><canvas id="chartT"></canvas></div>
     <div class="note">Los cursos con pocas valoraciones del contenido nuevo (comisiones recién arrancadas) hay que tomarlos con cautela.</div>
   </div>
 
   <div class="panel">
     <div class="top"><h3><span class="ic" style="color:#c04200">🎯</span> Foco comercial · módulos más flojos de los Top 10 vendidos</h3></div>
-    <div class="sub">Los 10 cursos de mayor venta, ordenados <b>de peor a mejor según Δ</b> (los que cayeron respecto del viejo, primero). Clic en cada uno para ver sus <b>módulos más flojos</b> — son los que conviene reforzar primero por impacto en ventas. Abajo, los que todavía no se renovaron o no tienen valoraciones aún.</div>
+    <div class="sub">Los 10 cursos de mayor venta, ordenados de peor a mejor según Δ (los que cayeron respecto del viejo, primero). Clic en cada uno para ver sus módulos más flojos — son los que conviene reforzar primero por impacto en ventas. Abajo, los que todavía no se renovaron o no tienen valoraciones aún.</div>
     <div id="topPainList"></div>
   </div>
 
   <div class="panel">
     <div class="top"><h3><span class="ic">↗</span> Evolución por curso</h3>
       <div><label class="flt">Filtrar curso:</label><select id="sel"></select></div></div>
-    <div class="sub">Rating semanal real del <b>contenido nuevo</b> (naranja) vs. el <b>contenido viejo</b> (azul) del mismo curso. Abajo: comisiones nuevas y comentarios.</div>
+    <div class="sub">Rating semanal real del contenido nuevo (naranja) vs. el contenido viejo (azul) del mismo curso. Abajo: comisiones nuevas y comentarios.</div>
     <div class="cv"><canvas id="chartC"></canvas></div>
     <div class="detail" id="detail"></div>
-    <div class="note">El ranking de comisiones usa el <b>rating de clases en vivo</b> (profe + actividad), donde las comisiones nuevas ya tienen volumen — distinto de la valoración de contenido del gráfico.</div>
+    <div class="note">El ranking de comisiones usa el rating de clases en vivo (profe + actividad), donde las comisiones nuevas ya tienen volumen — distinto de la valoración de contenido del gráfico.</div>
   </div>
 
   <div class="panel">
     <div class="top"><h3>Resumen · viejo → nuevo (contenido)</h3></div>
-    <div class="sub">Cada curso con contenido nuevo, ordenado de <b>peor a mejor según Δ</b> (nuevo − viejo): primero los que más cayeron, al final los que más mejoraron.</div>
+    <div class="sub">Cada curso con contenido nuevo, ordenado de peor a mejor según Δ (nuevo − viejo): primero los que más cayeron, al final los que más mejoraron.</div>
     <table id="tbl"><thead><tr><th>Curso</th><th class="num">Viejo</th><th class="num">Nuevo</th><th class="num">n nuevo</th><th class="num">Δ</th></tr></thead><tbody></tbody></table>
   </div>
 
   <div class="panel">
     <div class="top"><h3>Cobertura · 33 cursos renovados</h3></div>
-    <div class="sub">Todos los cursos con contenido nuevo y sus <b>comisiones nuevas</b>: cuántas hay, cuándo arranca la primera y si ya están generando valoraciones de módulo. Así se ve cuáles ya se miden y cuáles están por arrancar.</div>
+    <div class="sub">Todos los cursos con contenido nuevo y sus comisiones nuevas: cuántas hay, cuándo arranca la primera y si ya están generando valoraciones de módulo. Así se ve cuáles ya se miden y cuáles están por arrancar.</div>
     <div id="covNote" class="note-top" style="border-left-color:var(--coral);margin:4px 0 12px"></div>
     <table id="tblCov"><thead><tr><th>Curso</th><th class="num">Comis. nuevas</th><th class="num">Arrancadas</th><th>1ra comisión</th><th>Estado</th></tr></thead><tbody></tbody></table>
   </div>
 
   </section>
   <section id="sec-profes" class="section">
-  <div class="sech" style="border-top:none;margin-top:6px;padding-top:0"><h2>Rating de profesores</h2><div class="ssub">Valoración del profe en la clase en vivo (pregunta <b>"¿Qué tan bien guió la clase el instructor hoy?"</b>, 1–5), de los cursos renovados. Comparamos el mismo curso dictado con <b>contenido nuevo vs viejo</b> según el número de comisión. Fuente: hoja <b>live class rating</b>.</div></div>
+  <div class="sech" style="border-top:none;margin-top:6px;padding-top:0"><h2>Rating de profesores</h2><div class="ssub">Valoración del profe en la clase en vivo (pregunta "¿Qué tan bien guió la clase el instructor hoy?", 1–5), de los cursos renovados. Comparamos el mismo curso dictado con contenido nuevo vs viejo según el número de comisión. Fuente: hoja live class rating.</div></div>
 
   <div class="kpis" id="kpisProf"></div>
 
   <div class="panel">
     <div class="top"><h3><span class="ic">👩‍🏫</span> Rating del profe · contenido deprecado vs actualizado</h3>
       <div><label class="flt">Curso:</label><select id="selProf"></select></div></div>
-    <div class="sub">Rating promedio del profe (gris = staff dictando <b>contenido deprecado</b>, naranja = staff dictando <b>contenido actualizado</b>). Sirve para ver si el contenido nuevo afecta la percepción del profe. <span id="pvSub"></span></div>
+    <div class="sub">Rating promedio del profe (gris = staff dictando contenido deprecado, naranja = staff dictando contenido actualizado). Sirve para ver si el contenido nuevo afecta la percepción del profe. <span id="pvSub"></span></div>
     <div class="cv"><canvas id="chartPV"></canvas></div>
     <div class="note">Mismos profesores, distinto contenido. Si el rating del profe se mantiene o sube con el contenido nuevo, es buena señal de que el material acompaña la clase.</div>
   </div>
@@ -326,28 +338,28 @@ td{padding:7px 10px;border-top:1px solid var(--line)}tr:nth-child(even){backgrou
   </div>
   </section>
   <section id="sec-proftut" class="section">
-  <div class="sech" style="border-top:none;margin-top:6px;padding-top:0"><h2>Profes y Tutores · todas las comisiones</h2><div class="ssub">Rating de <b>profesores</b> (professor_guidance) y <b>tutores</b> (tutor_usefulness) en <b>todas</b> las comisiones. Fuente del rating: hoja <b>live class rating</b>. El nº de profes asignados por comisión viene de la asignación de staff de <b>BigQuery</b> (rol PROFESOR activo; la suplencia es un rol aparte y no cuenta).</div></div>
+  <div class="sech" style="border-top:none;margin-top:6px;padding-top:0"><h2>Profes y Tutores · todas las comisiones</h2><div class="ssub">Rating de profesores (professor_guidance) y tutores (tutor_usefulness) en todas las comisiones. Fuente del rating: hoja live class rating. El nº de profes asignados por comisión viene de la asignación de staff de BigQuery (rol PROFESOR activo; la suplencia es un rol aparte y no cuenta).</div></div>
 
-  <div class="note-top" style="border-left-color:var(--coral)"><b>Sobre el "rating compartido":</b> en comisiones con 2 profes, el rating del Sheet está atribuido a la dupla (no se puede separar por profe). Por eso lo mostramos <b>agregado</b> y lo comparamos contra las comisiones de 1 profe y contra tutores.</div>
+  <div class="note-top" style="border-left-color:var(--coral)">Sobre el "rating compartido": en comisiones con 2 profes, el rating del Sheet está atribuido a la dupla (no se puede separar por profe). Por eso lo mostramos agregado y lo comparamos contra las comisiones de 1 profe y contra tutores.</div>
 
   <div class="kpis" id="kpisPT"></div>
 
   <div class="panel">
     <div class="top"><h3><span class="ic">↗</span> Comparación de rating · 1 profe vs 2 profes vs tutores</h3></div>
-    <div class="sub">Rating promedio del profe en comisiones con <b>1 profe</b> (azul) vs comisiones con <b>2+ profes</b> (naranja, rating compartido), y el rating de <b>tutores</b> (verde). Nº de profes por comisión según BigQuery.</div>
+    <div class="sub">Rating promedio del profe en comisiones con 1 profe (azul) vs comisiones con 2+ profes (naranja, rating compartido), y el rating de tutores (verde). Nº de profes por comisión según BigQuery.</div>
     <div class="cv bar"><canvas id="chartPT"></canvas></div>
   </div>
 
   <div class="panel">
     <div class="top"><h3><span class="ic">↗</span> Evolución del rating del profe · por día</h3></div>
-    <div class="sub">Rating promedio del profe (professor_guidance) por día, en el rango elegido. Usá el <b>filtro de fechas</b> de arriba (4 / 8 / 12 sem) para acercarte a una semana y ver los picos y caídas.</div>
+    <div class="sub">Rating promedio del profe (professor_guidance) por día, en el rango elegido. Usá el filtro de fechas de arriba (4 / 8 / 12 sem) para acercarte a una semana y ver los picos y caídas.</div>
     <div class="cv"><canvas id="chartEvo"></canvas></div>
   </div>
   </section>
   <section id="sec-live" class="section">
   <div class="sech"><h2>2 · Live Sessions · actividad e inscriptos</h2><div class="ssub">Sesiones / webinars en vivo (hoja live_sessions), 16 mar – 12 jun 2026.</div></div>
 
-  <div class="note-top"><b>Sobre la asistencia:</b> sumamos la <b>asistencia real</b> (asistentes que se conectaron) tomada del tablero <b>Teacher Ratings → Live Sessions</b>, donde se carga a mano por sesión. La asistencia se completa con rezago, así que hoy hay dato hasta la semana del <b>11 may</b>; las sesiones más recientes todavía no la tienen cargada.</div>
+  <div class="note-top">Sobre la asistencia: sumamos la asistencia real (asistentes que se conectaron) tomada del tablero Teacher Ratings → Live Sessions, donde se carga a mano por sesión. La asistencia se completa con rezago, así que hoy hay dato hasta la semana del 11 may; las sesiones más recientes todavía no la tienen cargada.</div>
 
   <div class="kpis" id="kpisLive"></div>
 
@@ -355,7 +367,7 @@ td{padding:7px 10px;border-top:1px solid var(--line)}tr:nth-child(even){backgrou
     <h3><span class="ic">↗</span> Inscriptos vs asistentes reales por semana</h3>
     <div class="sub">Inscriptos (naranja) y asistentes reales (verde) por semana, lado a lado.</div>
     <div class="cv"><canvas id="chartW"></canvas></div>
-    <div class="note">La asistencia real se carga a mano en Teacher Ratings con rezago: la línea verde llega hasta la semana del <b>11 may</b>. La asistencia promedio del período medido es ~18% de los inscriptos. Las últimas semanas de inscriptos bajan porque incluyen sesiones próximas (inscripción abierta).</div>
+    <div class="note">La asistencia real se carga a mano en Teacher Ratings con rezago: la línea verde llega hasta la semana del 11 may. La asistencia promedio del período medido es ~18% de los inscriptos. Las últimas semanas de inscriptos bajan porque incluyen sesiones próximas (inscripción abierta).</div>
   </div>
 
   <div class="row2">
@@ -375,10 +387,10 @@ td{padding:7px 10px;border-top:1px solid var(--line)}tr:nth-child(even){backgrou
   </section>
   <section id="sec-workshops" class="section">
     <div class="sech"><h2>Workshops on demand</h2><div class="ssub">Performance del catálogo de workshops grabados · últimos 365 días · fuente PostHog (snapshot).</div></div>
-    <div class="note-top">Alto volumen de inscriptos pero <b>completion rate bajo (~2,7%)</b>. Acá se ve qué temáticas y títulos funcionan y cuáles conviene revisar.</div>
+    <div class="note-top">Alto volumen de inscriptos pero completion rate bajo (~2,7%). Acá se ve qué temáticas y títulos funcionan y cuáles conviene revisar.</div>
     <div class="panel" style="border-left:5px solid var(--coral)">
       <div class="top"><h3><span class="ic">🔄</span> Renovación en curso · <span id="wsRenovN">—</span> workshops</h3></div>
-      <div class="sub">Workshops on demand que estamos actualizando a nueva versión, por squad responsable (fuente en vivo: hoja workshops nuevas versiones). El detalle por estado está en la sección <b>Renovación workshops</b>.</div>
+      <div class="sub">Workshops on demand que estamos actualizando a nueva versión, por squad responsable (fuente en vivo: hoja workshops nuevas versiones). El detalle por estado está en la sección Renovación workshops.</div>
       <div class="sqsummary" id="wsRenovSq"></div>
     </div>
     <div class="kpis" id="kpisWs"></div>
@@ -389,14 +401,14 @@ td{padding:7px 10px;border-top:1px solid var(--line)}tr:nth-child(even){backgrou
     </div>
     <div class="panel"><h3><span class="ic">↗</span> Inscriptos por temática</h3><div class="sub">Demanda por área. Color = completion rate (verde alto · rojo bajo).</div><div class="cv" style="height:320px"><canvas id="chartWT"></canvas></div>
       <div class="detail" style="margin-top:14px">
-        <div class="dcard"><h4>Temáticas que mejor completan</h4><div class="q" style="border-left-color:#15a06b">Liderazgo &amp; Soft Skills — <b>4,3%</b> completado (el mejor)</div><div class="q" style="border-left-color:#15a06b">Finanzas — 3,0%</div></div>
-        <div class="dcard"><h4>Temáticas menos rankeadas</h4><div class="q" style="border-left-color:#d6432b">Programación — <b>0,2%</b> (2.943 inscriptos, 7 certificados)</div><div class="q" style="border-left-color:#d6432b">UX/UI &amp; Diseño — 0,4% (1.381 inscriptos)</div></div>
+        <div class="dcard"><h4>Temáticas que mejor completan</h4><div class="q" style="border-left-color:#15a06b">Liderazgo &amp; Soft Skills — 4,3% completado (el mejor)</div><div class="q" style="border-left-color:#15a06b">Finanzas — 3,0%</div></div>
+        <div class="dcard"><h4>Temáticas menos rankeadas</h4><div class="q" style="border-left-color:#d6432b">Programación — 0,2% (2.943 inscriptos, 7 certificados)</div><div class="q" style="border-left-color:#d6432b">UX/UI &amp; Diseño — 0,4% (1.381 inscriptos)</div></div>
       </div>
     </div>
   </section>
   <section id="sec-crm" class="section">
-    <div class="sech"><h2>Renovación de Workshops · Pipeline</h2><div class="ssub">Versiones nuevas de los workshops on demand. Tablero por estado — fuente en vivo: hoja <b>workshops (nuevas versiones)</b>.</div></div>
-    <div class="note-top">Cada tarjeta es un workshop a renovar (nombre viejo → nombre nuevo), con su <b>squad</b>, <b>analista de contenidos</b> y <b>prioridad</b>. Las columnas siguen el pipeline completo (To be assigned → Sent to content creator → Creating workshop → Internal QA → Launched); el tablero se mueve a medida que cambian el <b>Status</b>.</div>
+    <div class="sech"><h2>Renovación de Workshops · Pipeline</h2><div class="ssub">Versiones nuevas de los workshops on demand. Tablero por estado — fuente en vivo: hoja workshops (nuevas versiones).</div></div>
+    <div class="note-top">Cada tarjeta es un workshop a renovar (nombre viejo → nombre nuevo), con su squad, analista de contenidos y prioridad. Las columnas siguen el pipeline completo (To be assigned → Sent to content creator → Creating workshop → Internal QA → Launched); el tablero se mueve a medida que cambian el Status.</div>
     <div class="kpis" id="kpisCrm"></div>
     <div class="panel">
       <h3>Distribución por squad</h3>
@@ -521,6 +533,24 @@ function lineDs(nD,nN,oD,oN,na,oa){return [
 function mk(id,cfg){if(APP.ch[id])APP.ch[id].destroy();APP.ch[id]=new Chart(document.getElementById(id),cfg);}
 const kpi=(l,v,d,g)=>'<div class="kpi'+(g?" good":"")+'"><div class="l">'+l+'</div><div class="v">'+v+'</div><div class="d">'+d+'</div></div>';
 
+function renderMovements(ag){
+  const el=document.getElementById("moveAlert");if(!el)return;
+  // 1) Semana vs semana: rating de contenido NUEVO, últimos 7 días vs 7 previos (por curso renovado)
+  const t0=APP.maxD, tA=addDays(t0,-6), pB=addDays(t0,-7), pA=addDays(t0,-13);
+  const wk={};
+  for(const v of APP.val){ if(!v.isNew)continue; const o=wk[v.pid]||(wk[v.pid]={ts:0,tn:0,ps:0,pn:0});
+    if(v.d>=tA&&v.d<=t0){o.ts+=v.rt;o.tn++;} else if(v.d>=pA&&v.d<=pB){o.ps+=v.rt;o.pn++;} }
+  const mov=Object.keys(wk).map(pid=>{const o=wk[pid];if(o.tn<5||o.pn<5)return null;const d=o.ts/o.tn-o.ps/o.pn;return {n:APP.curso[pid]||pid,d:d};}).filter(Boolean);
+  const wkUp=mov.filter(x=>x.d>=0.03).sort((a,b)=>b.d-a.d).slice(0,3);
+  const wkDn=mov.filter(x=>x.d<=-0.03).sort((a,b)=>a.d-b.d).slice(0,3);
+  // 2) Nuevo vs viejo: delta por curso (muestra sólida n≥8)
+  const nv=APP.renov.map(pid=>{const o=ag[pid];if(!o||o.nn<8||!o.vn)return null;return {n:APP.curso[pid]||pid,d:o.ns/o.nn-o.vs/o.vn};}).filter(Boolean);
+  const nvUp=nv.filter(x=>x.d>0).sort((a,b)=>b.d-a.d).slice(0,3);
+  const nvDn=nv.filter(x=>x.d<0).sort((a,b)=>a.d-b.d).slice(0,3);
+  const chip=(x,up)=>'<span class="mv'+(up?'up':'dn')+'">'+(up?'▲':'▼')+' '+esc(x.n)+' '+(x.d>=0?'+':'')+x.d.toFixed(2)+'</span>';
+  const row=(lab,ups,dns)=>'<div class="mvrow"><span class="mvlab">'+lab+'</span>'+(ups.map(x=>chip(x,1)).join('')||'<span class="mvnone">sin subas relevantes</span>')+(dns.map(x=>chip(x,0)).join('')||(ups.length?'':'<span class="mvnone">sin bajas</span>'))+'</div>';
+  el.innerHTML=row("Últimos 7 días",wkUp,wkDn)+row("Nuevo vs viejo",nvUp,nvDn);
+}
 function renderContent(){const from=APP.from,to=APP.to,ag=prodAgg(APP.minD,APP.maxD);
   // Comparar SOLO cursos que ya tienen contenido nuevo Y viejo (viejo vs nuevo del MISMO curso), no global mezclado.
   const matched=Object.keys(ag).filter(p=>ag[p].nn>0&&ag[p].vn>0);
@@ -532,7 +562,7 @@ function renderContent(){const from=APP.from,to=APP.to,ag=prodAgg(APP.minD,APP.m
   const br={mod:{nn:0,ns:0,vn:0,vs:0},act:{nn:0,ns:0,vn:0,vs:0}};
   for(const v of APP.val){if(!APP.matchedSet.has(v.pid))continue;const o=br[v.tipo];if(!o)continue;if(v.isNew){o.nn++;o.ns+=v.rt;}else{o.vn++;o.vs+=v.rt;}}
   const fa=(o,k)=>o[k+"n"]?(o[k+"s"]/o[k+"n"]).toFixed(2):"—";
-  document.getElementById("cBreak").innerHTML="<b>Desglose:</b> Módulo → nuevo <b>"+fa(br.mod,"n")+"</b> vs viejo "+fa(br.mod,"v")+" (n nuevo "+br.mod.nn+") · Actividad práctica → nuevo <b>"+fa(br.act,"n")+"</b> vs viejo "+fa(br.act,"v")+" (n nuevo "+br.act.nn+"). El nuevo por módulo todavía tiene poca muestra porque las comisiones recién arrancaron.";
+  document.getElementById("cBreak").innerHTML="Desglose: Módulo → nuevo "+fa(br.mod,"n")+" vs viejo "+fa(br.mod,"v")+" (n nuevo "+br.mod.nn+") · Actividad práctica → nuevo "+fa(br.act,"n")+" vs viejo "+fa(br.act,"v")+" (n nuevo "+br.act.nn+"). El nuevo por módulo todavía tiene poca muestra porque las comisiones recién arrancaron.";
   const g=series(null,from,to);mk("chartG",{type:"line",data:{labels:g.labels,datasets:lineDs(g.newD,g.newN,g.oldD,g.oldN,ovN,ovV)},plugins:[refLines,lineLabels],options:lineOpts(3.4,5.05)});
   // top10 ventas (solo los renovados con datos para el gráfico viejo→nuevo)
   const chartItems=TOP10.filter(t=>t.pid&&ag[t.pid]&&(ag[t.pid].nn||ag[t.pid].vn));
@@ -543,7 +573,7 @@ function renderContent(){const from=APP.from,to=APP.to,ag=prodAgg(APP.minD,APP.m
   const rows=APP.renov.filter(pid=>ag[pid]&&(ag[pid].nn>0||ag[pid].vn>0)).map(pid=>{const o=ag[pid];const nv=o.nn?o.ns/o.nn:null,vv=o.vn?o.vs/o.vn:null;return {name:APP.curso[pid],nn:o.nn,nv:nv,vv:vv,dl:(nv!=null&&vv!=null)?nv-vv:null,med:o.nn>=8};});
   rows.sort((a,b)=>{const ad=a.dl==null?99:a.dl,bd=b.dl==null?99:b.dl;return ad-bd;});
   document.querySelector("#tbl tbody").innerHTML=rows.map(r=>'<tr><td>'+r.name+'</td><td class="num">'+(r.vv!=null?r.vv.toFixed(2):"—")+'</td><td class="num">'+(r.nv!=null?r.nv.toFixed(2):"—")+'</td><td class="num">'+r.nn+'</td><td class="num '+(r.dl>=0?"up":"dn")+'">'+(r.dl!=null?((r.dl>=0?"+":"")+r.dl.toFixed(2)):"—")+'</td></tr>').join("");
-  buildSel(ag);renderPerCourse(document.getElementById("sel").value||"-1");renderCoverage(ag);renderTopPain(ag);
+  buildSel(ag);renderPerCourse(document.getElementById("sel").value||"-1");renderCoverage(ag);renderTopPain(ag);renderMovements(ag);
 }
 function renderPain(ag){
   // sólido = n>=8 (dato confiable). Prioridad: primero sólidos por mayor caída, luego muestra baja.
@@ -599,7 +629,7 @@ function modBreakdown(pid,base){
   let comHtml;
   if(!coms.length){comHtml='<div class="mnote">Sin comentarios escritos todavía en el contenido nuevo.</div>';}
   else{comHtml=coms.slice(0,CAP).map(c=>{const bg=c.rt<=3?"#fde2dd":c.rt>=5?"#dcfce7":"#fef3cd",fg=c.rt<=3?"#b91c1c":c.rt>=5?"#166534":"#92400e";return '<div class="qc"><span class="qcr" style="background:'+bg+';color:'+fg+'">'+c.rt.toFixed(0)+'★</span><div class="qcb"><div class="qcm">“'+esc(c.cm).slice(0,260)+'”</div><div class="qcs">'+esc(c.mod)+'</div></div></div>';}).join("")+(coms.length>CAP?'<div class="mnote">+ '+(coms.length-CAP)+' comentarios más</div>':'');}
-  return '<div class="mnote">Valoración del contenido nuevo por módulo (línea de base = viejo del curso: <b>'+base.toFixed(2)+'</b>), del más flojo al mejor.</div>'+
+  return '<div class="mnote">Valoración del contenido nuevo por módulo (línea de base = viejo del curso: '+base.toFixed(2)+'), del más flojo al mejor.</div>'+
     '<div class="mbars">'+bars+'</div>'+
     '<div class="qch">💬 Qué dicen los alumnos · '+coms.length+' comentario'+(coms.length===1?'':'s')+' (peor primero)</div>'+comHtml;
 }
@@ -655,7 +685,7 @@ function renderCoverage(ag){
     return {name:APP.curso[pid]||pid,nCom,started,first:inis[0]||"—",rank,lab,col};
   }).sort((a,b)=>a.rank-b.rank || (a.first<b.first?-1:a.first>b.first?1:0) || b.nCom-a.nCom);
   const c0=rows.filter(r=>r.rank===0).length,c1=rows.filter(r=>r.rank===1).length,c2=rows.filter(r=>r.rank===2).length,c3=rows.filter(r=>r.rank===3).length;
-  document.getElementById("covNote").innerHTML="De los <b>"+rows.length+"</b> cursos renovados: <b>"+c0+"</b> ya se miden en el tablero · <b>"+c1+"</b> con primeras valoraciones · <b>"+c2+"</b> con comisiones en marcha sin valoraciones aún · <b>"+c3+"</b> por arrancar. Todos tienen comisiones nuevas cargadas.";
+  document.getElementById("covNote").innerHTML="De los "+rows.length+" cursos renovados: "+c0+" ya se miden en el tablero · "+c1+" con primeras valoraciones · "+c2+" con comisiones en marcha sin valoraciones aún · "+c3+" por arrancar. Todos tienen comisiones nuevas cargadas.";
   const fI=d=>{if(!d||d==="—")return "—";const p=d.split("-");return (+p[2])+" "+MES[+p[1]-1];};
   document.querySelector("#tblCov tbody").innerHTML=rows.map(r=>'<tr><td>'+esc(r.name)+'</td><td class="num">'+r.nCom+'</td><td class="num">'+r.started+'</td><td>'+fI(r.first)+'</td><td><span class="pchip" style="background:'+r.col+'22;color:'+r.col+'">'+r.lab+'</span></td></tr>').join("");
 }
@@ -671,7 +701,7 @@ function renderPerCourse(pid){const from=APP.from,to=APP.to;let s,base,nlab;
   const cs=Object.entries(com).map(([c,o])=>[c,o.n,+(o.s/o.n).toFixed(2)]).sort((a,b)=>b[2]-a[2]);
   let rank=cs.length?cs.map(x=>'<div class="crow"><span class="cm">#'+x[0]+'</span><span class="ba"><span class="fl" style="width:'+(x[2]/5*100).toFixed(0)+'%;background:'+(x[2]<4?"#d6432b":x[2]>=4.6?"#15a06b":"#3f6fb0")+'"></span></span><span class="vl">'+x[2].toFixed(2)+" · "+x[1]+'v</span></div>').join(""):'<div class="empty">Comisiones nuevas en marcha, todavía sin votos de clase en el rango.</div>';
   const cm=APP.val.filter(v=>v.pid===pid&&v.isNew&&v.cm&&v.d>=from&&v.d<=to).sort((a,b)=>b.d<a.d?-1:1).slice(0,4);
-  let coms=cm.length?cm.map(v=>'<div class="q">"'+v.cm.replace(/</g,"&lt;").slice(0,200)+'" <b>('+v.rt.toFixed(0)+'★)</b></div>').join(""):'<div class="empty">Sin comentarios del contenido nuevo en el rango.</div>';
+  let coms=cm.length?cm.map(v=>'<div class="q">"'+v.cm.replace(/</g,"&lt;").slice(0,200)+'" ('+v.rt.toFixed(0)+'★)</div>').join(""):'<div class="empty">Sin comentarios del contenido nuevo en el rango.</div>';
   document.getElementById("detail").innerHTML='<div class="dcard"><h4>Comisiones nuevas (clase en vivo) <span class="tag">en el rango</span></h4>'+rank+'<div class="note" style="margin-top:8px">'+cs.length+' de '+(APP.commTotal[pid]||0)+' comisiones nuevas con votos.</div></div><div class="dcard"><h4>Comentarios del contenido nuevo</h4>'+coms+'</div>';
 }
 // Asistencia real por semana (Monday ISO) — carga manual en Teacher Ratings · Live Sessions (snapshot 9 jun 2026, dato hasta 11 may).
@@ -755,7 +785,7 @@ function renderCRM(){
       const pr=r.prio||"";
       return '<div class="kcard prio-'+pr+'" style="border-left-color:'+sqColor(r.squad)+'">'+
         '<div class="kt">'+esc(r.nuevo||r.viejo||"(sin nombre)")+'</div>'+
-        (r.viejo&&r.viejo!==r.nuevo?'<div class="ko"><b>antes:</b> '+esc(r.viejo)+'</div>':'')+
+        (r.viejo&&r.viejo!==r.nuevo?'<div class="ko">antes: '+esc(r.viejo)+'</div>':'')+
         '<div class="kf"><span class="sqb" style="background:'+sqColor(r.squad)+'">'+esc(r.squad||"sin squad")+'</span>'+
         (pr?'<span class="pchip pr-'+esc(pr)+'">'+esc(pr)+'</span>':'')+
         (r.rev?'<span class="revchip"><span class="revav" style="background:'+sqColor(r.squad)+'">'+initials(r.rev)+'</span>'+esc(r.rev.split(" ")[0])+'</span>':'')+
