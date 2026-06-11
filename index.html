@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: contenido-filtro-foco -->
+<!-- build: contenido-acumulado -->
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -267,10 +267,6 @@ td{padding:7px 10px;border-top:1px solid var(--line)}tr:nth-child(even){backgrou
   <div class="sech" style="border-top:none;margin-top:6px;padding-top:0"><h2>Performance nuevos contenidos</h2></div>
   <div class="kpis" id="kpisCont"></div>
 
-  <div class="panel" style="border-left:5px solid var(--coral)">
-    <div class="top"><h3>Qué se movió</h3></div>
-    <div id="moveAlert" class="movewrap"></div>
-  </div>
 
   <div class="panel">
     <div class="top"><h3><span class="ic">↗</span> General · contenido nuevo vs. viejo</h3></div>
@@ -551,7 +547,7 @@ function renderMovements(ag){
   const row=(lab,ups,dns)=>'<div class="mvrow"><span class="mvlab">'+lab+'</span>'+(ups.map(x=>chip(x,1)).join('')||'<span class="mvnone">sin subas relevantes</span>')+(dns.map(x=>chip(x,0)).join('')||(ups.length?'':'<span class="mvnone">sin bajas</span>'))+'</div>';
   el.innerHTML=row("Últimos 7 días",wkUp,wkDn)+row("Nuevo vs viejo",nvUp,nvDn);
 }
-function renderContent(){const from=APP.from,to=APP.to,ag=prodAgg(from,to);
+function renderContent(){const from=APP.from,to=APP.to,ag=prodAgg(APP.minD,APP.maxD);
   // Comparar SOLO cursos que ya tienen contenido nuevo Y viejo (viejo vs nuevo del MISMO curso), no global mezclado.
   const matched=Object.keys(ag).filter(p=>ag[p].nn>0&&ag[p].vn>0);
   APP.matchedSet=new Set(matched);
@@ -573,7 +569,7 @@ function renderContent(){const from=APP.from,to=APP.to,ag=prodAgg(from,to);
   const rows=APP.renov.filter(pid=>ag[pid]&&(ag[pid].nn>0||ag[pid].vn>0)).map(pid=>{const o=ag[pid];const nv=o.nn?o.ns/o.nn:null,vv=o.vn?o.vs/o.vn:null;return {name:APP.curso[pid],nn:o.nn,nv:nv,vv:vv,dl:(nv!=null&&vv!=null)?nv-vv:null,med:o.nn>=8};});
   rows.sort((a,b)=>{const ad=a.dl==null?99:a.dl,bd=b.dl==null?99:b.dl;return ad-bd;});
   document.querySelector("#tbl tbody").innerHTML=rows.map(r=>'<tr><td>'+r.name+'</td><td class="num">'+(r.vv!=null?r.vv.toFixed(2):"—")+'</td><td class="num">'+(r.nv!=null?r.nv.toFixed(2):"—")+'</td><td class="num">'+r.nn+'</td><td class="num '+(r.dl>=0?"up":"dn")+'">'+(r.dl!=null?((r.dl>=0?"+":"")+r.dl.toFixed(2)):"—")+'</td></tr>').join("");
-  buildSel(ag);renderPerCourse(document.getElementById("sel").value||"-1");renderCoverage(ag);renderTopPain(ag);renderMovements(ag);
+  buildSel(ag);renderPerCourse(document.getElementById("sel").value||"-1");renderCoverage(ag);renderTopPain(ag);
 }
 function renderPain(ag){
   // sólido = n>=8 (dato confiable). Prioridad: primero sólidos por mayor caída, luego muestra baja.
@@ -854,7 +850,7 @@ function renderProfTut(){
   const cnts=days.map(d=>{const pd=byDay[d];return pd?pd.n:0;});
   mk("chartEvo",{type:"line",data:{labels:days.map(fmtW),datasets:[{label:"Rating profe",data:vals,borderColor:"#F5A623",backgroundColor:"rgba(245,166,35,0.14)",fill:true,borderWidth:3,tension:.4,spanGaps:true,pointRadius:cnts.map(n=>n?3.5:0),pointHoverRadius:5,pointBackgroundColor:"#F5A623",_cnt:cnts}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label(c){const n=c.dataset._cnt[c.dataIndex];return "Rating profe: "+(c.parsed.y!=null?c.parsed.y.toFixed(2):"—")+(n?"  (n="+n+")":"");}}}},scales:{y:{min:3.5,max:5,ticks:{stepSize:0.5},grid:{color:"#efe7da"},title:{display:true,text:"Rating (1–5)"}},x:{grid:{display:false},ticks:{maxRotation:0,autoSkip:true,maxTicksLimit:12}}}}});
 }
-APP.render=function(){document.querySelectorAll(".section").forEach(x=>x.style.display="block");renderContent();renderProfes();renderProfTut();renderLive();renderWorkshops();renderCRM();activate(APP.cur||"contenido");document.getElementById("frange").textContent="Rango: "+APP.from+" → "+APP.to+" · todo se calcula en este rango";};
+APP.render=function(){document.querySelectorAll(".section").forEach(x=>x.style.display="block");renderContent();renderProfes();renderProfTut();renderLive();renderWorkshops();renderCRM();activate(APP.cur||"contenido");document.getElementById("frange").textContent="Gráfico de evolución: "+APP.from+" → "+APP.to+" · (KPIs y Foco = acumulado total)";};
 function activate(id){APP.cur=id;var _fb=document.querySelector(".filterbar");if(_fb)_fb.style.display=(id==="workshops"||id==="crm")?"none":"flex";document.querySelectorAll(".section").forEach(s=>s.style.display=(s.id==="sec-"+id)?"block":"none");document.querySelectorAll(".nav").forEach(n=>{if(n.dataset.sec)n.classList.toggle("active",n.dataset.sec===id);});setTimeout(()=>window.dispatchEvent(new Event("resize")),25);}
 
 APP.start=async function(){
