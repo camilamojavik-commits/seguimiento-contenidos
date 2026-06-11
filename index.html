@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: proftut-filtrado -->
+<!-- build: profe-filtro-curso -->
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -310,8 +310,9 @@ td{padding:7px 10px;border-top:1px solid var(--line)}tr:nth-child(even){backgrou
   <div class="kpis" id="kpisProf"></div>
 
   <div class="panel">
-    <div class="top"><h3><span class="ic">👩‍🏫</span> Rating del profe · comisiones viejas vs nuevas, por curso</h3></div>
-    <div class="sub">Rating promedio del profe (azul = comisiones de contenido viejo, naranja = contenido nuevo), por curso, ordenado <b>de peor a mejor según Δ</b>. Sirve para ver si el contenido nuevo afecta la percepción del profe. Solo cursos con muestra nueva ≥5.</div>
+    <div class="top"><h3><span class="ic">👩‍🏫</span> Rating del profe · comisiones viejas vs nuevas, por curso</h3>
+      <div><label class="flt">Curso:</label><select id="selProf"></select></div></div>
+    <div class="sub">Rating promedio del profe (azul = comisiones de contenido viejo, naranja = contenido nuevo), por curso, ordenado <b>de peor a mejor según Δ</b>. Sirve para ver si el contenido nuevo afecta la percepción del profe. Solo cursos con muestra nueva ≥5. Elegí un curso para ver solo ese.</div>
     <div class="cv"><canvas id="chartPV"></canvas></div>
     <div class="note">Mismos profesores, distinto contenido. Si el rating del profe se mantiene o sube con el contenido nuevo, es buena señal de que el material acompaña la clase.</div>
   </div>
@@ -777,7 +778,11 @@ function renderProfes(){
     kpi("Δ nuevo − viejo",(ovN!=null&&ovV!=null)?((ovN-ovV>=0?"+":"")+(ovN-ovV).toFixed(2)):"—","mismo profe, contenido nuevo vs viejo")+
     kpi("Profesores medidos",Object.keys(profSet).length,"con nombre cargado");
   // chart: rating del profe por curso, viejo vs nuevo (cursos con ambos y muestra nueva >=5), de peor a mejor Δ
-  const items=APP.renov.map(p=>{const o=ag[p];if(!o||!o.nn||!o.vn)return null;if(o.nn<5)return null;return {n:APP.curso[p]||p,nv:o.ns/o.nn,vv:o.vs/o.vn,nn:o.nn};}).filter(Boolean).sort((a,b)=>(a.nv-a.vv)-(b.nv-b.vv));
+  const allItems=APP.renov.map(p=>{const o=ag[p];if(!o||!o.nn||!o.vn)return null;if(o.nn<5)return null;return {n:APP.curso[p]||p,nv:o.ns/o.nn,vv:o.vs/o.vn,nn:o.nn};}).filter(Boolean).sort((a,b)=>(a.nv-a.vv)-(b.nv-b.vv));
+  const selP=document.getElementById("selProf");
+  if(selP&&selP.options.length<=1)selP.innerHTML='<option value="">Todos los cursos</option>'+allItems.map(t=>'<option>'+esc(t.n)+'</option>').join("");
+  const fcP=selP?selP.value:"";
+  const items=fcP?allItems.filter(t=>t.n===fcP):allItems;
   mk("chartPV",{type:"bar",plugins:[barLabels],data:{labels:items.map(t=>t.n),datasets:[
     {label:"Comis. viejas",data:items.map(t=>+t.vv.toFixed(3)),backgroundColor:"#bdb1a0",borderRadius:4,maxBarThickness:40},
     {label:"Comis. nuevas",data:items.map(t=>+t.nv.toFixed(3)),backgroundColor:"#F5A623",borderRadius:4,maxBarThickness:40}
@@ -830,6 +835,7 @@ APP.start=async function(){
   df.onchange=()=>{APP.from=df.value;APP.render();};dt.onchange=()=>{APP.to=dt.value;APP.render();};
   document.querySelectorAll(".fb").forEach(b=>b.onclick=()=>{const p=b.dataset.p;if(p==="all"){APP.from=APP.minD;}else{APP.from=addDays(APP.maxD,-(+p)*7);}APP.to=APP.maxD;df.value=APP.from;dt.value=APP.to;APP.render();});
   document.getElementById("sel").onchange=function(){renderPerCourse(this.value);};
+  {const sp=document.getElementById("selProf");if(sp)sp.onchange=renderProfes;}
   document.getElementById("crmStatus").onchange=renderCRM;document.getElementById("crmSquad").onchange=renderCRM;document.getElementById("crmRev").onchange=renderCRM;document.getElementById("crmSearch").oninput=renderCRM;
   document.querySelectorAll(".nav").forEach(n=>{if(n.dataset.sec)n.onclick=()=>activate(n.dataset.sec);});
   document.getElementById("upd").textContent="Actualizado del sheet · "+new Date().toLocaleString("es");
