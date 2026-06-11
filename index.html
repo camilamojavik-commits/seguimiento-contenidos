@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: perfil-comentarios -->
+<!-- build: perfil-folios -->
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -481,7 +481,26 @@ td{padding:7px 10px;border-top:1px solid var(--line)}tr:nth-child(even){backgrou
 
 <script>
 const SHEET='1VvmrIcslmEZQCyW30iW7GZexcqGHuIOLP1nJNOMQ-F0';
-var FOLIOS={}; /* snapshot folios Intercom por profe (clave = nombre normalizado). Se completa abajo. */
+var FOLIOS=(function(){var U="https://app.intercom.com/a/inbox/_/inbox/conversation/";
+function f(t,s,id){return {title:t,state:s,url:U+id};}
+/* snapshot folios Intercom por persona (clave = folioKey del nombre). n=total en Intercom; items=curados (accionables + muestra). */
+return {
+"ariel ulczyk":{n:44,items:[f("Consulta a Staff (bot)","closed","215474620326281"),f("Consulta a Staff (bot)","closed","215474256262617"),f("Consulta a Staff (bot)","closed","215474163157701")]},
+"virginia garay":{n:20,items:[f("Pedido de ausencia (profesor)","closed","215473414628725"),f("Consulta a Staff (bot)","closed","215473943300184"),f("Consulta a Staff (bot)","closed","215473751996847")]},
+"claudio romano":{n:100,items:[f("Pedido de ausencia (profesor)","closed","215472743294828"),f("Consulta a Staff (bot)","closed","215474279386831"),f("Consulta a Staff (bot)","closed","215473269292836")]},
+"clara borenszweig":{n:92,items:[f("Consulta a Staff (bot)","closed","215474024208441"),f("Consulta a Staff (bot)","closed","215473955784373"),f("Consulta a Staff (bot)","closed","215474014805456")]},
+"florencia lewin":{n:47,items:[f("Rechazo de comisión asignada","closed","215474367059758"),f("Pedido de ausencia (profesor) · alta prioridad","closed","215473941349538"),f("Consulta a Staff (bot)","closed","215474367065990")]},
+"octavio sidoni":{n:60,items:[f("Consulta a Staff (bot)","closed","215474548729164"),f("Consulta a Staff (bot)","closed","215474287866493"),f("Consulta a Staff (bot)","closed","215474042956933")]},
+"esteban quinteros":{n:85,items:[f("Consulta a Staff (bot) · alta prioridad","snoozed","215474587945925"),f("Consulta a Staff (bot)","closed","215474568482531"),f("Consulta a Staff (bot)","closed","215474489014189")]},
+"luciano staniszewski":{n:67,items:[f("Pedido de ausencia (tutor)","closed","215474223106570"),f("Pedido de ausencia (profesor) · alta prioridad","closed","215474132093804"),f("Consulta a Staff (bot)","closed","215474223124636")]},
+"cristian ovejero":{n:140,items:[f("Consulta a Staff (bot) · alta prioridad","snoozed","215474633654139"),f("Consulta a Staff (bot)","closed","215474555474333"),f("Consulta a Staff (bot)","closed","215474460625150")]},
+"belen diaz":{n:170,items:[f("Pedido de baja de comisión","closed","215474264798351"),f("Consulta a Staff (bot)","closed","215474554318411"),f("Consulta a Staff (bot)","closed","215474238824551")]},
+"florencia bianco":{n:65,items:[f("Consulta a Staff (bot)","closed","215474553018348"),f("Consulta a Staff (bot)","closed","215474550586598"),f("Consulta a Staff (bot)","closed","215474078366532")]},
+"alan figueroa":{n:100,items:[f("Consulta a Staff (bot) · alta prioridad","closed","215474400172233"),f("Consulta a Staff (bot)","closed","215474349714482"),f("Consulta a Staff (bot)","closed","215474338996994")]},
+"tamara drajner":{n:16,items:[f("Nuevo profesor aprobado","closed","449646"),f("Consulta a Staff (bot)","closed","215472893089521")]},
+"alejandro ramirez":{n:21,items:[f("Consulta a Staff (bot)","closed","215474262235292"),f("Consulta a Staff (bot)","closed","215474176155339"),f("Consulta a Staff (bot)","closed","215474176147506")]},
+"maximiliano rosanda":{n:85,items:[f("Consulta a Staff (bot)","closed","215474552033875"),f("Consulta a Staff (bot)","closed","215474467415580"),f("Consulta a Staff (bot)","closed","215474393227943")]}
+};})();
 const TOP10=[
  {n:"Data Analytics",pid:"804123bd-e8d3-483e-87f3-46af58833a15"},
  {n:"Marketing Digital: CM & Publicidad",pid:"ff37e7ed-9b04-4ff5-971b-d0a6630e6c3b"},
@@ -856,12 +875,15 @@ function folioKey(s){return (s||"").toLowerCase().normalize("NFD").replace(/[̀-
 function openProfile(name){
   const f=APP.from,t=APP.to;
   const coms=APP.prof.filter(r=>r.prof===name&&r.cm&&/[a-zA-Z]{3,}/.test(r.cm)&&r.d>=f&&r.d<=t).sort((a,b)=>b.d<a.d?-1:1);
-  const fol=FOLIOS[folioKey(name)]||[];
+  const fdata=FOLIOS[folioKey(name)]||{n:0,items:[]};
+  const fol=Array.isArray(fdata)?fdata:(fdata.items||[]);
+  const folTot=Array.isArray(fdata)?fdata.length:(fdata.n||fol.length);
   const clean=name.replace(/\|/g," ").replace(/\[[^\]]*\]/g,"").replace(/\b(Profe|Profesor|Profesora|Tutor|Instructor)\b/g,"").replace(/\s+/g," ").trim();
   let html="<div class='pmh'>💬 Comentarios de alumnos ("+coms.length+")</div>";
   html+= coms.length? coms.slice(0,40).map(c=>'<div class="pmcom"><div class="r">'+c.d+' · '+c.pg.toFixed(0)+'★</div>'+esc(c.cm).slice(0,400)+'</div>').join("") : "<div class='pmempty'>Sin comentarios escritos en el rango elegido.</div>";
-  html+="<div class='pmh'>📋 Folios de Intercom ("+fol.length+")</div>";
+  html+="<div class='pmh'>📋 Folios de Intercom ("+folTot+")</div>";
   html+= fol.length? fol.map(x=>'<div class="pmfolio">'+(x.url?'<a href="'+x.url+'" target="_blank">':'')+esc(x.title||'(folio)')+(x.url?'</a>':'')+(x.state?' · '+esc(x.state):'')+(x.date?' · '+esc(x.date):'')+'</div>').join("") : "<div class='pmempty'>Sin folios cargados para esta persona en el snapshot.</div>";
+  if(fol.length&&folTot>fol.length)html+="<div class='pmempty'>Mostrando "+fol.length+" de "+folTot+" folios (accionables + muestra). El listado completo se conecta en vivo cuando el tablero se publique en el dominio de Coder.</div>";
   document.getElementById("profMTitle").textContent=clean;
   document.getElementById("profMBody").innerHTML=html;
   document.getElementById("profModal").classList.add("open");
