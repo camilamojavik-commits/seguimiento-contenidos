@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: profes-filtro-fecha -->
+<!-- build: perfil-comentarios -->
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -55,8 +55,16 @@ label.flt{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing
 .bot-in button{background:var(--coral);color:#fff;border:none;border-radius:10px;padding:0 14px;font-weight:700;cursor:pointer;font-family:inherit}
 .bot-chip{display:inline-block;background:var(--cream);border:1px solid var(--line);border-radius:14px;padding:4px 10px;font-size:11.5px;margin:0 4px 5px 0;cursor:pointer;color:var(--ink2)}
 .bot-chip:hover{border-color:var(--coral);color:var(--coral)}
-#verifyModal{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:300;display:none;align-items:center;justify-content:center}
-#verifyModal.open{display:flex}
+#verifyModal,#profModal{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:300;display:none;align-items:center;justify-content:center}
+#verifyModal.open,#profModal.open{display:flex}
+.pmcom{border-left:3px solid var(--amber);padding:5px 0 5px 10px;margin:8px 0;font-size:12.5px;color:#3f372e}
+.pmcom .r{font-weight:700;color:var(--ink2);font-size:11px}
+.pmh{font-weight:700;font-size:13px;margin:14px 0 6px;color:var(--ink);border-top:1px solid var(--line);padding-top:12px}
+.pmh:first-child{border-top:none;padding-top:0;margin-top:0}
+.pmfolio{border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin:7px 0;font-size:12px}
+.pmfolio a{color:var(--coral);text-decoration:none;font-weight:600}
+.pmempty{font-size:12px;color:var(--ink2);font-style:italic}
+.clk{cursor:pointer}.clk:hover{background:#fff7f0}
 .vbox{background:#fff;border-radius:14px;width:540px;max-width:92vw;max-height:82vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)}
 .vh{background:var(--ink);color:#fff;padding:13px 16px;font-weight:700;display:flex;justify-content:space-between;align-items:center}
 .vh span:last-child{cursor:pointer}
@@ -469,9 +477,11 @@ td{padding:7px 10px;border-top:1px solid var(--line)}tr:nth-child(even){backgrou
 </div>
 
 <div id="verifyModal"><div class="vbox"><div class="vh"><span>Verificación de números</span><span id="verifyX">✕</span></div><div id="verifyOut" class="vbody"></div></div></div>
+<div id="profModal"><div class="vbox"><div class="vh"><span id="profMTitle">Perfil</span><span id="profMX">✕</span></div><div id="profMBody" class="vbody"></div></div></div>
 
 <script>
 const SHEET='1VvmrIcslmEZQCyW30iW7GZexcqGHuIOLP1nJNOMQ-F0';
+var FOLIOS={}; /* snapshot folios Intercom por profe (clave = nombre normalizado). Se completa abajo. */
 const TOP10=[
  {n:"Data Analytics",pid:"804123bd-e8d3-483e-87f3-46af58833a15"},
  {n:"Marketing Digital: CM & Publicidad",pid:"ff37e7ed-9b04-4ff5-971b-d0a6630e6c3b"},
@@ -531,7 +541,7 @@ APP.init=async function(){
   for(const r of lc.slice(1)){const com=validC(r[Hl["comision"]]);const pid=APP.commCurso[com];if(!pid)continue;const p=parseFloat(r[Hl["professor_guidance"]]),a=parseFloat(r[Hl["activity"]]);let s=0,n=0;if(!isNaN(p)){s+=p;n++;}if(!isNaN(a)){s+=a;n++;}if(!n)continue;APP.lc.push({com:com,pid:pid,sc:s/n,d:day(r[Hl["timestamp"]])});}
   // RATING DE PROFESORES = professor_guidance de la clase en vivo, por curso renovado, clasificado nuevo/viejo por comisión
   APP.prof=[];
-  for(const r of lc.slice(1)){const url=r[Hl["url"]];const pid=pidUrl(url);if(!rset.has(pid))continue;const pg=parseFloat(r[Hl["professor_guidance"]]);if(isNaN(pg))continue;const com=resolveCom(url,r[Hl["comision"]]);if(!com)continue;const d=day(r[Hl["timestamp"]]);if(!d)continue;const prof=(r[Hl["class_professor_name_1"]]||"").trim();APP.prof.push({pid:pid,com:com,pg:pg,d:d,prof:prof,isNew:newComis.has(com)});}
+  for(const r of lc.slice(1)){const url=r[Hl["url"]];const pid=pidUrl(url);if(!rset.has(pid))continue;const pg=parseFloat(r[Hl["professor_guidance"]]);if(isNaN(pg))continue;const com=resolveCom(url,r[Hl["comision"]]);if(!com)continue;const d=day(r[Hl["timestamp"]]);if(!d)continue;const prof=(r[Hl["class_professor_name_1"]]||"").trim();const cmt=(r[Hl["comment"]]||"").trim();APP.prof.push({pid:pid,com:com,pg:pg,d:d,prof:prof,cm:cmt,isNew:newComis.has(com)});}
   // PROFES Y TUTORES — guardamos cada valoración con su fecha para poder filtrar por rango. nº de profes por comisión desde BQ (COMNP).
   APP.profRows=[];APP.tutRows=[];
   for(const r of lc.slice(1)){
@@ -842,6 +852,20 @@ function renderCRM(){
 }
 
 function profAgg(){const f=APP.from,t=APP.to;const m={};for(const v of APP.prof){if(v.d<f||v.d>t)continue;const o=m[v.pid]||(m[v.pid]={nn:0,ns:0,vn:0,vs:0});if(v.isNew){o.nn++;o.ns+=v.pg;}else{o.vn++;o.vs+=v.pg;}}return m;}
+function folioKey(s){return (s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/\|/g," ").replace(/\[[^\]]*\]/g,"").replace(/\b(profe|profesor|profesora|tutor|instructor)\b/g," ").replace(/[^a-z ]/g," ").replace(/\s+/g," ").trim();}
+function openProfile(name){
+  const f=APP.from,t=APP.to;
+  const coms=APP.prof.filter(r=>r.prof===name&&r.cm&&/[a-zA-Z]{3,}/.test(r.cm)&&r.d>=f&&r.d<=t).sort((a,b)=>b.d<a.d?-1:1);
+  const fol=FOLIOS[folioKey(name)]||[];
+  const clean=name.replace(/\|/g," ").replace(/\[[^\]]*\]/g,"").replace(/\b(Profe|Profesor|Profesora|Tutor|Instructor)\b/g,"").replace(/\s+/g," ").trim();
+  let html="<div class='pmh'>💬 Comentarios de alumnos ("+coms.length+")</div>";
+  html+= coms.length? coms.slice(0,40).map(c=>'<div class="pmcom"><div class="r">'+c.d+' · '+c.pg.toFixed(0)+'★</div>'+esc(c.cm).slice(0,400)+'</div>').join("") : "<div class='pmempty'>Sin comentarios escritos en el rango elegido.</div>";
+  html+="<div class='pmh'>📋 Folios de Intercom ("+fol.length+")</div>";
+  html+= fol.length? fol.map(x=>'<div class="pmfolio">'+(x.url?'<a href="'+x.url+'" target="_blank">':'')+esc(x.title||'(folio)')+(x.url?'</a>':'')+(x.state?' · '+esc(x.state):'')+(x.date?' · '+esc(x.date):'')+'</div>').join("") : "<div class='pmempty'>Sin folios cargados para esta persona en el snapshot.</div>";
+  document.getElementById("profMTitle").textContent=clean;
+  document.getElementById("profMBody").innerHTML=html;
+  document.getElementById("profModal").classList.add("open");
+}
 function renderProfes(){
   const ag=profAgg();
   const matched=Object.keys(ag).filter(p=>ag[p].nn>0&&ag[p].vn>0);
@@ -871,7 +895,7 @@ function renderProfes(){
   let prof=Object.keys(pm).map(name=>{const o=pm[name];const top=Object.entries(o.cur).sort((a,b)=>b[1]-a[1])[0];return {name:name,avg:o.s/o.n,n:o.n,curso:top?top[0]:""};}).filter(p=>p.n>=10);
   prof.sort((a,b)=>b.avg-a.avg);
   const tagFor=a=>a>=4.6?["Excelente","#15a06b"]:a>=4.3?["Bien","#8a97a8"]:a>=4.0?["A seguir","#d97706"]:["A reforzar","#d6432b"];
-  const trow=p=>{const t=tagFor(p.avg);return '<tr><td>'+esc(p.name)+'</td><td>'+esc(p.curso)+'</td><td class="num">'+p.n+'</td><td class="num">'+p.avg.toFixed(2)+'</td><td><span class="sev" style="background:'+t[1]+'22;color:'+t[1]+'">'+t[0]+'</span></td></tr>';};
+  const trow=p=>{const t=tagFor(p.avg);return '<tr class="clk" data-p="'+esc(p.name)+'" onclick="openProfile(this.dataset.p)"><td>'+esc(p.name)+'</td><td>'+esc(p.curso)+'</td><td class="num">'+p.n+'</td><td class="num">'+p.avg.toFixed(2)+'</td><td><span class="sev" style="background:'+t[1]+'22;color:'+t[1]+'">'+t[0]+'</span></td></tr>';};
   const top=prof.slice(0,12), bottom=prof.slice(-6).reverse();
   document.getElementById("profTop").innerHTML=top.map(trow).join("")||'<tr><td colspan="5" class="empty">Sin datos suficientes.</td></tr>';
   document.getElementById("profBottom").innerHTML=bottom.length?bottom.map(trow).join(""):'<tr><td colspan="5" class="empty">—</td></tr>';
@@ -1007,6 +1031,8 @@ function setupBot(){
   const vb=document.getElementById("verifyBtn");if(vb)vb.onclick=showVerify;
   const vx=document.getElementById("verifyX");if(vx)vx.onclick=()=>document.getElementById("verifyModal").classList.remove("open");
   const vm=document.getElementById("verifyModal");if(vm)vm.addEventListener("click",e=>{if(e.target===vm)vm.classList.remove("open");});
+  const px=document.getElementById("profMX");if(px)px.onclick=()=>document.getElementById("profModal").classList.remove("open");
+  const pmd=document.getElementById("profModal");if(pmd)pmd.addEventListener("click",e=>{if(e.target===pmd)pmd.classList.remove("open");});
 }
 function activate(id){APP.cur=id;var _fb=document.querySelector(".filterbar");if(_fb)_fb.style.display=(id==="workshops"||id==="crm")?"none":"flex";document.querySelectorAll(".section").forEach(s=>s.style.display=(s.id==="sec-"+id)?"block":"none");document.querySelectorAll(".nav").forEach(n=>{if(n.dataset.sec)n.classList.toggle("active",n.dataset.sec===id);});var _bi=document.getElementById("botInput");if(_bi)_bi.value="";if(typeof refreshBot==='function')refreshBot();setTimeout(()=>window.dispatchEvent(new Event("resize")),25);}
 
