@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: exec-logo -->
+<!-- build: exec-nav-grupos -->
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -94,6 +94,7 @@ td{padding:7px 10px;border-top:1px solid var(--line)}tr:nth-child(even){backgrou
 .glogo{width:200px;height:auto;display:block;margin:0 auto 14px}
 .sb-sub{font-size:12px;color:var(--ink2);font-weight:600;margin-top:5px}
 .nav{display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:12px;font-size:14px;font-weight:600;color:var(--ink2);cursor:pointer;margin-bottom:4px;text-decoration:none}
+.navgroup{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#9aa0a6;padding:0 14px;margin:16px 0 7px}
 .nav svg{width:20px;height:20px;flex-shrink:0}
 .nav:hover{background:var(--cream)}
 .nav.active{background:#FF632B;color:#fff}
@@ -101,7 +102,7 @@ td{padding:7px 10px;border-top:1px solid var(--line)}tr:nth-child(even){backgrou
 .sb-foot{margin-top:18px;padding-top:14px;border-top:1px solid var(--line);font-size:11.5px;color:var(--ink2);line-height:1.6}
 .main{margin-left:250px;padding:26px 36px 60px}
 .section{display:none}
-@media(max-width:860px){.sidebar{position:static;width:auto;height:auto;border-right:none;border-bottom:1px solid var(--line)}.main{margin-left:0}.sidebar nav{display:flex;flex-wrap:wrap;gap:6px}.nav{margin-bottom:0}}
+@media(max-width:860px){.sidebar{position:static;width:auto;height:auto;border-right:none;border-bottom:1px solid var(--line)}.main{margin-left:0}.sidebar nav{display:flex;flex-wrap:wrap;gap:6px}.nav{margin-bottom:0}.navgroup{width:100%;margin:6px 0 2px}}
 
 .filterbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin-bottom:18px;font-size:13px}
 .filterbar input{font-family:inherit;font-size:13px;border:1.5px solid var(--line);border-radius:8px;padding:5px 8px;color:var(--ink)}
@@ -253,12 +254,14 @@ td{padding:7px 10px;border-top:1px solid var(--line)}tr:nth-child(even){backgrou
 </defs>
 </svg><div class="sb-sub">Seguimiento de contenidos</div></div>
   <nav>
+    <div class="navgroup">Contenidos</div>
     <a class="nav active" data-sec="contenido"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg> Performance contenidos</a>
-    <a class="nav" data-sec="profes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M21 8v5"/><path d="M7 11v4c0 1 2 2 5 2s5-1 5-2v-4"/></svg> Rating de profesores</a>
-    <a class="nav" data-sec="proftut"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.2"/><path d="M3 20c0-3 2.5-5 6-5s6 2 6 5"/><path d="M15.5 20c0-2 1-3.5 3-3.5s3 1.5 3 3.5"/></svg> Profes y Tutores</a>
     <a class="nav" data-sec="live"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg> Live Sessions</a>
     <a class="nav" data-sec="workshops"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M10 9l4 2.5-4 2.5z" fill="currentColor" stroke="none"/><path d="M8 21h8"/></svg> Workshops on demand</a>
     <a class="nav" data-sec="crm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="5" height="16" rx="1"/><rect x="10" y="4" width="5" height="11" rx="1"/><rect x="17" y="4" width="5" height="7" rx="1"/></svg> Renovación workshops</a>
+    <div class="navgroup">Staff académico</div>
+    <a class="nav" data-sec="profes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M21 8v5"/><path d="M7 11v4c0 1 2 2 5 2s5-1 5-2v-4"/></svg> Rating de profesores</a>
+    <a class="nav" data-sec="proftut"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.2"/><path d="M3 20c0-3 2.5-5 6-5s6 2 6 5"/><path d="M15.5 20c0-2 1-3.5 3-3.5s3 1.5 3 3.5"/></svg> Profes y Tutores</a>
   </nav>
 </aside>
 <main class="main">
