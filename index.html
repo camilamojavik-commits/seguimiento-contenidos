@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: exec-nav-grupos -->
+<!-- build: percourse-acumulado -->
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -700,8 +700,11 @@ function buildSel(ag){const sel=document.getElementById("sel");const cur=sel.val
   sel.innerHTML='<option value="-1">Todos (general)</option>'+opts.map(pid=>'<option value="'+pid+'">'+APP.curso[pid]+(ag[pid].nn<8?" · muestra baja":"")+'</option>').join("");
   if(cur&&[...sel.options].some(o=>o.value===cur))sel.value=cur;}
 function renderPerCourse(pid){const from=APP.from,to=APP.to;let s,base,nlab;
-  if(pid==="-1"){s=series(null,from,to);base=s.oldAvg;}else{s=series(pid,from,to);base=s.oldAvg;}
-  mk("chartC",{type:"line",data:{labels:s.labels,datasets:lineDs(s.newD,s.newN,s.oldD,s.oldN,s.newAvg,s.oldAvg)},plugins:[refLines,lineLabels],options:lineOpts(3.2,5.08)});
+  // Promedios de la leyenda = ACUMULADO total (igual que el gráfico General), no el rango filtrado.
+  const agF=prodAgg(APP.minD,APP.maxD);let na,oa;
+  if(pid==="-1"){s=series(null,from,to);let TN=0,TS=0,VN=0,VS=0;(APP.matchedSet?[...APP.matchedSet]:[]).forEach(p=>{const o=agF[p];if(o){TN+=o.nn;TS+=o.ns;VN+=o.vn;VS+=o.vs;}});na=TN?TS/TN:s.newAvg;oa=VN?VS/VN:s.oldAvg;base=oa;}
+  else{s=series(pid,from,to);const o=agF[pid];na=(o&&o.nn)?o.ns/o.nn:s.newAvg;oa=(o&&o.vn)?o.vs/o.vn:s.oldAvg;base=oa;}
+  mk("chartC",{type:"line",data:{labels:s.labels,datasets:lineDs(s.newD,s.newN,s.oldD,s.oldN,na,oa)},plugins:[refLines,lineLabels],options:lineOpts(3.2,5.08)});
   // detail
   if(pid==="-1"){document.getElementById("detail").innerHTML="";return;}
   const com={};for(const r of APP.lc){if(r.pid!==pid)continue;if(r.d&&(r.d<from||r.d>to))continue;const o=com[r.com]||(com[r.com]={s:0,n:0});o.s+=r.sc;o.n++;}
