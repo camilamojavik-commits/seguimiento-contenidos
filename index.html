@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: bot-asistente -->
+<!-- build: bot-contextual -->
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -891,6 +891,26 @@ function renderProfTut(){
   mk("chartEvo",{type:"line",data:{labels:days.map(fmtW),datasets:[{label:"Rating profe",data:vals,borderColor:"#F5A623",backgroundColor:"rgba(245,166,35,0.14)",fill:true,borderWidth:3,tension:.4,spanGaps:true,pointRadius:cnts.map(n=>n?3.5:0),pointHoverRadius:5,pointBackgroundColor:"#F5A623",_cnt:cnts}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label(c){const n=c.dataset._cnt[c.dataIndex];return "Rating profe: "+(c.parsed.y!=null?c.parsed.y.toFixed(2):"—")+(n?"  (n="+n+")":"");}}}},scales:{y:{min:3.5,max:5,ticks:{stepSize:0.5},grid:{color:"#efe7da"},title:{display:true,text:"Rating (1–5)"}},x:{grid:{display:false},ticks:{maxRotation:0,autoSkip:true,maxTicksLimit:12}}}}});
 }
 APP.render=function(){document.querySelectorAll(".section").forEach(x=>x.style.display="block");renderContent();renderProfes();renderProfTut();renderLive();renderWorkshops();renderCRM();activate(APP.cur||"contenido");document.getElementById("frange").textContent="Rango: "+APP.from+" → "+APP.to+" · todo (KPIs, gráficos y foco) se calcula en este rango";};
+function pipeAns(Q){const rows=APP.wsr||[];if(!rows.length)return "No hay datos del pipeline cargados.";
+  const idx=s=>stIdx(s);
+  const pend=rows.filter(r=>{const i=idx(r.status);return i===0||i===1;}).length;
+  const prod=rows.filter(r=>{const i=idx(r.status);return i===2||i<0;}).length;
+  const qa=rows.filter(r=>idx(r.status)===3).length;
+  const done=rows.filter(r=>idx(r.status)===4||r.launched).length;
+  if(/sin asignar|asignar/.test(Q))return "Sin asignar: <span class='big'>"+pend+"</span> workshops (To be assigned + Sent to content creator).";
+  if(/lanzad/.test(Q))return "Lanzados: <span class='big'>"+done+"</span> workshops con versión nueva publicada.";
+  if(/producci|creating/.test(Q))return "En producción: <span class='big'>"+prod+"</span> (Creating workshop).";
+  if(/qa|revisi/.test(Q))return "En revisión (Internal QA): <span class='big'>"+qa+"</span>.";
+  if(/squad/.test(Q)){const sq={};rows.forEach(r=>{if(r.squad)sq[r.squad]=(sq[r.squad]||0)+1;});return "Por squad:<br>"+Object.entries(sq).sort((a,b)=>b[1]-a[1]).map(([s,n])=>"• "+s+": "+n).join("<br>");}
+  return "Pipeline de renovación · <b>"+rows.length+"</b> workshops:<br>• Sin asignar: "+pend+"<br>• En producción: "+prod+"<br>• En revisión (QA): "+qa+"<br>• Lanzados: "+done;}
+function liveAns(Q){const ss=(APP.sess||[]).filter(s=>s.fe&&s.fe>=APP.from&&s.fe<=APP.to);if(!ss.length)return "No hay sesiones en el rango elegido.";
+  let ins=0;ss.forEach(s=>ins+=s.ins);
+  if(/asisten/.test(Q)){let a=0;for(const w in ATT)a+=ATT[w];return "Asistentes reales (carga manual hasta sem. 11 may): <span class='big'>"+a.toLocaleString("es")+"</span>.";}
+  if(/inscript/.test(Q))return "Inscriptos a Live Sessions (rango): <span class='big'>"+ins.toLocaleString("es")+"</span> en "+ss.length+" sesiones.";
+  if(/facilitad/.test(Q)){const f={};ss.forEach(s=>{if(s.fac)f[s.fac]=(f[s.fac]||0)+s.ins;});return "Inscriptos por facilitador:<br>"+Object.entries(f).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([k,v])=>"• "+k+": "+v).join("<br>");}
+  return "Live Sessions (rango): <b>"+ss.length+"</b> sesiones · "+ins.toLocaleString("es")+" inscriptos.";}
+function wsOdAns(Q){if(/completion|complet/.test(Q))return "Completion rate del catálogo: <span class='big'>~2,7%</span> promedio.";
+  return "Workshops on demand: <b>167</b> con actividad · 24.237 inscriptos · completion ~2,7%.<br>Top: "+WS.insc.slice(0,3).map(x=>x[0]).join(" · ")+".";}
 function botAnswer(q){
   const norm=s=>(s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
   const Q=norm(q);
@@ -898,6 +918,10 @@ function botAnswer(q){
   if(typeof APP==='undefined'||!APP.val)return "Estoy cargando los datos, probá en unos segundos.";
   const from=APP.from,to=APP.to,ag=prodAgg(from,to);
   const fmt=x=>x!=null?x.toFixed(2):"—";
+  const cur=APP.cur||"contenido";
+  if(/pipeline|sin asignar|asignar|lanzad|producci|creating|internal qa|qa\b|revisi|squad|renovaci/.test(Q))return pipeAns(Q);
+  if(/sesion|inscript|asisten|facilitad|webinar/.test(Q))return liveAns(Q);
+  if(/completion|on.?demand|tematica/.test(Q))return wsOdAns(Q);
   let pid=null,plen=0;
   APP.renov.forEach(p=>{let nm=norm(APP.curso[p]||"").replace(/\(v\d+\)/g,"").replace(/[:·]/g," ").replace(/\s+/g," ").trim();if(nm.length<4)return;
     if(Q.includes(nm)&&nm.length>plen){pid=p;plen=nm.length;}
@@ -921,16 +945,21 @@ function botAnswer(q){
   if(pid){const o=ag[pid];if(!o||(!o.nn&&!o.vn))return "<b>"+APP.curso[pid]+"</b>: sin valoraciones en el rango elegido.";
     const nv=o.nn?o.ns/o.nn:null,vv=o.vn?o.vs/o.vn:null,dl=(nv!=null&&vv!=null)?nv-vv:null;
     return "<b>"+APP.curso[pid]+"</b> · contenido:<br>nuevo <span class='big'>"+fmt(nv)+"</span> vs viejo "+fmt(vv)+(dl!=null?" · Δ "+(dl>=0?"+":"")+fmt(dl):"")+"<br>n nuevo="+o.nn;}
+  if(cur==="crm")return pipeAns("");
+  if(cur==="live")return liveAns("");
+  if(cur==="workshops")return wsOdAns("");
+  if(cur==="profes"||cur==="proftut"){let s=0,n=0;APP.profRows.forEach(r=>{if(r.d<from||r.d>to)return;s+=r.pg;n++;});return "Rating del profe (rango): <span class='big'>"+(n?fmt(s/n):"—")+"</span> · "+n+" valoraciones.<br><span style='color:#6b7079'>Probá: \"profe de Data Analytics\", \"tutores\".</span>";}
   const o=ov(matched);
-  return "Contenido (rango elegido): nuevo <span class='big'>"+fmt(o.n)+"</span> vs viejo "+fmt(o.v)+" · "+matched.length+" cursos comparables.<br><span style='color:#6b7079'>Probá: \"rating de Excel\", \"cuáles bajaron\", \"profe de Data Analytics\", \"tutores\".</span>";
+  return "Contenido (rango elegido): nuevo <span class='big'>"+fmt(o.n)+"</span> vs viejo "+fmt(o.v)+" · "+matched.length+" cursos comparables.<br><span style='color:#6b7079'>Probá: \"rating de Excel\", \"cuáles bajaron\".</span>";
 }
 function setupBot(){
   const btn=document.getElementById("botBtn"),panel=document.getElementById("botPanel"),inp=document.getElementById("botInput"),out=document.getElementById("botOut"),send=document.getElementById("botSend"),x=document.getElementById("botX"),chips=document.getElementById("botChips");
   if(!btn||btn._wired)return;btn._wired=1;
-  const EX=["rating de Excel","cuáles bajaron","mejores cursos","profe de Data Analytics","tutores"];
-  if(chips)chips.innerHTML=EX.map(e=>'<span class="bot-chip">'+e+'</span>').join("");
+  const CH={contenido:["rating de Excel","cuáles bajaron","mejores cursos"],profes:["profe de Data Analytics","tutores","mejores cursos"],proftut:["tutores","profe de Excel","cuáles bajaron"],live:["inscriptos","asistentes","por facilitador"],workshops:["completion","top workshops"],crm:["sin asignar","lanzados","en producción","por squad"]};
+  function paintChips(){const ex=CH[APP.cur||"contenido"]||CH.contenido;if(chips)chips.innerHTML=ex.map(e=>'<span class="bot-chip">'+e+'</span>').join("");}
+  paintChips();
   const go=()=>{out.innerHTML=botAnswer(inp.value);};
-  btn.onclick=()=>{panel.classList.toggle("open");if(panel.classList.contains("open"))inp.focus();};
+  btn.onclick=()=>{panel.classList.toggle("open");if(panel.classList.contains("open")){paintChips();inp.focus();}};
   if(x)x.onclick=()=>panel.classList.remove("open");
   send.onclick=go;
   inp.addEventListener("keydown",e=>{if(e.key==="Enter")go();});
