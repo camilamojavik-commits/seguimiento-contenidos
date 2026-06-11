@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: contenido-acumulado -->
+<!-- build: evo-total-periodo -->
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -38,6 +38,9 @@ label.flt{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing
 .mvup{background:#15a06b18;color:#15a06b}
 .mvdn{background:#d6432b18;color:#d6432b}
 .mvnone{font-size:11.5px;color:var(--ink2);font-style:italic}
+.evobig{text-align:right;line-height:1}
+.evonum{font-size:30px;font-weight:800;color:var(--amber)}
+.evolab{display:block;font-size:11px;color:var(--ink2);margin-top:2px}
 .detail{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:14px}
 .dcard{border:1px solid var(--line);border-radius:12px;padding:12px 13px;background:#fffdf9}
 .dcard h4{font-size:12.5px;font-weight:800;margin-bottom:7px;display:flex;align-items:center;gap:6px}
@@ -180,6 +183,9 @@ td{padding:7px 10px;border-top:1px solid var(--line)}tr:nth-child(even){backgrou
 .mtab th{background:#faf5ec;color:var(--ink2);padding:6px 9px;font-size:10px}
 .mtab td{padding:6px 9px;border-top:1px solid var(--line)}.mtab tr:nth-child(even){background:#fffdf9}
 .mflag{font-size:10px;font-weight:800;color:#dc2626;background:#fde2dd;border-radius:20px;padding:1px 8px}
+
+/* ocultar cajas de explicación/notas */
+.note,.note-top,.mnote{display:none!important}
 </style>
 </head>
 <body>
@@ -347,8 +353,9 @@ td{padding:7px 10px;border-top:1px solid var(--line)}tr:nth-child(even){backgrou
   </div>
 
   <div class="panel">
-    <div class="top"><h3><span class="ic">↗</span> Evolución del rating del profe · por día</h3></div>
-    <div class="sub">Rating promedio del profe (professor_guidance) por día, en el rango elegido. Usá el filtro de fechas de arriba (4 / 8 / 12 sem) para acercarte a una semana y ver los picos y caídas.</div>
+    <div class="top"><h3><span class="ic">↗</span> Evolución del rating del profe · por día</h3>
+      <div class="evobig"><span class="evonum" id="evoTotal">—</span><span class="evolab" id="evoN"></span></div></div>
+    <div class="sub">Rating promedio del profe (professor_guidance) por día, en el rango elegido. Usá el filtro de fechas de arriba (4 / 8 / 12 sem) para acercarte a una semana y ver los picos y caídas. El número grande es el promedio del período seleccionado.</div>
     <div class="cv"><canvas id="chartEvo"></canvas></div>
   </div>
   </section>
@@ -845,6 +852,9 @@ function renderProfTut(){
     kpi("Tutores",at!=null?at.toFixed(2):"—",tut.n.toLocaleString("es")+" valoraciones",1);
   mk("chartPT",{type:"bar",plugins:[barLabels],data:{labels:["Comis. 1 profe","Comis. 2+ profes","Tutores"],datasets:[{data:[a1!=null?+a1.toFixed(3):null,a2!=null?+a2.toFixed(3):null,at!=null?+at.toFixed(3):null],backgroundColor:["#3f6fb0","#F5A623","#15a06b"],borderRadius:5,maxBarThickness:90}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{min:4,max:5,ticks:{stepSize:0.25},grid:{color:"#efe7da"},title:{display:true,text:"Rating (1–5)"}},x:{grid:{display:false}}}}});
   // Evolución diaria del rating del profe (en el rango filtrado) — para ver picos de la semana
+  let pS=0,pN=0;for(const d in byDay){pS+=byDay[d].s;pN+=byDay[d].n;}
+  var et=document.getElementById("evoTotal");if(et)et.textContent=pN?(pS/pN).toFixed(2):"—";
+  var en=document.getElementById("evoN");if(en)en.textContent=pN?("promedio del período · "+pN.toLocaleString("es")+" valoraciones"):"";
   const days=[];let dd=from;for(let i=0;i<400&&dd<=to;i++){days.push(dd);dd=addDays(dd,1);}
   const vals=days.map(d=>{const pd=byDay[d];return pd&&pd.n?+(pd.s/pd.n).toFixed(3):null;});
   const cnts=days.map(d=>{const pd=byDay[d];return pd?pd.n:0;});
