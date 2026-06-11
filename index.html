@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: proftut-comnp -->
+<!-- build: proftut-evolucion -->
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -338,15 +338,9 @@ td{padding:7px 10px;border-top:1px solid var(--line)}tr:nth-child(even){backgrou
   </div>
 
   <div class="panel">
-    <div class="top"><h3><span class="ic">★</span> Ranking de profesores · <span id="ptProfCount">—</span></h3></div>
-    <div class="sub">Profesores con ≥10 valoraciones, ordenados por rating. <b>2 profes</b> = en cuántas de sus comisiones había otro profesor asignado (BQ).</div>
-    <table id="tblPT"><thead><tr><th>Profesor</th><th class="num">Comis.</th><th class="num">2 profes</th><th class="num">n</th><th class="num">Rating</th><th>—</th></tr></thead><tbody></tbody></table>
-  </div>
-
-  <div class="panel">
-    <div class="top"><h3><span class="ic">★</span> Ranking de tutores · <span id="ptTutCount">—</span></h3></div>
-    <div class="sub">Tutores con ≥10 valoraciones (tutor_usefulness), ordenados por rating.</div>
-    <table id="tblTut"><thead><tr><th>Tutor</th><th class="num">Comis.</th><th class="num">n</th><th class="num">Rating</th><th>—</th></tr></thead><tbody></tbody></table>
+    <div class="top"><h3><span class="ic">↗</span> Evolución del rating del profe · por día</h3></div>
+    <div class="sub">Rating promedio del profe (professor_guidance) por día, en el rango elegido. Usá el <b>filtro de fechas</b> de arriba (4 / 8 / 12 sem) para acercarte a una semana y ver los picos y caídas.</div>
+    <div class="cv"><canvas id="chartEvo"></canvas></div>
   </div>
   </section>
   <section id="sec-live" class="section">
@@ -483,12 +477,13 @@ APP.init=async function(){
   APP.prof=[];
   for(const r of lc.slice(1)){const url=r[Hl["url"]];const pid=pidUrl(url);if(!rset.has(pid))continue;const pg=parseFloat(r[Hl["professor_guidance"]]);if(isNaN(pg))continue;const com=resolveCom(url,r[Hl["comision"]]);if(!com)continue;const d=day(r[Hl["timestamp"]]);if(!d)continue;const prof=(r[Hl["class_professor_name_1"]]||"").trim();APP.prof.push({pid:pid,com:com,pg:pg,d:d,prof:prof,isNew:newComis.has(com)});}
   // PROFES Y TUTORES — todas las comisiones. Rating del Sheet; nº de profes por comisión desde BQ (COMNP, por número de comisión).
-  APP.profAll={};APP.tutAll={};
+  APP.profAll={};APP.tutAll={};APP.profByDay={};
   APP.g1={s:0,n:0,coh:{}};APP.g2={s:0,n:0,coh:{}};APP.tutG={s:0,n:0};
   for(const r of lc.slice(1)){
     const com=resolveCom(r[Hl["url"]],r[Hl["comision"]]);const np=com?COMNP[com]:undefined;
     const pg=parseFloat(r[Hl["professor_guidance"]]);const pn=cleanName(r[Hl["class_professor_name_1"]]);
     if(pn&&/[a-zA-Z]/.test(pn)&&!isNaN(pg)){const o=APP.profAll[pn]||(APP.profAll[pn]={s:0,n:0,coms:{}});o.s+=pg;o.n++;if(com)o.coms[com]=1;
+      const dd=day(r[Hl["timestamp"]]);if(dd){const pd=APP.profByDay[dd]||(APP.profByDay[dd]={s:0,n:0});pd.s+=pg;pd.n++;}
       if(np>=2){APP.g2.s+=pg;APP.g2.n++;APP.g2.coh[com]=1;}
       else if(np===1){APP.g1.s+=pg;APP.g1.n++;APP.g1.coh[com]=1;}}
     const tu=parseFloat(r[Hl["tutor_usefulness"]]);const tn=cleanName(r[Hl["tutor_name"]]);
@@ -814,13 +809,11 @@ function renderProfTut(){
     kpi("Δ (2 profes − 1 profe)",(a1!=null&&a2!=null)?((a2-a1>=0?"+":"")+(a2-a1).toFixed(2)):"—","misma escala, distinta dotación")+
     kpi("Tutores",at!=null?at.toFixed(2):"—",APP.tutG.n.toLocaleString("es")+" valoraciones",1);
   mk("chartPT",{type:"bar",plugins:[barLabels],data:{labels:["Comis. 1 profe","Comis. 2+ profes","Tutores"],datasets:[{data:[a1!=null?+a1.toFixed(3):null,a2!=null?+a2.toFixed(3):null,at!=null?+at.toFixed(3):null],backgroundColor:["#3f6fb0","#F5A623","#15a06b"],borderRadius:5,maxBarThickness:90}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{min:4,max:5,ticks:{stepSize:0.25},grid:{color:"#efe7da"},title:{display:true,text:"Rating (1–5)"}},x:{grid:{display:false}}}}});
-  const tag=a=>a>=4.6?["Excelente","#15a06b"]:a>=4.3?["Bien","#3f6fb0"]:a>=4.0?["A seguir","#d97706"]:["A reforzar","#d6432b"];
-  profs.sort((a,b)=>b.avg-a.avg);
-  document.querySelector("#tblPT tbody").innerHTML=profs.map(p=>{const t=tag(p.avg);return '<tr><td>'+esc(p.name)+'</td><td class="num">'+p.nc+'</td><td class="num">'+(p.dual||"")+'</td><td class="num">'+p.n+'</td><td class="num">'+p.avg.toFixed(2)+'</td><td><span class="sev" style="background:'+t[1]+'22;color:'+t[1]+'">'+t[0]+'</span></td></tr>';}).join("")||'<tr><td colspan="6" class="empty">Sin datos.</td></tr>';
-  tuts.sort((a,b)=>b.avg-a.avg);
-  document.querySelector("#tblTut tbody").innerHTML=tuts.map(p=>{const t=tag(p.avg);return '<tr><td>'+esc(p.name)+'</td><td class="num">'+p.nc+'</td><td class="num">'+p.n+'</td><td class="num">'+p.avg.toFixed(2)+'</td><td><span class="sev" style="background:'+t[1]+'22;color:'+t[1]+'">'+t[0]+'</span></td></tr>';}).join("")||'<tr><td colspan="5" class="empty">Sin datos.</td></tr>';
-  document.getElementById("ptProfCount").textContent=profs.length;
-  document.getElementById("ptTutCount").textContent=tuts.length;
+  // Evolución diaria del rating del profe (respeta el filtro de fechas) — para ver picos de la semana
+  const days=[];let dd=APP.from;for(let i=0;i<400&&dd<=APP.to;i++){days.push(dd);dd=addDays(dd,1);}
+  const vals=days.map(d=>{const pd=APP.profByDay[d];return pd&&pd.n?+(pd.s/pd.n).toFixed(3):null;});
+  const cnts=days.map(d=>{const pd=APP.profByDay[d];return pd?pd.n:0;});
+  mk("chartEvo",{type:"line",data:{labels:days.map(fmtW),datasets:[{label:"Rating profe",data:vals,borderColor:"#F5A623",backgroundColor:"rgba(245,166,35,0.14)",fill:true,borderWidth:3,tension:.4,spanGaps:true,pointRadius:cnts.map(n=>n?3.5:0),pointHoverRadius:5,pointBackgroundColor:"#F5A623",_cnt:cnts}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label(c){const n=c.dataset._cnt[c.dataIndex];return "Rating profe: "+(c.parsed.y!=null?c.parsed.y.toFixed(2):"—")+(n?"  (n="+n+")":"");}}}},scales:{y:{min:3.5,max:5,ticks:{stepSize:0.5},grid:{color:"#efe7da"},title:{display:true,text:"Rating (1–5)"}},x:{grid:{display:false},ticks:{maxRotation:0,autoSkip:true,maxTicksLimit:12}}}}});
 }
 APP.render=function(){document.querySelectorAll(".section").forEach(x=>x.style.display="block");renderContent();renderProfes();renderProfTut();renderLive();renderWorkshops();renderCRM();activate(APP.cur||"contenido");document.getElementById("frange").textContent="Evolución: "+APP.from+" → "+APP.to+" · (KPIs y Top 5 = acumulado total)";};
 function activate(id){APP.cur=id;var _fb=document.querySelector(".filterbar");if(_fb)_fb.style.display=(id==="workshops"||id==="crm")?"none":"flex";document.querySelectorAll(".section").forEach(s=>s.style.display=(s.id==="sec-"+id)?"block":"none");document.querySelectorAll(".nav").forEach(n=>{if(n.dataset.sec)n.classList.toggle("active",n.dataset.sec===id);});setTimeout(()=>window.dispatchEvent(new Event("resize")),25);}
