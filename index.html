@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: bot-reset-seccion -->
+<!-- build: verify-btn -->
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -55,6 +55,17 @@ label.flt{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing
 .bot-in button{background:var(--coral);color:#fff;border:none;border-radius:10px;padding:0 14px;font-weight:700;cursor:pointer;font-family:inherit}
 .bot-chip{display:inline-block;background:var(--cream);border:1px solid var(--line);border-radius:14px;padding:4px 10px;font-size:11.5px;margin:0 4px 5px 0;cursor:pointer;color:var(--ink2)}
 .bot-chip:hover{border-color:var(--coral);color:var(--coral)}
+#verifyModal{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:300;display:none;align-items:center;justify-content:center}
+#verifyModal.open{display:flex}
+.vbox{background:#fff;border-radius:14px;width:540px;max-width:92vw;max-height:82vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.vh{background:var(--ink);color:#fff;padding:13px 16px;font-weight:700;display:flex;justify-content:space-between;align-items:center}
+.vh span:last-child{cursor:pointer}
+.vbody{padding:14px 16px}
+.vrow{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line);font-size:13px}
+.vrow:first-child{border-top:none}
+.vico{font-weight:800;width:14px;text-align:center}
+.vl{flex:1;color:var(--ink)}
+.vd{color:var(--ink2);font-size:11px;font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
 .detail{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:14px}
 .dcard{border:1px solid var(--line);border-radius:12px;padding:12px 13px;background:#fffdf9}
 .dcard h4{font-size:12.5px;font-weight:800;margin-bottom:7px;display:flex;align-items:center;gap:6px}
@@ -282,7 +293,7 @@ td{padding:7px 10px;border-top:1px solid var(--line)}tr:nth-child(even){backgrou
   <div class="filterbar">
     <span class="fl">Rango de fechas:</span>
     <input type="date" id="dfrom"><span>–</span><input type="date" id="dto">
-    <button class="fb" data-p="4">4 sem</button><button class="fb" data-p="8">8 sem</button><button class="fb" data-p="12">12 sem</button><button class="fb" data-p="all">Todo</button>
+    <button class="fb" data-p="4">4 sem</button><button class="fb" data-p="8">8 sem</button><button class="fb" data-p="12">12 sem</button><button class="fb" data-p="all">Todo</button><button class="fb" id="verifyBtn" style="border-color:var(--coral);color:var(--coral)">✓ Verificar números</button>
     <span class="frange" id="frange"></span><span class="upd" id="upd"></span>
   </div>
   <div id="loading" style="padding:40px;text-align:center;color:var(--ink2);font-size:14px">Cargando datos del sheet…</div>
@@ -456,6 +467,8 @@ td{padding:7px 10px;border-top:1px solid var(--line)}tr:nth-child(even){backgrou
   </div>
   <div class="bot-in"><input id="botInput" placeholder="Ej: rating de Excel" autocomplete="off"><button id="botSend">Ir</button></div>
 </div>
+
+<div id="verifyModal"><div class="vbox"><div class="vh"><span>Verificación de números</span><span id="verifyX">✕</span></div><div id="verifyOut" class="vbody"></div></div></div>
 
 <script>
 const SHEET='1VvmrIcslmEZQCyW30iW7GZexcqGHuIOLP1nJNOMQ-F0';
@@ -891,6 +904,32 @@ function renderProfTut(){
   mk("chartEvo",{type:"line",data:{labels:days.map(fmtW),datasets:[{label:"Rating profe",data:vals,borderColor:"#F5A623",backgroundColor:"rgba(245,166,35,0.14)",fill:true,borderWidth:3,tension:.4,spanGaps:true,pointRadius:cnts.map(n=>n?3.5:0),pointHoverRadius:5,pointBackgroundColor:"#F5A623",_cnt:cnts}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label(c){const n=c.dataset._cnt[c.dataIndex];return "Rating profe: "+(c.parsed.y!=null?c.parsed.y.toFixed(2):"—")+(n?"  (n="+n+")":"");}}}},scales:{y:{min:3.5,max:5,ticks:{stepSize:0.5},grid:{color:"#efe7da"},title:{display:true,text:"Rating (1–5)"}},x:{grid:{display:false},ticks:{maxRotation:0,autoSkip:true,maxTicksLimit:12}}}}});
 }
 APP.render=function(){document.querySelectorAll(".section").forEach(x=>x.style.display="block");renderContent();renderProfes();renderProfTut();renderLive();renderWorkshops();renderCRM();activate(APP.cur||"contenido");document.getElementById("frange").textContent="Rango: "+APP.from+" → "+APP.to+" · todo (KPIs, gráficos y foco) se calcula en este rango";};
+function verify(){
+  const R=[];const add=(l,ok,d)=>R.push({l,ok,d});
+  const f=APP.from,t=APP.to;
+  const ag={};APP.val.forEach(v=>{if(v.d<f||v.d>t)return;const o=ag[v.pid]||(ag[v.pid]={nn:0,ns:0,vn:0,vs:0});if(v.isNew){o.nn++;o.ns+=v.rt;}else{o.vn++;o.vs+=v.rt;}});
+  const matched=Object.keys(ag).filter(p=>ag[p].nn>0&&ag[p].vn>0);
+  let TN=0,TS=0,VN=0,VS=0;matched.forEach(p=>{const o=ag[p];TN+=o.nn;TS+=o.ns;VN+=o.vn;VS+=o.vs;});
+  const ovN=TN?TS/TN:null,ovV=VN?VS/VN:null;
+  const kv=[...document.querySelectorAll('#kpisCont .v')].map(x=>parseFloat(x.textContent.replace(',','.')));
+  add("KPI contenido nuevo = recomputo", ovN!=null&&Math.abs(ovN-kv[2])<=0.011, "panel "+(isNaN(kv[2])?"—":kv[2].toFixed(2))+" · calc "+(ovN!=null?ovN.toFixed(2):"—"));
+  add("KPI contenido viejo = recomputo", ovV!=null&&Math.abs(ovV-kv[1])<=0.011, "panel "+(isNaN(kv[1])?"—":kv[1].toFixed(2))+" · calc "+(ovV!=null?ovV.toFixed(2):"—"));
+  add("Cursos comparables coinciden", matched.length===kv[0], "panel "+kv[0]+" · calc "+matched.length);
+  add("Ratings de contenido dentro de 1–5", APP.val.filter(v=>v.rt<1||v.rt>5).length===0, APP.val.filter(v=>v.rt<1||v.rt>5).length+" fuera");
+  let mn=0,an=0;APP.val.forEach(v=>{if(v.d<f||v.d>t||!v.isNew||matched.indexOf(v.pid)<0)return;if(v.tipo==='mod')mn++;else an++;});
+  add("Módulo + actividad = total nuevo", (mn+an)===TN, "mód "+mn+" + act "+an+" = "+(mn+an)+" vs "+TN);
+  const badP=APP.profRows.filter(r=>r.pg<1||r.pg>5).length, badT=APP.tutRows.filter(r=>r.tu<1||r.tu>5).length;
+  add("Ratings de profe/tutor dentro de 1–5", badP===0&&badT===0, "profe "+badP+" · tutor "+badT+" fuera");
+  const ck=Object.keys(COMNP).length;add("Mapa de profes por comisión cargado", ck>0, ck+" comisiones");
+  const rows=APP.wsr||[];const ix=s=>stIdx(s);const pend=rows.filter(r=>{const i=ix(r.status);return i===0||i===1;}).length,prod=rows.filter(r=>{const i=ix(r.status);return i===2||i<0;}).length,qa=rows.filter(r=>ix(r.status)===3).length,done=rows.filter(r=>ix(r.status)===4||r.launched).length;
+  add("Pipeline: suma de estados = total", (pend+prod+qa+done)===rows.length, (pend+prod+qa+done)+" = "+rows.length);
+  let nan=0;['contenido','profes','proftut','live','workshops','crm'].forEach(id=>{const el=document.getElementById('sec-'+id);if(el&&/\bNaN\b|\bundefined\b|\bInfinity\b/.test(el.textContent))nan++;});
+  add("Sin NaN / undefined en las secciones", nan===0, nan+" con anomalías");
+  return R;
+}
+function showVerify(){const R=verify();const okAll=R.every(x=>x.ok);const m=document.getElementById('verifyModal'),o=document.getElementById('verifyOut');if(!m)return;
+  o.innerHTML="<div style='font-weight:800;font-size:15px;margin-bottom:4px;color:"+(okAll?"var(--green)":"#d6432b")+"'>"+(okAll?"✓ Todo OK":"⚠ Revisar lo marcado")+"</div><div style='font-size:11.5px;color:var(--ink2);margin-bottom:10px'>Rango: "+APP.from+" → "+APP.to+"</div>"+R.map(x=>"<div class='vrow'><span class='vico' style='color:"+(x.ok?"var(--green)":"#d6432b")+"'>"+(x.ok?"✓":"✗")+"</span><span class='vl'>"+x.l+"</span><span class='vd'>"+x.d+"</span></div>").join("");
+  m.classList.add("open");}
 function pipeAns(Q){const rows=APP.wsr||[];if(!rows.length)return "No hay datos del pipeline cargados.";
   const idx=s=>stIdx(s);
   const pend=rows.filter(r=>{const i=idx(r.status);return i===0||i===1;}).length;
@@ -965,6 +1004,9 @@ function setupBot(){
   send.onclick=go;
   inp.addEventListener("keydown",e=>{if(e.key==="Enter")go();});
   panel.addEventListener("click",e=>{if(e.target.classList.contains("bot-chip")){inp.value=e.target.textContent;go();}});
+  const vb=document.getElementById("verifyBtn");if(vb)vb.onclick=showVerify;
+  const vx=document.getElementById("verifyX");if(vx)vx.onclick=()=>document.getElementById("verifyModal").classList.remove("open");
+  const vm=document.getElementById("verifyModal");if(vm)vm.addEventListener("click",e=>{if(e.target===vm)vm.classList.remove("open");});
 }
 function activate(id){APP.cur=id;var _fb=document.querySelector(".filterbar");if(_fb)_fb.style.display=(id==="workshops"||id==="crm")?"none":"flex";document.querySelectorAll(".section").forEach(s=>s.style.display=(s.id==="sec-"+id)?"block":"none");document.querySelectorAll(".nav").forEach(n=>{if(n.dataset.sec)n.classList.toggle("active",n.dataset.sec===id);});var _bi=document.getElementById("botInput");if(_bi)_bi.value="";if(typeof refreshBot==='function')refreshBot();setTimeout(()=>window.dispatchEvent(new Event("resize")),25);}
 
