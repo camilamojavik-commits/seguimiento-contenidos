@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: bot-contextual2 -->
+<!-- build: bot-reset-seccion -->
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -953,20 +953,20 @@ function botAnswer(q){
   const o=ov(matched);
   return "Contenido (rango elegido): nuevo <span class='big'>"+fmt(o.n)+"</span> vs viejo "+fmt(o.v)+" · "+matched.length+" cursos comparables.<br><span style='color:#6b7079'>Probá: \"rating de Excel\", \"cuáles bajaron\".</span>";
 }
+const BOTCH={contenido:["rating de Excel","cuáles bajaron","mejores cursos"],profes:["profe de Data Analytics","tutores","mejores cursos"],proftut:["tutores","profe de Excel","cuáles bajaron"],live:["inscriptos","asistentes","por facilitador"],workshops:["completion","top workshops"],crm:["sin asignar","lanzados","en producción","por squad"]};
+function refreshBot(){const out=document.getElementById("botOut");if(!out)return;const cur=(typeof APP!=='undefined'&&APP.cur)||"contenido";const ex=BOTCH[cur]||BOTCH.contenido;const msg=cur==="crm"?"Preguntá sobre el pipeline:":cur==="live"?"Preguntá sobre Live Sessions:":cur==="workshops"?"Preguntá sobre workshops on demand:":(cur==="profes"||cur==="proftut")?"Preguntá sobre profes y tutores:":"Preguntá sobre el contenido:";out.innerHTML=msg+"<div style='margin-top:8px'>"+ex.map(e=>'<span class="bot-chip">'+e+'</span>').join("")+"</div>";}
 function setupBot(){
-  const btn=document.getElementById("botBtn"),panel=document.getElementById("botPanel"),inp=document.getElementById("botInput"),out=document.getElementById("botOut"),send=document.getElementById("botSend"),x=document.getElementById("botX"),chips=document.getElementById("botChips");
+  const btn=document.getElementById("botBtn"),panel=document.getElementById("botPanel"),inp=document.getElementById("botInput"),out=document.getElementById("botOut"),send=document.getElementById("botSend"),x=document.getElementById("botX");
   if(!btn||btn._wired)return;btn._wired=1;
-  const CH={contenido:["rating de Excel","cuáles bajaron","mejores cursos"],profes:["profe de Data Analytics","tutores","mejores cursos"],proftut:["tutores","profe de Excel","cuáles bajaron"],live:["inscriptos","asistentes","por facilitador"],workshops:["completion","top workshops"],crm:["sin asignar","lanzados","en producción","por squad"]};
-  function paintChips(){const ex=CH[APP.cur||"contenido"]||CH.contenido;if(chips)chips.innerHTML=ex.map(e=>'<span class="bot-chip">'+e+'</span>').join("");}
-  paintChips();
+  refreshBot();
   const go=()=>{out.innerHTML=botAnswer(inp.value);};
-  btn.onclick=()=>{panel.classList.toggle("open");if(panel.classList.contains("open")){paintChips();inp.focus();}};
+  btn.onclick=()=>{panel.classList.toggle("open");if(panel.classList.contains("open")){if(!inp.value.trim())refreshBot();inp.focus();}};
   if(x)x.onclick=()=>panel.classList.remove("open");
   send.onclick=go;
   inp.addEventListener("keydown",e=>{if(e.key==="Enter")go();});
-  if(chips)chips.addEventListener("click",e=>{if(e.target.classList.contains("bot-chip")){inp.value=e.target.textContent;go();}});
+  panel.addEventListener("click",e=>{if(e.target.classList.contains("bot-chip")){inp.value=e.target.textContent;go();}});
 }
-function activate(id){APP.cur=id;var _fb=document.querySelector(".filterbar");if(_fb)_fb.style.display=(id==="workshops"||id==="crm")?"none":"flex";document.querySelectorAll(".section").forEach(s=>s.style.display=(s.id==="sec-"+id)?"block":"none");document.querySelectorAll(".nav").forEach(n=>{if(n.dataset.sec)n.classList.toggle("active",n.dataset.sec===id);});setTimeout(()=>window.dispatchEvent(new Event("resize")),25);}
+function activate(id){APP.cur=id;var _fb=document.querySelector(".filterbar");if(_fb)_fb.style.display=(id==="workshops"||id==="crm")?"none":"flex";document.querySelectorAll(".section").forEach(s=>s.style.display=(s.id==="sec-"+id)?"block":"none");document.querySelectorAll(".nav").forEach(n=>{if(n.dataset.sec)n.classList.toggle("active",n.dataset.sec===id);});var _bi=document.getElementById("botInput");if(_bi)_bi.value="";if(typeof refreshBot==='function')refreshBot();setTimeout(()=>window.dispatchEvent(new Event("resize")),25);}
 
 APP.start=async function(){
   document.getElementById("loading").style.display="block";
