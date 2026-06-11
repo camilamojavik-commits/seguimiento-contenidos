@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: exec-no-sech -->
+<!-- build: exec-coder-palette -->
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -25,7 +25,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--cream);color:va
 .kpi .d{font-size:11px;color:var(--ink2);margin-top:3px}
 .panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:20px 20px 16px;margin-bottom:16px;box-shadow:0 1px 2px rgba(16,24,40,.04)}
 .panel .top{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
-.panel h3{font-size:16px;font-weight:700;display:flex;align-items:center;gap:7px;letter-spacing:-.01em}.panel h3 .ic{color:var(--ink2)}
+.panel h3{font-size:16px;font-weight:700;display:flex;align-items:center;gap:7px;letter-spacing:-.01em}.panel h3 .ic{display:none}
 .panel .sub{font-size:12.5px;color:var(--ink2);margin:4px 0 12px}
 .sub,.ssub,.sech{display:none}
 select{font-family:inherit;font-size:13px;font-weight:600;color:var(--ink);background:#fff;border:1.5px solid var(--line);border-radius:10px;padding:7px 12px;cursor:pointer;min-width:240px}
@@ -752,10 +752,10 @@ function renderWorkshops(){
   document.querySelector("#tblW tbody").innerHTML=WS.cont.map(c=>'<tr><td>'+c[0]+'</td><td class="num">'+c[1]+'</td><td class="num">'+c[2]+'</td></tr>').join("");
 }
 // --- Renovación de workshops (CRM / Kanban) ---
-const SQCOL={"Marketing":"#FF632B","Backend":"#2563eb","Frontend":"#F59E0B","AI":"#7C3AED","Data":"#0EA5A4","Diseño":"#EC4899","Producto":"#0891B2","Negocios":"#16A34A","Cloud Ciberseguridad":"#64748B"};
-const sqColor=s=>SQCOL[s]||"#9a8c79";
+const SQCOL={};
+const sqColor=s=>"#585858";
 const STORDER=["To be assigned","Sent to content creator","Creating workshop","Internal QA","Launched"];
-const STCOL={"To be assigned":"#F59E0B","Sent to content creator":"#EAB308","Creating workshop":"#A855F7","Internal QA":"#3B82F6","Launched":"#22C55E"};
+const STCOL={"To be assigned":"#cbd5e1","Sent to content creator":"#9aa3af","Creating workshop":"#6b7280","Internal QA":"#475569","Launched":"#FF632B"};
 const stIdx=s=>STORDER.findIndex(x=>x.toLowerCase()===(s||"").trim().toLowerCase());
 const stColor=s=>{const i=stIdx(s);return i>=0?STCOL[STORDER[i]]:"#94a3b8";};
 const initials=n=>(n||"").split(/\s+/).filter(Boolean).slice(0,2).map(w=>w[0].toUpperCase()).join("");
