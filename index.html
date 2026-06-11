@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: staff-rating -->
+<!-- build: profes-filtro-fecha -->
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -841,13 +841,13 @@ function renderCRM(){
   }).join("");
 }
 
-function profAgg(){const m={};for(const v of APP.prof){const o=m[v.pid]||(m[v.pid]={nn:0,ns:0,vn:0,vs:0});if(v.isNew){o.nn++;o.ns+=v.pg;}else{o.vn++;o.vs+=v.pg;}}return m;}
+function profAgg(){const f=APP.from,t=APP.to;const m={};for(const v of APP.prof){if(v.d<f||v.d>t)continue;const o=m[v.pid]||(m[v.pid]={nn:0,ns:0,vn:0,vs:0});if(v.isNew){o.nn++;o.ns+=v.pg;}else{o.vn++;o.vs+=v.pg;}}return m;}
 function renderProfes(){
   const ag=profAgg();
   const matched=Object.keys(ag).filter(p=>ag[p].nn>0&&ag[p].vn>0);
   let TN=0,TS=0,VN=0,VS=0;matched.forEach(p=>{const o=ag[p];TN+=o.nn;TS+=o.ns;VN+=o.vn;VS+=o.vs;});
   const ovN=TN?TS/TN:null,ovV=VN?VS/VN:null;
-  const profSet={};APP.prof.forEach(v=>{if(v.prof)profSet[v.prof]=1;});
+  const profSet={};APP.prof.forEach(v=>{if(v.d<APP.from||v.d>APP.to)return;if(v.prof)profSet[v.prof]=1;});
   document.getElementById("kpisProf").innerHTML=
     kpi("Rating profe · comis. nuevas",ovN!=null?ovN.toFixed(2):"—",TN.toLocaleString("es")+" valoraciones",1)+
     kpi("Rating profe · comis. viejas",ovV!=null?ovV.toFixed(2):"—",VN.toLocaleString("es")+" valoraciones")+
@@ -867,7 +867,7 @@ function renderProfes(){
   ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{min:3.5,max:5,ticks:{stepSize:0.5},grid:{color:"#efe7da"},title:{display:true,text:"Rating del profe (1–5)"}},x:{grid:{display:false},ticks:{font:{size:12.5}}}}}});
   // ranking de profesores (n>=10), con su curso principal
   const pm={};
-  for(const v of APP.prof){if(!v.prof)continue;const o=pm[v.prof]||(pm[v.prof]={s:0,n:0,cur:{}});o.s+=v.pg;o.n++;const cn=APP.curso[v.pid]||v.pid;o.cur[cn]=(o.cur[cn]||0)+1;}
+  for(const v of APP.prof){if(v.d<APP.from||v.d>APP.to)continue;if(!v.prof)continue;const o=pm[v.prof]||(pm[v.prof]={s:0,n:0,cur:{}});o.s+=v.pg;o.n++;const cn=APP.curso[v.pid]||v.pid;o.cur[cn]=(o.cur[cn]||0)+1;}
   let prof=Object.keys(pm).map(name=>{const o=pm[name];const top=Object.entries(o.cur).sort((a,b)=>b[1]-a[1])[0];return {name:name,avg:o.s/o.n,n:o.n,curso:top?top[0]:""};}).filter(p=>p.n>=10);
   prof.sort((a,b)=>b.avg-a.avg);
   const tagFor=a=>a>=4.6?["Excelente","#15a06b"]:a>=4.3?["Bien","#8a97a8"]:a>=4.0?["A seguir","#d97706"]:["A reforzar","#d6432b"];
