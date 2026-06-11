@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: evo-total-periodo -->
+<!-- build: exec-restyle-v1 -->
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -8,7 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
-:root{--coral:#FF632B;--amber:#F5A623;--cream:#F8F2E8;--ink:#171717;--ink2:#5b5147;--line:#e7ddcf;--card:#fff;--green:#15a06b;--base:#3f6fb0;}
+:root{--coral:#FF632B;--amber:#F5A623;--cream:#F5F5F3;--ink:#1A1A1A;--ink2:#6b7079;--line:#ebebe8;--card:#fff;--green:#15905f;--base:#8a97a8;}
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--cream);color:var(--ink);line-height:1.5}
 .wrap{max-width:1080px;margin:0 auto;padding:30px 22px 60px}
@@ -19,13 +19,13 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--cream);color:va
 .brand h2{font-size:20px;font-weight:800;margin-top:2px}
 .meta{text-align:right;font-size:12px;color:var(--ink2)}.meta b{color:var(--ink)}
 .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
-.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:13px 14px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;box-shadow:0 1px 2px rgba(16,24,40,.04)}
 .kpi .l{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--ink2)}
 .kpi .v{font-size:26px;font-weight:800;margin-top:4px}.kpi.good .v{color:var(--green)}
 .kpi .d{font-size:11px;color:var(--ink2);margin-top:3px}
-.panel{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 18px 14px;margin-bottom:18px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:20px 20px 16px;margin-bottom:16px;box-shadow:0 1px 2px rgba(16,24,40,.04)}
 .panel .top{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
-.panel h3{font-size:16px;font-weight:800;display:flex;align-items:center;gap:7px}.panel h3 .ic{color:var(--green)}
+.panel h3{font-size:16px;font-weight:700;display:flex;align-items:center;gap:7px;letter-spacing:-.01em}.panel h3 .ic{color:var(--ink2)}
 .panel .sub{font-size:12.5px;color:var(--ink2);margin:4px 0 12px}
 select{font-family:inherit;font-size:13px;font-weight:600;color:var(--ink);background:#fff;border:1.5px solid var(--line);border-radius:10px;padding:7px 12px;cursor:pointer;min-width:240px}
 label.flt{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--ink2);margin-right:8px}
@@ -531,7 +531,7 @@ const barLabels={id:"barLabels",afterDatasetsDraw(ch){const ctx=ch.ctx;ctx.save(
 const lineOpts=(mn,mx)=>({responsive:true,maintainAspectRatio:false,interaction:{mode:"nearest",intersect:false},elements:{point:{borderColor:"#fff",borderWidth:2}},plugins:{legend:{position:"top",labels:{usePointStyle:true,boxWidth:8,font:{size:12}}},tooltip:{callbacks:{label(c){const n=c.dataset._cnt[c.dataIndex];return c.dataset.label.split(" · ")[0]+": "+(c.parsed.y!=null?c.parsed.y.toFixed(2):"—")+(n?"  (n="+n+")":"");}}}},scales:{y:{min:mn,max:mx,ticks:{stepSize:0.25},grid:{color:"#efe7da"},title:{display:true,text:"Rating (1–5)"}},x:{grid:{display:false}}}});
 function lineDs(nD,nN,oD,oN,na,oa){return [
   {label:"Contenido nuevo · promedio "+(na!=null?na.toFixed(2):"s/d"),data:nD,borderColor:"#F5A623",backgroundColor:"rgba(245,166,35,0.13)",fill:true,borderWidth:3,tension:.4,spanGaps:true,pointBackgroundColor:"#F5A623",pointRadius:nN.map(radN),pointHoverRadius:nN.map(n=>radN(n)+2),_cnt:nN},
-  {label:"Contenido viejo · promedio "+(oa!=null?oa.toFixed(2):"s/d"),data:oD,borderColor:"#3f6fb0",fill:false,borderWidth:2.5,tension:.4,spanGaps:true,pointBackgroundColor:"#3f6fb0",pointRadius:oN.map(radO),pointHoverRadius:oN.map(n=>radO(n)+2),_cnt:oN}
+  {label:"Contenido viejo · promedio "+(oa!=null?oa.toFixed(2):"s/d"),data:oD,borderColor:"#8a97a8",fill:false,borderWidth:2.5,tension:.4,spanGaps:true,pointBackgroundColor:"#8a97a8",pointRadius:oN.map(radO),pointHoverRadius:oN.map(n=>radO(n)+2),_cnt:oN}
 ];}
 function mk(id,cfg){if(APP.ch[id])APP.ch[id].destroy();APP.ch[id]=new Chart(document.getElementById(id),cfg);}
 const kpi=(l,v,d,g)=>'<div class="kpi'+(g?" good":"")+'"><div class="l">'+l+'</div><div class="v">'+v+'</div><div class="d">'+d+'</div></div>';
@@ -682,7 +682,7 @@ function renderCoverage(ag){
     const n=nv[pid]||0;const nCom=APP.commTotal[pid]||inis.length;
     let rank,lab,col;
     if(n>=8){rank=0;lab="Midiéndose";col="#15a06b";}
-    else if(n>0){rank=1;lab="Primeras valoraciones ("+n+")";col="#3f6fb0";}
+    else if(n>0){rank=1;lab="Primeras valoraciones ("+n+")";col="#8a97a8";}
     else if(started>0){rank=2;lab="En marcha, sin valoraciones aún";col="#F5A623";}
     else{rank=3;lab="Por arrancar";col="#9a8c79";}
     return {name:APP.curso[pid]||pid,nCom,started,first:inis[0]||"—",rank,lab,col};
@@ -702,7 +702,7 @@ function renderPerCourse(pid){const from=APP.from,to=APP.to;let s,base,nlab;
   if(pid==="-1"){document.getElementById("detail").innerHTML="";return;}
   const com={};for(const r of APP.lc){if(r.pid!==pid)continue;if(r.d&&(r.d<from||r.d>to))continue;const o=com[r.com]||(com[r.com]={s:0,n:0});o.s+=r.sc;o.n++;}
   const cs=Object.entries(com).map(([c,o])=>[c,o.n,+(o.s/o.n).toFixed(2)]).sort((a,b)=>b[2]-a[2]);
-  let rank=cs.length?cs.map(x=>'<div class="crow"><span class="cm">#'+x[0]+'</span><span class="ba"><span class="fl" style="width:'+(x[2]/5*100).toFixed(0)+'%;background:'+(x[2]<4?"#d6432b":x[2]>=4.6?"#15a06b":"#3f6fb0")+'"></span></span><span class="vl">'+x[2].toFixed(2)+" · "+x[1]+'v</span></div>').join(""):'<div class="empty">Comisiones nuevas en marcha, todavía sin votos de clase en el rango.</div>';
+  let rank=cs.length?cs.map(x=>'<div class="crow"><span class="cm">#'+x[0]+'</span><span class="ba"><span class="fl" style="width:'+(x[2]/5*100).toFixed(0)+'%;background:'+(x[2]<4?"#d6432b":x[2]>=4.6?"#15a06b":"#8a97a8")+'"></span></span><span class="vl">'+x[2].toFixed(2)+" · "+x[1]+'v</span></div>').join(""):'<div class="empty">Comisiones nuevas en marcha, todavía sin votos de clase en el rango.</div>';
   const cm=APP.val.filter(v=>v.pid===pid&&v.isNew&&v.cm&&v.d>=from&&v.d<=to).sort((a,b)=>b.d<a.d?-1:1).slice(0,4);
   let coms=cm.length?cm.map(v=>'<div class="q">"'+v.cm.replace(/</g,"&lt;").slice(0,200)+'" ('+v.rt.toFixed(0)+'★)</div>').join(""):'<div class="empty">Sin comentarios del contenido nuevo en el rango.</div>';
   document.getElementById("detail").innerHTML='<div class="dcard"><h4>Comisiones nuevas (clase en vivo) <span class="tag">en el rango</span></h4>'+rank+'<div class="note" style="margin-top:8px">'+cs.length+' de '+(APP.commTotal[pid]||0)+' comisiones nuevas con votos.</div></div><div class="dcard"><h4>Comentarios del contenido nuevo</h4>'+coms+'</div>';
@@ -712,7 +712,7 @@ const ATT={"2026-03-16":39,"2026-03-23":41,"2026-03-30":39,"2026-04-06":52,"2026
 function renderLive(){const from=APP.from,to=APP.to;const ss=APP.sess.filter(s=>s.fe&&s.fe>=from&&s.fe<=to);
   const est={};let ins=0,rec=0;const fac={},wk={};const facN={};
   ss.forEach(s=>{est[s.est||"(s/d)"]=(est[s.est||"(s/d)"]||0)+1;ins+=s.ins;if(s.rec)rec++;if(!fac[s.fac]){fac[s.fac]=0;facN[s.fac]=0;}fac[s.fac]+=s.ins;facN[s.fac]++;const m=monday(s.fe);if(m){if(!wk[m])wk[m]={n:0,ins:0};wk[m].n++;wk[m].ins+=s.ins;}});
-  const estMap={ENDED:["Finalizadas","#3f6fb0"],LIVE:["En vivo","#15a06b"],UPCOMING:["Próximas","#F5A623"]};
+  const estMap={ENDED:["Finalizadas","#8a97a8"],LIVE:["En vivo","#15a06b"],UPCOMING:["Próximas","#F5A623"]};
   const weeks=genWeeks(from,to);const wi=weeks.map(w=>wk[w]?wk[w].ins:0);const wn=weeks.map(w=>wk[w]?wk[w].n:0);
   const wa=weeks.map(w=>ATT[w]!=null?ATT[w]:null);
   let sumAs=0,sumInsAs=0;weeks.forEach((w,i)=>{if(ATT[w]!=null){sumAs+=ATT[w];sumInsAs+=wi[i];}});
@@ -827,7 +827,7 @@ function renderProfes(){
   for(const v of APP.prof){if(!v.prof)continue;const o=pm[v.prof]||(pm[v.prof]={s:0,n:0,cur:{}});o.s+=v.pg;o.n++;const cn=APP.curso[v.pid]||v.pid;o.cur[cn]=(o.cur[cn]||0)+1;}
   let prof=Object.keys(pm).map(name=>{const o=pm[name];const top=Object.entries(o.cur).sort((a,b)=>b[1]-a[1])[0];return {name:name,avg:o.s/o.n,n:o.n,curso:top?top[0]:""};}).filter(p=>p.n>=10);
   prof.sort((a,b)=>b.avg-a.avg);
-  const tagFor=a=>a>=4.6?["Excelente","#15a06b"]:a>=4.3?["Bien","#3f6fb0"]:a>=4.0?["A seguir","#d97706"]:["A reforzar","#d6432b"];
+  const tagFor=a=>a>=4.6?["Excelente","#15a06b"]:a>=4.3?["Bien","#8a97a8"]:a>=4.0?["A seguir","#d97706"]:["A reforzar","#d6432b"];
   const trow=p=>{const t=tagFor(p.avg);return '<tr><td>'+esc(p.name)+'</td><td>'+esc(p.curso)+'</td><td class="num">'+p.n+'</td><td class="num">'+p.avg.toFixed(2)+'</td><td><span class="sev" style="background:'+t[1]+'22;color:'+t[1]+'">'+t[0]+'</span></td></tr>';};
   const top=prof.slice(0,12), bottom=prof.slice(-6).reverse();
   document.getElementById("profTop").innerHTML=top.map(trow).join("")||'<tr><td colspan="5" class="empty">Sin datos suficientes.</td></tr>';
@@ -850,7 +850,7 @@ function renderProfTut(){
     kpi("Profe · comis. 2+ profes",a2!=null?a2.toFixed(2):"—",Object.keys(g2.c).length+" comis · rating compartido")+
     kpi("Δ (2 profes − 1 profe)",(a1!=null&&a2!=null)?((a2-a1>=0?"+":"")+(a2-a1).toFixed(2)):"—","misma escala, distinta dotación")+
     kpi("Tutores",at!=null?at.toFixed(2):"—",tut.n.toLocaleString("es")+" valoraciones",1);
-  mk("chartPT",{type:"bar",plugins:[barLabels],data:{labels:["Comis. 1 profe","Comis. 2+ profes","Tutores"],datasets:[{data:[a1!=null?+a1.toFixed(3):null,a2!=null?+a2.toFixed(3):null,at!=null?+at.toFixed(3):null],backgroundColor:["#3f6fb0","#F5A623","#15a06b"],borderRadius:5,maxBarThickness:90}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{min:4,max:5,ticks:{stepSize:0.25},grid:{color:"#efe7da"},title:{display:true,text:"Rating (1–5)"}},x:{grid:{display:false}}}}});
+  mk("chartPT",{type:"bar",plugins:[barLabels],data:{labels:["Comis. 1 profe","Comis. 2+ profes","Tutores"],datasets:[{data:[a1!=null?+a1.toFixed(3):null,a2!=null?+a2.toFixed(3):null,at!=null?+at.toFixed(3):null],backgroundColor:["#8a97a8","#F5A623","#15a06b"],borderRadius:5,maxBarThickness:90}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{min:4,max:5,ticks:{stepSize:0.25},grid:{color:"#efe7da"},title:{display:true,text:"Rating (1–5)"}},x:{grid:{display:false}}}}});
   // Evolución diaria del rating del profe (en el rango filtrado) — para ver picos de la semana
   let pS=0,pN=0;for(const d in byDay){pS+=byDay[d].s;pN+=byDay[d].n;}
   var et=document.getElementById("evoTotal");if(et)et.textContent=pN?(pS/pN).toFixed(2):"—";
