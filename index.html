@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: contenido-por-rango -->
+<!-- build: legend-ultimo -->
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -533,9 +533,12 @@ const refLines={id:"ref",beforeDraw(ch){const a=ch.chartArea,y=ch.scales.y,ctx=c
 const lineLabels={id:"lineLabels",afterDatasetsDraw(ch){const ctx=ch.ctx,ds=ch.data.datasets[0];if(!ds)return;ctx.save();ctx.font="700 10.5px 'Plus Jakarta Sans',sans-serif";ctx.fillStyle="#b65e16";ctx.textAlign="center";ch.getDatasetMeta(0).data.forEach((pt,i)=>{const v=ds.data[i];if(v==null)return;ctx.fillText(v.toFixed(2),pt.x,pt.y-9);});ctx.restore();}};
 const barLabels={id:"barLabels",afterDatasetsDraw(ch){const ctx=ch.ctx;ctx.save();ctx.font="700 11px 'Plus Jakarta Sans',sans-serif";ctx.textAlign="center";ch.data.datasets.forEach((ds,di)=>{ch.getDatasetMeta(di).data.forEach((bar,i)=>{const v=ds.data[i];if(v==null)return;ctx.fillStyle=di===0?"#8a8073":"#b65e16";ctx.fillText(Number.isInteger(v)?v:v.toFixed(2),bar.x,bar.y-6);});});ctx.restore();}};
 const lineOpts=(mn,mx)=>({responsive:true,maintainAspectRatio:false,interaction:{mode:"nearest",intersect:false},elements:{point:{borderColor:"#fff",borderWidth:2}},plugins:{legend:{position:"top",labels:{usePointStyle:true,boxWidth:8,font:{size:12}}},tooltip:{callbacks:{label(c){const n=c.dataset._cnt[c.dataIndex];return c.dataset.label.split(" · ")[0]+": "+(c.parsed.y!=null?c.parsed.y.toFixed(2):"—")+(n?"  (n="+n+")":"");}}}},scales:{y:{min:mn,max:mx,ticks:{stepSize:0.25},grid:{color:"#efe7da"},title:{display:true,text:"Rating (1–5)"}},x:{grid:{display:false}}}});
-function lineDs(nD,nN,oD,oN,na,oa){return [
-  {label:"Contenido nuevo · promedio "+(na!=null?na.toFixed(2):"s/d"),data:nD,borderColor:"#F5A623",backgroundColor:"rgba(245,166,35,0.13)",fill:true,borderWidth:3,tension:.4,spanGaps:true,pointBackgroundColor:"#F5A623",pointRadius:nN.map(radN),pointHoverRadius:nN.map(n=>radN(n)+2),_cnt:nN},
-  {label:"Contenido viejo · promedio "+(oa!=null?oa.toFixed(2):"s/d"),data:oD,borderColor:"#8a97a8",fill:false,borderWidth:2.5,tension:.4,spanGaps:true,pointBackgroundColor:"#8a97a8",pointRadius:oN.map(radO),pointHoverRadius:oN.map(n=>radO(n)+2),_cnt:oN}
+function lineDs(nD,nN,oD,oN,na,oa){
+  const lastV=a=>{for(let i=a.length-1;i>=0;i--){if(a[i]!=null)return a[i];}return null;};
+  const ln=lastV(nD),lo=lastV(oD);
+  return [
+  {label:"Contenido nuevo · últ. "+(ln!=null?ln.toFixed(2):"s/d"),data:nD,borderColor:"#F5A623",backgroundColor:"rgba(245,166,35,0.13)",fill:true,borderWidth:3,tension:.4,spanGaps:true,pointBackgroundColor:"#F5A623",pointRadius:nN.map(radN),pointHoverRadius:nN.map(n=>radN(n)+2),_cnt:nN},
+  {label:"Contenido viejo · últ. "+(lo!=null?lo.toFixed(2):"s/d"),data:oD,borderColor:"#8a97a8",fill:false,borderWidth:2.5,tension:.4,spanGaps:true,pointBackgroundColor:"#8a97a8",pointRadius:oN.map(radO),pointHoverRadius:oN.map(n=>radO(n)+2),_cnt:oN}
 ];}
 function mk(id,cfg){if(APP.ch[id])APP.ch[id].destroy();APP.ch[id]=new Chart(document.getElementById(id),cfg);}
 const kpi=(l,v,d,g)=>'<div class="kpi'+(g?" good":"")+'"><div class="l">'+l+'</div><div class="v">'+v+'</div><div class="d">'+d+'</div></div>';
