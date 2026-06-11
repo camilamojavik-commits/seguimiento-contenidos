@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: profe-filtro-curso -->
+<!-- build: profe-deprecado-actualizado -->
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -310,9 +310,9 @@ td{padding:7px 10px;border-top:1px solid var(--line)}tr:nth-child(even){backgrou
   <div class="kpis" id="kpisProf"></div>
 
   <div class="panel">
-    <div class="top"><h3><span class="ic">👩‍🏫</span> Rating del profe · comisiones viejas vs nuevas, por curso</h3>
+    <div class="top"><h3><span class="ic">👩‍🏫</span> Rating del profe · contenido deprecado vs actualizado</h3>
       <div><label class="flt">Curso:</label><select id="selProf"></select></div></div>
-    <div class="sub">Rating promedio del profe (azul = comisiones de contenido viejo, naranja = contenido nuevo), por curso, ordenado <b>de peor a mejor según Δ</b>. Sirve para ver si el contenido nuevo afecta la percepción del profe. Solo cursos con muestra nueva ≥5. Elegí un curso para ver solo ese.</div>
+    <div class="sub">Rating promedio del profe (gris = staff dictando <b>contenido deprecado</b>, naranja = staff dictando <b>contenido actualizado</b>). Sirve para ver si el contenido nuevo afecta la percepción del profe. <span id="pvSub"></span></div>
     <div class="cv"><canvas id="chartPV"></canvas></div>
     <div class="note">Mismos profesores, distinto contenido. Si el rating del profe se mantiene o sube con el contenido nuevo, es buena señal de que el material acompaña la clase.</div>
   </div>
@@ -778,15 +778,17 @@ function renderProfes(){
     kpi("Δ nuevo − viejo",(ovN!=null&&ovV!=null)?((ovN-ovV>=0?"+":"")+(ovN-ovV).toFixed(2)):"—","mismo profe, contenido nuevo vs viejo")+
     kpi("Profesores medidos",Object.keys(profSet).length,"con nombre cargado");
   // chart: rating del profe por curso, viejo vs nuevo (cursos con ambos y muestra nueva >=5), de peor a mejor Δ
-  const allItems=APP.renov.map(p=>{const o=ag[p];if(!o||!o.nn||!o.vn)return null;if(o.nn<5)return null;return {n:APP.curso[p]||p,nv:o.ns/o.nn,vv:o.vs/o.vn,nn:o.nn};}).filter(Boolean).sort((a,b)=>(a.nv-a.vv)-(b.nv-b.vv));
+  // Desplegable: "Todos (agregado)" = 2 barras (staff contenido deprecado vs actualizado). Seleccionar curso = ese curso.
+  const courseItems=matched.map(p=>({n:APP.curso[p]||p,nv:ag[p].ns/ag[p].nn,vv:ag[p].vs/ag[p].vn,nn:ag[p].nn})).sort((a,b)=>(a.nv-a.vv)-(b.nv-b.vv));
   const selP=document.getElementById("selProf");
-  if(selP&&selP.options.length<=1)selP.innerHTML='<option value="">Todos los cursos</option>'+allItems.map(t=>'<option>'+esc(t.n)+'</option>').join("");
+  if(selP&&selP.options.length<=1)selP.innerHTML='<option value="">Todos (agregado)</option>'+courseItems.map(t=>'<option>'+esc(t.n)+'</option>').join("");
   const fcP=selP?selP.value:"";
-  const items=fcP?allItems.filter(t=>t.n===fcP):allItems;
-  mk("chartPV",{type:"bar",plugins:[barLabels],data:{labels:items.map(t=>t.n),datasets:[
-    {label:"Comis. viejas",data:items.map(t=>+t.vv.toFixed(3)),backgroundColor:"#bdb1a0",borderRadius:4,maxBarThickness:40},
-    {label:"Comis. nuevas",data:items.map(t=>+t.nv.toFixed(3)),backgroundColor:"#F5A623",borderRadius:4,maxBarThickness:40}
-  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"top",labels:{usePointStyle:true,boxWidth:8,font:{size:12}}}},scales:{y:{min:3.5,max:5,ticks:{stepSize:0.5},grid:{color:"#efe7da"}},x:{grid:{display:false},ticks:{font:{size:10.5},maxRotation:38,minRotation:38}}}}});
+  let dep=ovV,act=ovN,nNew=null;
+  if(fcP){const it=courseItems.find(t=>t.n===fcP);if(it){dep=it.vv;act=it.nv;nNew=it.nn;}}
+  var pvs=document.getElementById("pvSub");if(pvs)pvs.textContent=fcP?(fcP+" · "+(nNew||0)+" valoraciones del profe en contenido nuevo"):("Agregado de "+matched.length+" cursos renovados. Elegí un curso en el desplegable para verlo solo.");
+  mk("chartPV",{type:"bar",plugins:[barLabels],data:{labels:["Staff · contenido deprecado","Staff · contenido actualizado"],datasets:[
+    {data:[dep!=null?+dep.toFixed(3):null,act!=null?+act.toFixed(3):null],backgroundColor:["#bdb1a0","#F5A623"],borderRadius:6,maxBarThickness:160}
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{min:3.5,max:5,ticks:{stepSize:0.5},grid:{color:"#efe7da"},title:{display:true,text:"Rating del profe (1–5)"}},x:{grid:{display:false},ticks:{font:{size:12.5}}}}}});
   // ranking de profesores (n>=10), con su curso principal
   const pm={};
   for(const v of APP.prof){if(!v.prof)continue;const o=pm[v.prof]||(pm[v.prof]={s:0,n:0,cur:{}});o.s+=v.pg;o.n++;const cn=APP.curso[v.pid]||v.pid;o.cur[cn]=(o.cur[cn]||0)+1;}
