@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: feedback-sin-nombres2 -->
+<!-- build: chart-pad -->
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -938,7 +938,7 @@ function renderProfes(){
   var pvs=document.getElementById("pvSub");if(pvs)pvs.textContent=fcP?(fcP+" · "+(nNew||0)+" valoraciones del profe en contenido nuevo"):("Agregado de "+matched.length+" cursos renovados. Elegí un curso en el desplegable para verlo solo.");
   mk("chartPV",{type:"bar",plugins:[barLabels],data:{labels:["Staff · contenido deprecado","Staff · contenido actualizado"],datasets:[
     {data:[dep!=null?+dep.toFixed(3):null,act!=null?+act.toFixed(3):null],backgroundColor:["#bdb1a0","#F5A623"],borderRadius:6,maxBarThickness:160}
-  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{min:3.5,max:5,ticks:{stepSize:0.5},grid:{color:"#efe7da"},title:{display:true,text:"Rating del profe (1–5)"}},x:{grid:{display:false},ticks:{font:{size:12.5}}}}}});
+  ]},options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:18}},plugins:{legend:{display:false}},scales:{y:{min:3.5,max:5,ticks:{stepSize:0.5},grid:{color:"#efe7da"},title:{display:true,text:"Rating del profe (1–5)"}},x:{grid:{display:false},ticks:{font:{size:12.5}}}}}});
   // ranking de profesores (n>=10), con su curso principal
   const pm={};
   for(const v of APP.prof){if(v.d<APP.from||v.d>APP.to)continue;if(!v.prof)continue;const o=pm[v.prof]||(pm[v.prof]={s:0,n:0,cur:{}});o.s+=v.pg;o.n++;const cn=APP.curso[v.pid]||v.pid;o.cur[cn]=(o.cur[cn]||0)+1;}
@@ -967,7 +967,7 @@ function renderProfTut(){
     kpi("Profe · comis. 2+ profes",a2!=null?a2.toFixed(2):"—",Object.keys(g2.c).length+" comis · rating compartido")+
     kpi("Δ (2 profes − 1 profe)",(a1!=null&&a2!=null)?((a2-a1>=0?"+":"")+(a2-a1).toFixed(2)):"—","misma escala, distinta dotación")+
     kpi("Tutores",at!=null?at.toFixed(2):"—",tut.n.toLocaleString("es")+" valoraciones",1);
-  mk("chartPT",{type:"bar",plugins:[barLabels],data:{labels:["Comis. 1 profe","Comis. 2+ profes","Tutores"],datasets:[{data:[a1!=null?+a1.toFixed(3):null,a2!=null?+a2.toFixed(3):null,at!=null?+at.toFixed(3):null],backgroundColor:["#8a97a8","#F5A623","#15a06b"],borderRadius:5,maxBarThickness:90}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{min:4,max:5,ticks:{stepSize:0.25},grid:{color:"#efe7da"},title:{display:true,text:"Rating (1–5)"}},x:{grid:{display:false}}}}});
+  mk("chartPT",{type:"bar",plugins:[barLabels],data:{labels:["Comis. 1 profe","Comis. 2+ profes","Tutores"],datasets:[{data:[a1!=null?+a1.toFixed(3):null,a2!=null?+a2.toFixed(3):null,at!=null?+at.toFixed(3):null],backgroundColor:["#8a97a8","#F5A623","#15a06b"],borderRadius:5,maxBarThickness:90}]},options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:18}},plugins:{legend:{display:false}},scales:{y:{min:4,max:5,ticks:{stepSize:0.25},grid:{color:"#efe7da"},title:{display:true,text:"Rating (1–5)"}},x:{grid:{display:false}}}}});
   // Evolución diaria del rating del profe (en el rango filtrado) — para ver picos de la semana
   let pS=0,pN=0;for(const d in byDay){pS+=byDay[d].s;pN+=byDay[d].n;}
   // ---- Comisiones con rating bajo en el rango (professor_guidance por comisión) ----
