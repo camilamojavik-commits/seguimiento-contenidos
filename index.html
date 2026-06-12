@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: feedback-sin-nombres -->
+<!-- build: feedback-sin-nombres2 -->
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -566,7 +566,9 @@ APP.init=async function(){
   APP.val=[];
   // Set de nombres de profe/tutor: un comentario que menciona a una persona es sobre el profe/tutor, no el contenido.
   const _nrm=x=>(x||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
-  APP.nameSet=(function(){const s=new Set();for(const r of lc.slice(1)){[r[Hl["class_professor_name_1"]],r[Hl["tutor_name"]]].forEach(nm=>{_nrm(nm).replace(/[^a-z ]/g," ").split(/\s+/).forEach(t=>{if(t.length>=4)s.add(t);});});}return s;})();
+  APP.nameSet=(function(){const s=new Set();for(const r of lc.slice(1)){[r[Hl["class_professor_name_1"]],r[Hl["tutor_name"]]].forEach(nm=>{_nrm(nm).replace(/[^a-z ]/g," ").split(/\s+/).forEach(t=>{if(t.length>=4)s.add(t);});});}
+    ["claro","clara","claros","claras","buena","bueno","buenos","buenas","mejor","mejora","mejores","mejorar","justa","justo","sola","solo","fuente","fuentes","facil","real","ideal","clase","clases","tema","temas","nota","notas","practica","teoria","contenido","ejemplo","ejemplos","modulo","modulos","excelente","mala","malo","corta","largo","larga","nueva","nuevo","clase"].forEach(w=>s.delete(w));
+    return s;})();
   const Hv={};vm[0].forEach((x,i)=>{if(Hv[x.trim()]===undefined)Hv[x.trim()]=i;});
   for(const r of vm.slice(1)){const url=r[Hv["url"]];const pid=pidUrl(url);if(!rset.has(pid))continue;const rt=parseFloat(r[Hv["rating"]]);if(isNaN(rt))continue;const com=resolveCom(url,r[Hv["comision"]]);if(!com)continue;const d=day(r[Hv["timestamp"]]);if(!d)continue;const cmt=(r[Hv["comment"]]||"").trim();if(cmt&&DELIV.test(cmt))continue;APP.val.push({pid:pid,cid:cohUrl(url),com:com,rt:rt,d:d,cm:cmt,mod:(r[Hv["module_name"]]||"").trim()||"(módulo s/d)",tipo:"mod",isNew:newComis.has(com)});}
   for(const r of lc.slice(1)){const url=r[Hl["url"]];const pid=pidUrl(url);if(!rset.has(pid))continue;const a=parseFloat(r[Hl["activity"]]);if(isNaN(a))continue;const com=resolveCom(url,r[Hl["comision"]]);if(!com)continue;const d=day(r[Hl["timestamp"]]);if(!d)continue;const cmt=(r[Hl["comment"]]||"").trim();if(cmt&&DELIV.test(cmt))continue;APP.val.push({pid:pid,cid:cohUrl(url),com:com,rt:a,d:d,cm:cmt,mod:"Actividad práctica",tipo:"act",isNew:newComis.has(com)});}
