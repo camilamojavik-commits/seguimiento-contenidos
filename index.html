@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: comis-rating-bajo -->
+<!-- build: contenido-diario -->
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -595,10 +595,10 @@ APP.init=async function(){
 };
 
 function genWeeks(from,to){const out=[];let m=monday(from),e=monday(to);if(!m||!e)return out;let d=new Date(m+"T00:00:00Z"),ed=new Date(e+"T00:00:00Z");while(d<=ed){out.push(d.toISOString().slice(0,10));d.setUTCDate(d.getUTCDate()+7);}return out;}
-function series(pid,from,to){const wk=genWeeks(from,to);const idx={};wk.forEach((w,i)=>idx[w]=i);const nD=wk.map(()=>null),nS=wk.map(()=>0),nN=wk.map(()=>0),oD=wk.map(()=>null),oS=wk.map(()=>0),oN=wk.map(()=>0);let ns=0,nn=0,os=0,on=0;
-  for(const v of APP.val){if(pid){if(v.pid!==pid)continue;}else if(APP.matchedSet&&!APP.matchedSet.has(v.pid))continue;if(v.d<from||v.d>to)continue;const w=monday(v.d);if(!(w in idx))continue;const i=idx[w];if(v.isNew){nS[i]+=v.rt;nN[i]++;ns+=v.rt;nn++;}else{oS[i]+=v.rt;oN[i]++;os+=v.rt;on++;}}
-  for(let i=0;i<wk.length;i++){if(nN[i])nD[i]=+(nS[i]/nN[i]).toFixed(3);if(oN[i])oD[i]=+(oS[i]/oN[i]).toFixed(3);}
-  return {labels:wk.map(fmtW),newD:nD,newN:nN,oldD:oD,oldN:oN,newAvg:nn?ns/nn:null,oldAvg:on?os/on:null};}
+function series(pid,from,to){const dys=[];let dd=from;for(let i=0;i<400&&dd<=to;i++){dys.push(dd);dd=addDays(dd,1);}const idx={};dys.forEach((w,i)=>idx[w]=i);const nD=dys.map(()=>null),nS=dys.map(()=>0),nN=dys.map(()=>0),oD=dys.map(()=>null),oS=dys.map(()=>0),oN=dys.map(()=>0);let ns=0,nn=0,os=0,on=0;
+  for(const v of APP.val){if(pid){if(v.pid!==pid)continue;}else if(APP.matchedSet&&!APP.matchedSet.has(v.pid))continue;if(v.d<from||v.d>to)continue;const i=idx[v.d];if(i===undefined)continue;if(v.isNew){nS[i]+=v.rt;nN[i]++;ns+=v.rt;nn++;}else{oS[i]+=v.rt;oN[i]++;os+=v.rt;on++;}}
+  for(let i=0;i<dys.length;i++){if(nN[i])nD[i]=+(nS[i]/nN[i]).toFixed(3);if(oN[i])oD[i]=+(oS[i]/oN[i]).toFixed(3);}
+  return {labels:dys.map(fmtW),newD:nD,newN:nN,oldD:oD,oldN:oN,newAvg:nn?ns/nn:null,oldAvg:on?os/on:null};}
 function prodAgg(from,to){const m={};for(const v of APP.val){if(v.d<from||v.d>to)continue;const o=m[v.pid]||(m[v.pid]={nn:0,ns:0,vn:0,vs:0});if(v.isNew){o.nn++;o.ns+=v.rt;}else{o.vn++;o.vs+=v.rt;}}return m;}
 
 const radN=n=>n?Math.max(3.5,Math.min(10,3.5+n/7)):0;
