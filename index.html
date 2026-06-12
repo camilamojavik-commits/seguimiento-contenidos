@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: filtros-fecha -->
+<!-- build: feedback-sin-nombres -->
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -564,6 +564,9 @@ APP.init=async function(){
   const resolveCom=(url,comRaw)=>{let c=validC(comRaw);if(!c){const ci=cohUrl(url);if(ci&&cohToCom[ci])c=cohToCom[ci];}return c;};
   // CONTENIDO = valoración de módulo + actividad práctica, clasificado por comisión (en comisiones_cc_nuevo => nuevo)
   APP.val=[];
+  // Set de nombres de profe/tutor: un comentario que menciona a una persona es sobre el profe/tutor, no el contenido.
+  const _nrm=x=>(x||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
+  APP.nameSet=(function(){const s=new Set();for(const r of lc.slice(1)){[r[Hl["class_professor_name_1"]],r[Hl["tutor_name"]]].forEach(nm=>{_nrm(nm).replace(/[^a-z ]/g," ").split(/\s+/).forEach(t=>{if(t.length>=4)s.add(t);});});}return s;})();
   const Hv={};vm[0].forEach((x,i)=>{if(Hv[x.trim()]===undefined)Hv[x.trim()]=i;});
   for(const r of vm.slice(1)){const url=r[Hv["url"]];const pid=pidUrl(url);if(!rset.has(pid))continue;const rt=parseFloat(r[Hv["rating"]]);if(isNaN(rt))continue;const com=resolveCom(url,r[Hv["comision"]]);if(!com)continue;const d=day(r[Hv["timestamp"]]);if(!d)continue;const cmt=(r[Hv["comment"]]||"").trim();if(cmt&&DELIV.test(cmt))continue;APP.val.push({pid:pid,cid:cohUrl(url),com:com,rt:rt,d:d,cm:cmt,mod:(r[Hv["module_name"]]||"").trim()||"(módulo s/d)",tipo:"mod",isNew:newComis.has(com)});}
   for(const r of lc.slice(1)){const url=r[Hl["url"]];const pid=pidUrl(url);if(!rset.has(pid))continue;const a=parseFloat(r[Hl["activity"]]);if(isNaN(a))continue;const com=resolveCom(url,r[Hl["comision"]]);if(!com)continue;const d=day(r[Hl["timestamp"]]);if(!d)continue;const cmt=(r[Hl["comment"]]||"").trim();if(cmt&&DELIV.test(cmt))continue;APP.val.push({pid:pid,cid:cohUrl(url),com:com,rt:a,d:d,cm:cmt,mod:"Actividad práctica",tipo:"act",isNew:newComis.has(com)});}
@@ -695,9 +698,10 @@ const REC={
  "Growth Marketing (V2)|||Growth strategy: el framework AARRR y métricas de negocio":{n:1,tips:["Desarrollar más el módulo yendo de lo general a lo particular; no dar por sentado conocimientos previos.","Agregar ejemplos concretos del framework AARRR aplicado a un caso real."]}
 };
 APP.recTog=function(id){const d=document.getElementById(id);if(d)d.style.display=d.style.display==="none"?"block":"none";};
+function hasName(cmt){const ns=APP.nameSet;if(!ns)return false;const w=(cmt||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").split(/[^a-z]+/);for(const t of w){if(t.length>=4&&ns.has(t))return true;}return false;}
 function modBreakdown(pid,base){
   const m={};const coms=[];
-  for(const v of APP.val){if(v.pid!==pid||!v.isNew||v.d<APP.from||v.d>APP.to)continue;const k=v.mod||"(sin módulo)";const o=m[k]||(m[k]={s:0,n:0,c:0});o.s+=v.rt;o.n++;if(v.cm&&v.cm.trim().length>1){o.c++;coms.push({mod:k,rt:v.rt,cm:v.cm.trim()});}}
+  for(const v of APP.val){if(v.pid!==pid||!v.isNew||v.d<APP.from||v.d>APP.to)continue;const k=v.mod||"(sin módulo)";const o=m[k]||(m[k]={s:0,n:0,c:0});o.s+=v.rt;o.n++;if(v.cm&&v.cm.trim().length>1&&!hasName(v.cm)){o.c++;coms.push({mod:k,rt:v.rt,cm:v.cm.trim()});}}
   let arr=Object.entries(m).map(([mod,o])=>({mod,n:o.n,avg:o.s/o.n,c:o.c})).sort((a,b)=>a.avg-b.avg);
   if(!arr.length)return '<div class="mnote">Sin valoraciones del contenido nuevo en el rango.</div>';
   const bc=a=>a<base-0.15?"#dc2626":(a>=base+0.15?"#15a06b":"#e8954a");
@@ -787,7 +791,7 @@ function renderPerCourse(pid){const from=APP.from,to=APP.to;let s,base,nlab;
   const com={};for(const r of APP.lc){if(r.pid!==pid)continue;if(r.d&&(r.d<from||r.d>to))continue;const o=com[r.com]||(com[r.com]={s:0,n:0});o.s+=r.sc;o.n++;}
   const cs=Object.entries(com).map(([c,o])=>[c,o.n,+(o.s/o.n).toFixed(2)]).sort((a,b)=>b[2]-a[2]);
   let rank=cs.length?cs.map(x=>'<div class="crow"><span class="cm">#'+x[0]+'</span><span class="ba"><span class="fl" style="width:'+(x[2]/5*100).toFixed(0)+'%;background:'+(x[2]<4?"#d6432b":x[2]>=4.6?"#15a06b":"#8a97a8")+'"></span></span><span class="vl">'+x[2].toFixed(2)+" · "+x[1]+'v</span></div>').join(""):'<div class="empty">Comisiones nuevas en marcha, todavía sin votos de clase en el rango.</div>';
-  const cm=APP.val.filter(v=>v.pid===pid&&v.isNew&&v.cm&&v.d>=from&&v.d<=to).sort((a,b)=>b.d<a.d?-1:1).slice(0,4);
+  const cm=APP.val.filter(v=>v.pid===pid&&v.isNew&&v.cm&&!hasName(v.cm)&&v.d>=from&&v.d<=to).sort((a,b)=>b.d<a.d?-1:1).slice(0,4);
   let coms=cm.length?cm.map(v=>'<div class="q">"'+v.cm.replace(/</g,"&lt;").slice(0,200)+'" ('+v.rt.toFixed(0)+'★)</div>').join(""):'<div class="empty">Sin comentarios del contenido nuevo en el rango.</div>';
   document.getElementById("detail").innerHTML='<div class="dcard"><h4>Comisiones nuevas (clase en vivo) <span class="tag">en el rango</span></h4>'+rank+'<div class="note" style="margin-top:8px">'+cs.length+' de '+(APP.commTotal[pid]||0)+' comisiones nuevas con votos.</div></div><div class="dcard"><h4>Comentarios del contenido nuevo</h4>'+coms+'</div>';
 }
