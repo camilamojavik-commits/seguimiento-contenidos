@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: perfil-folios-feedback -->
+<!-- build: folios-live-ready -->
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -64,6 +64,7 @@ label.flt{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing
 .pmfolio{border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin:7px 0;font-size:12px}
 .pmfolio a{color:var(--coral);text-decoration:none;font-weight:600}
 .pmempty{font-size:12px;color:var(--ink2);font-style:italic}
+.folstat{font-weight:500;font-size:11px;color:var(--ink2)}
 .clk{cursor:pointer}.clk:hover{background:#fff7f0}
 .vbox{background:#fff;border-radius:14px;width:540px;max-width:92vw;max-height:82vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)}
 .vh{background:var(--ink);color:#fff;padding:13px 16px;font-weight:700;display:flex;justify-content:space-between;align-items:center}
@@ -481,6 +482,12 @@ td{padding:7px 10px;border-top:1px solid var(--line)}tr:nth-child(even){backgrou
 
 <script>
 const SHEET='1VvmrIcslmEZQCyW30iW7GZexcqGHuIOLP1nJNOMQ-F0';
+/* === Folios de feedback en vivo ===
+   Dejar FOLIOS_API="" => usa el snapshot horneado abajo (FOLIOS_COM).
+   Al deployar en el dominio de Coder con el proxy de Intercom, poner acá la URL del endpoint, ej:
+   var FOLIOS_API="https://TU-DOMINIO/api/folios";
+   El endpoint recibe ?coms=90105,89780&name=... y devuelve {folios:[{com,title,date,mail,state,url}]}. La API key vive en el servidor, nunca acá. */
+var FOLIOS_API=(window.FOLIOS_API||"");
 var FOLIOS_COM=(function(){var U="https://app.intercom.com/a/inbox/_/inbox/conversation/";
 function f(date,mail,id){return {t:"Feedback de cursada (Comunidad) — resumen + sugerencias",date:date,mail:mail,state:"closed",url:U+id};}
 /* Folios de feedback de Intercom indexados por COMISIÓN. El perfil cruza las comisiones del profe/tutor.
@@ -866,20 +873,31 @@ function renderCRM(){
 
 function profAgg(){const f=APP.from,t=APP.to;const m={};for(const v of APP.prof){if(v.d<f||v.d>t)continue;const o=m[v.pid]||(m[v.pid]={nn:0,ns:0,vn:0,vs:0});if(v.isNew){o.nn++;o.ns+=v.pg;}else{o.vn++;o.vs+=v.pg;}}return m;}
 function folioKey(s){return (s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/\|/g," ").replace(/\[[^\]]*\]/g,"").replace(/\b(profe|profesor|profesora|tutor|instructor)\b/g," ").replace(/[^a-z ]/g," ").replace(/\s+/g," ").trim();}
+function folioCard(x){return '<div class="pmfolio">'+(x.url?'<a href="'+x.url+'" target="_blank">':'')+esc(x.t||'Feedback de cursada')+(x.url?'</a>':'')+'<div class="r">Comisión '+esc(x.com)+(x.date?' · '+esc(x.date):'')+(x.state?' · '+esc(x.state):'')+'</div>'+(x.mail?'<div class="r">'+esc(x.mail)+'</div>':'')+'</div>';}
+function renderFolios(fol,comsPersona){return fol.length? fol.map(folioCard).join("") : "<div class='pmempty'>Sin folios de feedback para las comisiones de esta persona ("+(comsPersona.join(", ")||"s/d")+").</div>";}
 function openProfile(name){
   const f=APP.from,t=APP.to;
   const coms=APP.prof.filter(r=>r.prof===name&&r.cm&&/[a-zA-Z]{3,}/.test(r.cm)&&r.d>=f&&r.d<=t).sort((a,b)=>b.d<a.d?-1:1);
   // comisiones de esta persona (para cruzar con folios de feedback de Intercom)
   const comsPersona=[...new Set(APP.prof.filter(r=>r.prof===name&&r.com).map(r=>r.com))];
-  let fol=[];comsPersona.forEach(c=>{(FOLIOS_COM[c]||[]).forEach(x=>fol.push(Object.assign({com:c},x)));});
+  let snap=[];comsPersona.forEach(c=>{(FOLIOS_COM[c]||[]).forEach(x=>snap.push(Object.assign({com:c},x)));});
   const clean=name.replace(/\|/g," ").replace(/\[[^\]]*\]/g,"").replace(/\b(Profe|Profesor|Profesora|Tutor|Instructor)\b/g,"").replace(/\s+/g," ").trim();
   let html="<div class='pmh'>💬 Comentarios de alumnos ("+coms.length+")</div>";
   html+= coms.length? coms.slice(0,40).map(c=>'<div class="pmcom"><div class="r">'+c.d+' · '+c.pg.toFixed(0)+'★</div>'+esc(c.cm).slice(0,400)+'</div>').join("") : "<div class='pmempty'>Sin comentarios escritos en el rango elegido.</div>";
-  html+="<div class='pmh'>📋 Folios de feedback · Intercom ("+fol.length+")</div>";
-  html+= fol.length? fol.map(x=>'<div class="pmfolio">'+(x.url?'<a href="'+x.url+'" target="_blank">':'')+esc(x.t||'Feedback')+(x.url?'</a>':'')+'<div class="r">Comisión '+esc(x.com)+(x.date?' · '+esc(x.date):'')+(x.state?' · '+esc(x.state):'')+'</div>'+(x.mail?'<div class="r">'+esc(x.mail)+'</div>':'')+'</div>').join("") : "<div class='pmempty'>Sin folios de feedback para las comisiones de esta persona ("+(comsPersona.join(", ")||"s/d")+"). En vivo se cruzan automáticamente por comisión sobre todas las comisiones de la persona.</div>";
+  html+="<div class='pmh'>📋 Folios de feedback · Intercom <span id='folStat' class='folstat'>"+(FOLIOS_API?"· actualizando…":"· snapshot")+"</span></div><div id='folBox'>"+renderFolios(snap,comsPersona)+"</div>";
   document.getElementById("profMTitle").textContent=clean;
   document.getElementById("profMBody").innerHTML=html;
   document.getElementById("profModal").classList.add("open");
+  // Modo en vivo: si hay endpoint configurado (window.FOLIOS_API), consulta Intercom por comisión y reemplaza el snapshot.
+  if(FOLIOS_API&&comsPersona.length){
+    fetch(FOLIOS_API+(FOLIOS_API.indexOf("?")>=0?"&":"?")+"coms="+encodeURIComponent(comsPersona.join(","))+"&name="+encodeURIComponent(clean))
+      .then(r=>r.json()).then(d=>{
+        const live=(d.folios||[]).map(x=>({com:x.com,t:x.title||x.t||"Feedback de cursada",date:x.date||"",mail:x.mail||"",state:x.state||"",url:x.url||""}));
+        const box=document.getElementById("folBox"),st=document.getElementById("folStat");
+        if(box){box.innerHTML=renderFolios(live,comsPersona);}
+        if(st){st.textContent="· en vivo";}
+      }).catch(()=>{const st=document.getElementById("folStat");if(st)st.textContent="· snapshot (sin conexión a la API)";});
+  }
 }
 function renderProfes(){
   const ag=profAgg();
