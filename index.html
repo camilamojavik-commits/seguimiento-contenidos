@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: folios-staff-amplio -->
+<!-- build: comis-rating-bajo -->
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -395,6 +395,12 @@ td{padding:7px 10px;border-top:1px solid var(--line)}tr:nth-child(even){backgrou
       <div class="evobig"><span class="evonum" id="evoTotal">—</span><span class="evolab" id="evoN"></span></div></div>
     <div class="sub">Rating promedio del profe (professor_guidance) por día, en el rango elegido. Usá el filtro de fechas de arriba (4 / 8 / 12 sem) para acercarte a una semana y ver los picos y caídas. El número grande es el promedio del período seleccionado.</div>
     <div class="cv"><canvas id="chartEvo"></canvas></div>
+  </div>
+
+  <div class="panel">
+    <div class="top"><h3><span class="ic">▼</span> Comisiones con rating bajo · en el rango <span id="lowComCount" class="folstat"></span></h3></div>
+    <div class="sub">Comisiones cuyo rating de profe (professor_guidance) en el rango de fechas elegido está por debajo de 4,30, con al menos 5 valoraciones. Ordenadas de peor a mejor. Cambiá el filtro de fechas de arriba para recalcular.</div>
+    <table id="tblLowCom"><thead><tr><th>Comisión</th><th>Curso</th><th>Profe</th><th class="num">Nº profes</th><th class="num">Rating</th><th class="num">n</th><th>Estado</th></tr></thead><tbody id="lowComBody"></tbody></table>
   </div>
   </section>
   <section id="sec-live" class="section">
@@ -955,6 +961,16 @@ function renderProfTut(){
   mk("chartPT",{type:"bar",plugins:[barLabels],data:{labels:["Comis. 1 profe","Comis. 2+ profes","Tutores"],datasets:[{data:[a1!=null?+a1.toFixed(3):null,a2!=null?+a2.toFixed(3):null,at!=null?+at.toFixed(3):null],backgroundColor:["#8a97a8","#F5A623","#15a06b"],borderRadius:5,maxBarThickness:90}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{min:4,max:5,ticks:{stepSize:0.25},grid:{color:"#efe7da"},title:{display:true,text:"Rating (1–5)"}},x:{grid:{display:false}}}}});
   // Evolución diaria del rating del profe (en el rango filtrado) — para ver picos de la semana
   let pS=0,pN=0;for(const d in byDay){pS+=byDay[d].s;pN+=byDay[d].n;}
+  // ---- Comisiones con rating bajo en el rango (professor_guidance por comisión) ----
+  const LOWT=4.30, LOWMIN=5;
+  const cmap={};for(const r of APP.profRows){if(r.d<from||r.d>to||!r.com)continue;const o=cmap[r.com]||(cmap[r.com]={s:0,n:0,np:r.np});o.s+=r.pg;o.n++;}
+  // enriquecer con curso y profe conocidos (de cursos renovados)
+  const comCurso={},comProf={};for(const v of APP.prof){if(!v.com)continue;if(v.pid&&APP.curso[v.pid])comCurso[v.com]=APP.curso[v.pid];if(v.prof){comProf[v.com]=(comProf[v.com]||{});comProf[v.com][v.prof]=(comProf[v.com][v.prof]||0)+1;}}
+  let low=Object.keys(cmap).map(c=>{const o=cmap[c];const pf=comProf[c]?Object.entries(comProf[c]).sort((a,b)=>b[1]-a[1])[0][0]:"";return {com:c,avg:o.s/o.n,n:o.n,np:o.np,curso:comCurso[c]||"—",prof:pf?pf.replace(/\|/g," ").replace(/\[[^\]]*\]/g,"").replace(/\b(Profe|Profesor|Profesora|Tutor|Instructor)\b/g,"").replace(/\s+/g," ").trim():"—"};}).filter(p=>p.n>=LOWMIN&&p.avg<LOWT).sort((a,b)=>a.avg-b.avg);
+  const bandLow=a=>a<4.0?["A reforzar","#d6432b"]:["A seguir","#d97706"];
+  const lcb=document.getElementById("lowComBody");
+  if(lcb)lcb.innerHTML=low.length?low.map(p=>{const t=bandLow(p.avg);return '<tr><td>'+esc(p.com)+'</td><td>'+esc(p.curso)+'</td><td>'+esc(p.prof)+'</td><td class="num">'+(p.np||"—")+'</td><td class="num">'+p.avg.toFixed(2)+'</td><td class="num">'+p.n+'</td><td><span class="sev" style="background:'+t[1]+'22;color:'+t[1]+'">'+t[0]+'</span></td></tr>';}).join(""):'<tr><td colspan="7" class="empty">Ninguna comisión por debajo de 4,30 (con n≥5) en el rango elegido.</td></tr>';
+  const lcc=document.getElementById("lowComCount");if(lcc)lcc.textContent="· "+low.length+" comisiones";
   var et=document.getElementById("evoTotal");if(et)et.textContent=pN?(pS/pN).toFixed(2):"—";
   var en=document.getElementById("evoN");if(en)en.textContent=pN?("promedio del período · "+pN.toLocaleString("es")+" valoraciones"):"";
   const days=[];let dd=from;for(let i=0;i<400&&dd<=to;i++){days.push(dd);dd=addDays(dd,1);}
