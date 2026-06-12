@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: nav-logo -->
+<!-- build: filtros-fecha -->
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -645,9 +645,9 @@ function renderContent(){const from=APP.from,to=APP.to,ag=prodAgg(from,to);
   let TN=0,TS=0,VN=0,VS=0,med=0;matched.forEach(pid=>{const o=ag[pid];TN+=o.nn;TS+=o.ns;VN+=o.vn;VS+=o.vs;if(o.nn>=8)med++;});
   const ovN=TN?TS/TN:null,ovV=VN?VS/VN:null;
   document.getElementById("kpisCont").innerHTML=kpi("Cursos comparables",matched.length,med+" con muestra sólida (n≥8)")+kpi("Avg viejo",ovV!=null?ovV.toFixed(2):"—",VN.toLocaleString("es")+" val. (mismos cursos)")+kpi("Avg nuevo",ovN!=null?ovN.toFixed(2):"—",TN.toLocaleString("es")+" valoraciones",1)+kpi("Δ nuevo − viejo",(ovN!=null&&ovV!=null)?((ovN-ovV>=0?"+":"")+(ovN-ovV).toFixed(2)):"—","viejo vs nuevo del mismo curso",1);
-  // desglose módulo vs actividad práctica (acumulado total)
+  // desglose módulo vs actividad práctica (en el rango filtrado)
   const br={mod:{nn:0,ns:0,vn:0,vs:0},act:{nn:0,ns:0,vn:0,vs:0}};
-  for(const v of APP.val){if(!APP.matchedSet.has(v.pid))continue;const o=br[v.tipo];if(!o)continue;if(v.isNew){o.nn++;o.ns+=v.rt;}else{o.vn++;o.vs+=v.rt;}}
+  for(const v of APP.val){if(!APP.matchedSet.has(v.pid)||v.d<from||v.d>to)continue;const o=br[v.tipo];if(!o)continue;if(v.isNew){o.nn++;o.ns+=v.rt;}else{o.vn++;o.vs+=v.rt;}}
   const fa=(o,k)=>o[k+"n"]?(o[k+"s"]/o[k+"n"]).toFixed(2):"—";
   document.getElementById("cBreak").innerHTML="Desglose: Módulo → nuevo "+fa(br.mod,"n")+" vs viejo "+fa(br.mod,"v")+" (n nuevo "+br.mod.nn+") · Actividad práctica → nuevo "+fa(br.act,"n")+" vs viejo "+fa(br.act,"v")+" (n nuevo "+br.act.nn+"). El nuevo por módulo todavía tiene poca muestra porque las comisiones recién arrancaron.";
   const g=series(null,from,to);mk("chartG",{type:"line",data:{labels:g.labels,datasets:lineDs(g.newD,g.newN,g.oldD,g.oldN,ovN,ovV)},plugins:[refLines,lineLabels],options:lineOpts(3.4,5.05)});
@@ -697,7 +697,7 @@ const REC={
 APP.recTog=function(id){const d=document.getElementById(id);if(d)d.style.display=d.style.display==="none"?"block":"none";};
 function modBreakdown(pid,base){
   const m={};const coms=[];
-  for(const v of APP.val){if(v.pid!==pid||!v.isNew)continue;const k=v.mod||"(sin módulo)";const o=m[k]||(m[k]={s:0,n:0,c:0});o.s+=v.rt;o.n++;if(v.cm&&v.cm.trim().length>1){o.c++;coms.push({mod:k,rt:v.rt,cm:v.cm.trim()});}}
+  for(const v of APP.val){if(v.pid!==pid||!v.isNew||v.d<APP.from||v.d>APP.to)continue;const k=v.mod||"(sin módulo)";const o=m[k]||(m[k]={s:0,n:0,c:0});o.s+=v.rt;o.n++;if(v.cm&&v.cm.trim().length>1){o.c++;coms.push({mod:k,rt:v.rt,cm:v.cm.trim()});}}
   let arr=Object.entries(m).map(([mod,o])=>({mod,n:o.n,avg:o.s/o.n,c:o.c})).sort((a,b)=>a.avg-b.avg);
   if(!arr.length)return '<div class="mnote">Sin valoraciones del contenido nuevo en el rango.</div>';
   const bc=a=>a<base-0.15?"#dc2626":(a>=base+0.15?"#15a06b":"#e8954a");
