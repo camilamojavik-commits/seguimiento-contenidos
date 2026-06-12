@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: folios-live-ready -->
+<!-- build: folios-staff-amplio -->
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -489,18 +489,20 @@ const SHEET='1VvmrIcslmEZQCyW30iW7GZexcqGHuIOLP1nJNOMQ-F0';
    El endpoint recibe ?coms=90105,89780&name=... y devuelve {folios:[{com,title,date,mail,state,url}]}. La API key vive en el servidor, nunca acá. */
 var FOLIOS_API=(window.FOLIOS_API||"");
 var FOLIOS_COM=(function(){var U="https://app.intercom.com/a/inbox/_/inbox/conversation/";
-function f(date,mail,id){return {t:"Feedback de cursada (Comunidad) — resumen + sugerencias",date:date,mail:mail,state:"closed",url:U+id};}
-/* Folios de feedback de Intercom indexados por COMISIÓN. El perfil cruza las comisiones del profe/tutor.
-   Tipo de folio: "Feedback comisión NNNN" del equipo de Comunidad (feedback de cursada con resumen, puntos a mejorar y sugerencias).
-   Trae: comisión + email del profe/tutor + fecha. Snapshot al 2026-06; en vivo se consultan por comisión sobre TODAS las comisiones de la persona. */
+function f(t,date,mail,id){return {t:t,date:date,mail:mail,state:"closed",url:U+id};}
+/* Folios de Intercom (equipo Comunidad/Staff/Académico) indexados por COMISIÓN. El perfil cruza las comisiones del profe/tutor.
+   Incluye folios escritos por una persona del staff que referencian la comisión: feedback de cursada, ausencias, cancelaciones, recordatorios.
+   Trae: comisión + email del profe/tutor + fecha. Snapshot al 2026-06; en vivo se consultan por comisión (proxy de Intercom). */
 return {
-"89780":[f("2026-03-09","leandro.diego.calarco@gmail.com (profe) · cynthia (tutora)","215473409988671")],
-"90105":[f("2026-03-09","danysmaggioni+profesora@gmail.com (profe) · nahir.dana+tutor@gmail.com","215473409413877")],
-"90185":[f("2026-03-09","marihegb+profesor@gmail.com (profe) · caponesolnazarena+tutora@gmail.com","215473409648964")],
-"90015":[f("2026-03-09","profe + tutor de la comisión","215473410501282")],
-"90030":[f("2026-03-09","profe + tutor de la comisión","215473410556744")],
-"90170":[f("2026-03-09","profe + tutor de la comisión","215473409575823")],
-"90205":[f("2026-03-09","profe + tutor de la comisión","215473409835564")]
+"89780":[f("Feedback de cursada (Comunidad)","2026-03-09","leandro.diego.calarco@gmail.com (profe) · cynthia (tutora)","215473409988671")],
+"90105":[f("Feedback de cursada (Comunidad)","2026-03-09","danysmaggioni+profesora@gmail.com (profe) · nahir.dana+tutor@gmail.com","215473409413877")],
+"90185":[f("Feedback de cursada (Comunidad)","2026-03-09","marihegb+profesor@gmail.com (profe) · caponesolnazarena+tutora@gmail.com","215473409648964")],
+"90015":[f("Feedback de cursada (Comunidad)","2026-03-09","profe + tutor de la comisión","215473410501282")],
+"90030":[f("Feedback de cursada (Comunidad)","2026-03-09","profe + tutor de la comisión","215473410556744")],
+"90170":[f("Feedback de cursada (Comunidad)","2026-03-09","profe + tutor de la comisión","215473409575823")],
+"90205":[f("Feedback de cursada (Comunidad)","2026-03-09","profe + tutor de la comisión","215473409835564")],
+"97370":[f("Contacto de Staff — ausencia a clase","2026-06-02","ezequielmtartaglia+profesor@gmail.com (profe)","215474554219345")],
+"96890":[f("Urgente — cancelación de clases en la comisión","2026-05-28","ezequielmtartaglia+profesor@gmail.com (profe)","215474483197775")]
 };})();
 const TOP10=[
  {n:"Data Analytics",pid:"804123bd-e8d3-483e-87f3-46af58833a15"},
