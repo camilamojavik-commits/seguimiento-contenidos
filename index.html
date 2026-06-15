@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: rec-tabla-fix -->
+<!-- build: tbl-drilldown -->
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -665,9 +665,12 @@ function renderContent(){const from=APP.from,to=APP.to,ag=prodAgg(from,to);
   const nue=chartItems.map(t=>{const o=ag[t.pid];return o.nn?+(o.ns/o.nn).toFixed(3):null;});
   mk("chartT",{type:"bar",plugins:[barLabels],data:{labels:chartItems.map(t=>t.n),datasets:[{label:"Viejo",data:vie,backgroundColor:"#bdb1a0",borderRadius:4,maxBarThickness:46},{label:"Nuevo",data:nue,backgroundColor:"#F5A623",borderRadius:4,maxBarThickness:46}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"top",labels:{usePointStyle:true,boxWidth:8,font:{size:12}}}},scales:{y:{min:3.5,max:5,ticks:{stepSize:0.5},grid:{color:"#efe7da"}},x:{grid:{display:false},ticks:{font:{size:11}}}}}});
   // table
-  const rows=APP.renov.filter(pid=>ag[pid]&&(ag[pid].nn>0||ag[pid].vn>0)).map(pid=>{const o=ag[pid];const nv=o.nn?o.ns/o.nn:null,vv=o.vn?o.vs/o.vn:null;return {name:APP.curso[pid],nn:o.nn,nv:nv,vv:vv,dl:(nv!=null&&vv!=null)?nv-vv:null,med:o.nn>=8};});
+  const rows=APP.renov.filter(pid=>ag[pid]&&(ag[pid].nn>0||ag[pid].vn>0)).map(pid=>{const o=ag[pid];const nv=o.nn?o.ns/o.nn:null,vv=o.vn?o.vs/o.vn:null;return {pid:pid,name:APP.curso[pid],nn:o.nn,nv:nv,vv:vv,dl:(nv!=null&&vv!=null)?nv-vv:null,med:o.nn>=8};});
   rows.sort((a,b)=>{const ad=a.dl==null?99:a.dl,bd=b.dl==null?99:b.dl;return ad-bd;});
-  document.querySelector("#tbl tbody").innerHTML=rows.map(r=>'<tr><td>'+r.name+'</td><td class="num">'+(r.vv!=null?r.vv.toFixed(2):"—")+'</td><td class="num">'+(r.nv!=null?r.nv.toFixed(2):"—")+'</td><td class="num">'+r.nn+'</td><td class="num '+(r.dl>=0?"up":"dn")+'">'+(r.dl!=null?((r.dl>=0?"+":"")+r.dl.toFixed(2)):"—")+'</td></tr>').join("");
+  document.querySelector("#tbl tbody").innerHTML=rows.map((r,i)=>{const exp=r.nn>0;
+    const main='<tr'+(exp?' class="clk" style="cursor:pointer" onclick="APP.tblTog('+i+')"':'')+'><td>'+(exp?'<span id="tblc'+i+'" style="color:#FF632B;margin-right:7px">▸</span>':'')+esc(r.name)+'</td><td class="num">'+(r.vv!=null?r.vv.toFixed(2):"—")+'</td><td class="num">'+(r.nv!=null?r.nv.toFixed(2):"—")+'</td><td class="num">'+r.nn+'</td><td class="num '+(r.dl>=0?"up":"dn")+'">'+(r.dl!=null?((r.dl>=0?"+":"")+r.dl.toFixed(2)):"—")+'</td></tr>';
+    const det=exp?'<tr id="tbld'+i+'" style="display:none"><td colspan="5" style="background:#faf7f2;padding:6px 10px 12px">'+modBreakdown(r.pid,(r.vv!=null?r.vv:4.6))+'</td></tr>':'';
+    return main+det;}).join("");
   buildSel(ag);renderPerCourse(document.getElementById("sel").value||"-1");renderCoverage(ag);renderTopPain(ag);
 }
 function renderPain(ag){
@@ -703,6 +706,7 @@ const REC={
  "Growth Marketing (V2)|||Growth strategy: el framework AARRR y métricas de negocio":{n:1,tips:["Desarrollar más el módulo yendo de lo general a lo particular; no dar por sentado conocimientos previos.","Agregar ejemplos concretos del framework AARRR aplicado a un caso real."]}
 };
 APP.recTog=function(id){const d=document.getElementById(id);if(d)d.style.display=d.style.display==="none"?"block":"none";};
+APP.tblTog=function(i){const d=document.getElementById("tbld"+i);if(d)d.style.display=d.style.display==="none"?"":"none";const c=document.getElementById("tblc"+i);if(c)c.textContent=(d&&d.style.display==="none")?"▸":"▾";};
 function hasName(cmt){const ns=APP.nameSet;if(!ns)return false;const w=(cmt||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").split(/[^a-z]+/);for(const t of w){if(t.length>=4&&ns.has(t))return true;}return false;}
 function modBreakdown(pid,base){
   const m={};const coms=[];
