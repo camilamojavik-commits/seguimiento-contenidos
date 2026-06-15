@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: chart-pad -->
+<!-- build: backfill-nombre-comision -->
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -562,6 +562,8 @@ APP.init=async function(){
   const cohToCom={};
   for(const r of lc.slice(1)){const co=validC(r[Hl["comision"]]);const ci=cohUrl(r[Hl["url"]]);if(co&&ci&&!cohToCom[ci])cohToCom[ci]=co;}
   const resolveCom=(url,comRaw)=>{let c=validC(comRaw);if(!c){const ci=cohUrl(url);if(ci&&cohToCom[ci])c=cohToCom[ci];}return c;};
+  // comisión -> nombre de profe (de las filas que SÍ tienen nombre), para backfillear las valoraciones que vienen sin nombre
+  const com2name=(function(){const c={};for(const r of lc.slice(1)){const com=resolveCom(r[Hl["url"]],r[Hl["comision"]]);const pn=(r[Hl["class_professor_name_1"]]||"").trim();if(com&&pn){(c[com]||(c[com]={}))[pn]=(c[com][pn]||0)+1;}}const out={};Object.keys(c).forEach(k=>{out[k]=Object.entries(c[k]).sort((a,b)=>b[1]-a[1])[0][0];});return out;})();
   // CONTENIDO = valoración de módulo + actividad práctica, clasificado por comisión (en comisiones_cc_nuevo => nuevo)
   APP.val=[];
   // Set de nombres de profe/tutor: un comentario que menciona a una persona es sobre el profe/tutor, no el contenido.
@@ -577,12 +579,12 @@ APP.init=async function(){
   for(const r of lc.slice(1)){const com=validC(r[Hl["comision"]]);const pid=APP.commCurso[com];if(!pid)continue;const p=parseFloat(r[Hl["professor_guidance"]]),a=parseFloat(r[Hl["activity"]]);let s=0,n=0;if(!isNaN(p)){s+=p;n++;}if(!isNaN(a)){s+=a;n++;}if(!n)continue;APP.lc.push({com:com,pid:pid,sc:s/n,d:day(r[Hl["timestamp"]])});}
   // RATING DE PROFESORES = professor_guidance de la clase en vivo, por curso renovado, clasificado nuevo/viejo por comisión
   APP.prof=[];
-  for(const r of lc.slice(1)){const url=r[Hl["url"]];const pid=pidUrl(url);if(!rset.has(pid))continue;const pg=parseFloat(r[Hl["professor_guidance"]]);if(isNaN(pg))continue;const com=resolveCom(url,r[Hl["comision"]]);if(!com)continue;const d=day(r[Hl["timestamp"]]);if(!d)continue;const prof=(r[Hl["class_professor_name_1"]]||"").trim();const cmt=(r[Hl["comment"]]||"").trim();APP.prof.push({pid:pid,com:com,pg:pg,d:d,prof:prof,cm:cmt,isNew:newComis.has(com)});}
+  for(const r of lc.slice(1)){const url=r[Hl["url"]];const pid=pidUrl(url);if(!rset.has(pid))continue;const pg=parseFloat(r[Hl["professor_guidance"]]);if(isNaN(pg))continue;const com=resolveCom(url,r[Hl["comision"]]);if(!com)continue;const d=day(r[Hl["timestamp"]]);if(!d)continue;const prof=(r[Hl["class_professor_name_1"]]||"").trim()||com2name[com]||"";const cmt=(r[Hl["comment"]]||"").trim();APP.prof.push({pid:pid,com:com,pg:pg,d:d,prof:prof,cm:cmt,isNew:newComis.has(com)});}
   // PROFES Y TUTORES — guardamos cada valoración con su fecha para poder filtrar por rango. nº de profes por comisión desde BQ (COMNP).
   APP.profRows=[];APP.tutRows=[];
   for(const r of lc.slice(1)){
     const com=resolveCom(r[Hl["url"]],r[Hl["comision"]]);const np=com?COMNP[com]:undefined;const d=day(r[Hl["timestamp"]]);if(!d)continue;
-    const pg=parseFloat(r[Hl["professor_guidance"]]);const pn=cleanName(r[Hl["class_professor_name_1"]]);
+    const pg=parseFloat(r[Hl["professor_guidance"]]);const pn=cleanName((r[Hl["class_professor_name_1"]]||"").trim()||com2name[com]||"");
     if(pn&&/[a-zA-Z]/.test(pn)&&!isNaN(pg))APP.profRows.push({d:d,com:com,np:np,pg:pg,prof:pn});
     const tu=parseFloat(r[Hl["tutor_usefulness"]]);const tn=cleanName(r[Hl["tutor_name"]]);
     if(tn&&/[a-zA-Z]/.test(tn)&&!isNaN(tu))APP.tutRows.push({d:d,tu:tu});
@@ -703,7 +705,7 @@ APP.recTog=function(id){const d=document.getElementById(id);if(d)d.style.display
 function hasName(cmt){const ns=APP.nameSet;if(!ns)return false;const w=(cmt||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").split(/[^a-z]+/);for(const t of w){if(t.length>=4&&ns.has(t))return true;}return false;}
 function modBreakdown(pid,base){
   const m={};const coms=[];
-  for(const v of APP.val){if(v.pid!==pid||!v.isNew||v.d<APP.from||v.d>APP.to)continue;const k=v.mod||"(sin módulo)";const o=m[k]||(m[k]={s:0,n:0,c:0});o.s+=v.rt;o.n++;if(v.cm&&v.cm.trim().length>1&&!hasName(v.cm)){o.c++;coms.push({mod:k,rt:v.rt,cm:v.cm.trim()});}}
+  for(const v of APP.val){if(v.pid!==pid||!v.isNew||v.d<APP.from||v.d>APP.to)continue;const k=v.mod||"(sin módulo)";const o=m[k]||(m[k]={s:0,n:0,c:0});o.s+=v.rt;o.n++;if(v.cm&&v.cm.trim().length>1&&!hasName(v.cm)){o.c++;coms.push({mod:k,rt:v.rt,cm:v.cm.trim(),com:v.com});}}
   let arr=Object.entries(m).map(([mod,o])=>({mod,n:o.n,avg:o.s/o.n,c:o.c})).sort((a,b)=>a.avg-b.avg);
   if(!arr.length)return '<div class="mnote">Sin valoraciones del contenido nuevo en el rango.</div>';
   const bc=a=>a<base-0.15?"#dc2626":(a>=base+0.15?"#15a06b":"#e8954a");
@@ -721,7 +723,7 @@ function modBreakdown(pid,base){
   const CAP=10;
   let comHtml;
   if(!coms.length){comHtml='<div class="mnote">Sin comentarios escritos todavía en el contenido nuevo.</div>';}
-  else{comHtml=coms.slice(0,CAP).map(c=>{const bg=c.rt<=3?"#fde2dd":c.rt>=5?"#dcfce7":"#fef3cd",fg=c.rt<=3?"#b91c1c":c.rt>=5?"#166534":"#92400e";return '<div class="qc"><span class="qcr" style="background:'+bg+';color:'+fg+'">'+c.rt.toFixed(0)+'★</span><div class="qcb"><div class="qcm">“'+esc(c.cm).slice(0,260)+'”</div><div class="qcs">'+esc(c.mod)+'</div></div></div>';}).join("")+(coms.length>CAP?'<div class="mnote">+ '+(coms.length-CAP)+' comentarios más</div>':'');}
+  else{comHtml=coms.slice(0,CAP).map(c=>{const bg=c.rt<=3?"#fde2dd":c.rt>=5?"#dcfce7":"#fef3cd",fg=c.rt<=3?"#b91c1c":c.rt>=5?"#166534":"#92400e";return '<div class="qc"><span class="qcr" style="background:'+bg+';color:'+fg+'">'+c.rt.toFixed(0)+'★</span><div class="qcb"><div class="qcm">“'+esc(c.cm).slice(0,260)+'”</div><div class="qcs">'+esc(c.mod)+(c.com?' · comisión #'+esc(c.com):'')+'</div></div></div>';}).join("")+(coms.length>CAP?'<div class="mnote">+ '+(coms.length-CAP)+' comentarios más</div>':'');}
   return '<div class="mnote">Valoración del contenido nuevo por módulo (línea de base = viejo del curso: '+base.toFixed(2)+'), del más flojo al mejor.</div>'+
     '<div class="mbars">'+bars+'</div>'+
     '<div class="qch">💬 Qué dicen los alumnos · '+coms.length+' comentario'+(coms.length===1?'':'s')+' (peor primero)</div>'+comHtml;
