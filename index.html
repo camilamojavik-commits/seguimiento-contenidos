@@ -542,6 +542,11 @@ const NEW2=new Set("23300,63295,63575,63660,63685,63710,64630,64690,64720,64870,
 function cleanName(nm){if(!nm)return "";let parts=String(nm).split("|").map(s=>s.trim()).filter(Boolean);let cand=parts.filter(p=>!/^\+?(prof|profe|profesor|profesora|tutor|instr|coordin|asist)/i.test(p));let name=(cand[0]||parts[0]||nm);name=name.replace(/\[[^\]]*\]/g,"").replace(/\b(profesora|profesor|profe|tutor|instructor)\b/ig,"").replace(/\s+/g," ").trim();return name;}
 const pidUrl=u=>{u=u||"";let m=u.match(/\/learn\/([a-zA-Z0-9-]+)/)||u.match(/productId=([a-zA-Z0-9-]+)/)||u.match(/\/course\/([a-zA-Z0-9-]+)/);return m?m[1]:"";};
 const cohUrl=u=>{const m=(u||"").match(/cohortId=([a-zA-Z0-9-]+)/);return m?m[1]:"";};
+// programVersionId de la URL de la valoración -> clasifica nuevo/viejo por la VERSIÓN real del contenido (no por la comisión).
+const pvidUrl=u=>{const m=(u||"").match(/programVersionId=([0-9a-fA-F-]+)/);return m?m[1].toLowerCase():"";};
+// UUID de las versiones renovadas ('Initial AI-generated version' en BigQuery, excluye CoderCamp). Actualizar cuando se vincule una versión nueva.
+const NEWVER=new Set(["eef462c9-2146-416b-9c8f-13bdfae2d391","a793557e-0e2c-4e21-a147-0e850c57192a","043e5a03-d9a2-46df-9367-bb63fc5f9395","98f1e692-ae81-42f3-b39a-c36edefd61ee","7dad4f90-0314-44b0-840d-f9e99a6b632e","d1f5b4a7-7aa0-43cc-9a35-53fba5ba4e27","0f26af0b-4bd5-4fe9-9cbd-b90895f492de","c66062ad-2551-4483-92e3-ccfe12a67b20","f3d1e65d-877e-4793-bb88-c04ce9f48ae2","7459b011-b740-4327-b820-657de5b80b25","5c4651ce-5482-4df6-943a-d9578e7416e3","db2321d5-d05a-47f6-9a39-8a13ed862664","61c82e36-51eb-4fbb-9ec6-7108940bde12","a60aaf61-3a58-497e-a37b-60120e186bd2","7701c33f-ce50-4b5e-ac78-6977777c90ee"]);
+const isNuevoVer=u=>NEWVER.has(pvidUrl(u));
 const day=s=>{const m=(s||"").match(/(\d{4}-\d{2}-\d{2})/);return m?m[1]:"";};
 const MES=["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
 const monday=ds=>{if(!/^\d{4}-\d{2}-\d{2}$/.test(ds))return null;const d=new Date(ds+"T00:00:00Z");const k=(d.getUTCDay()+6)%7;d.setUTCDate(d.getUTCDate()-k);return d.toISOString().slice(0,10);};
@@ -565,7 +570,9 @@ APP.init=async function(){
   const resolveCom=(url,comRaw)=>{let c=validC(comRaw);if(!c){const ci=cohUrl(url);if(ci&&cohToCom[ci])c=cohToCom[ci];}return c;};
   // comisión -> nombre de profe (de las filas que SÍ tienen nombre), para backfillear las valoraciones que vienen sin nombre
   const com2name=(function(){const c={};for(const r of lc.slice(1)){const com=resolveCom(r[Hl["url"]],r[Hl["comision"]]);const pn=(r[Hl["class_professor_name_1"]]||"").trim();if(com&&pn){(c[com]||(c[com]={}))[pn]=(c[com][pn]||0)+1;}}const out={};Object.keys(c).forEach(k=>{out[k]=Object.entries(c[k]).sort((a,b)=>b[1]-a[1])[0][0];});return out;})();
-  // CONTENIDO = SOLO valoración de módulo, clasificado por comisión (en comisiones_cc_nuevo => nuevo).
+  // CONTENIDO = SOLO valoración de módulo. Nuevo/viejo se clasifica por la VERSIÓN real de cada valoración
+  // (programVersionId de la URL contra NEWVER, las versiones 'Initial AI-generated version' de BigQuery),
+  // NO por la lista de comisiones (comisiones_cc_nuevo daba falsos positivos como Photoshop).
   // La actividad práctica (Live Class Rating) NO cuenta como contenido y queda excluida.
   APP.val=[];
   // Set de nombres de profe/tutor: un comentario que menciona a una persona es sobre el profe/tutor, no el contenido.
@@ -574,7 +581,7 @@ APP.init=async function(){
     ["claro","clara","claros","claras","buena","bueno","buenos","buenas","mejor","mejora","mejores","mejorar","justa","justo","sola","solo","fuente","fuentes","facil","real","ideal","clase","clases","tema","temas","nota","notas","practica","teoria","contenido","ejemplo","ejemplos","modulo","modulos","excelente","mala","malo","corta","largo","larga","nueva","nuevo","clase"].forEach(w=>s.delete(w));
     return s;})();
   const Hv={};vm[0].forEach((x,i)=>{if(Hv[x.trim()]===undefined)Hv[x.trim()]=i;});
-  for(const r of vm.slice(1)){const url=r[Hv["url"]];const pid=pidUrl(url);if(!rset.has(pid))continue;const rt=parseFloat(r[Hv["rating"]]);if(isNaN(rt))continue;const com=resolveCom(url,r[Hv["comision"]]);if(!com)continue;const d=day(r[Hv["timestamp"]]);if(!d)continue;const cmt=(r[Hv["comment"]]||"").trim();if(cmt&&DELIV.test(cmt))continue;APP.val.push({pid:pid,cid:cohUrl(url),com:com,rt:rt,d:d,cm:cmt,mod:(r[Hv["module_name"]]||"").trim()||"(módulo s/d)",tipo:"mod",isNew:newComis.has(com)});}
+  for(const r of vm.slice(1)){const url=r[Hv["url"]];const pid=pidUrl(url);if(!rset.has(pid))continue;const rt=parseFloat(r[Hv["rating"]]);if(isNaN(rt))continue;const com=resolveCom(url,r[Hv["comision"]]);if(!com)continue;const d=day(r[Hv["timestamp"]]);if(!d)continue;const cmt=(r[Hv["comment"]]||"").trim();if(cmt&&DELIV.test(cmt))continue;APP.val.push({pid:pid,cid:cohUrl(url),com:com,rt:rt,d:d,cm:cmt,mod:(r[Hv["module_name"]]||"").trim()||"(módulo s/d)",tipo:"mod",isNew:isNuevoVer(url)});}
   // (Actividad práctica eliminada del contenido — antes se agregaba acá desde la hoja live class rating con tipo:"act".)
   // ranking de comisiones (clase en vivo: profe + actividad) — se mantiene aparte
   APP.lc=[];
