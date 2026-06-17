@@ -315,7 +315,7 @@ td{padding:7px 10px;border-top:1px solid var(--line)}tr:nth-child(even){backgrou
 
   <div class="panel">
     <div class="top"><h3><span class="ic">↗</span> General · contenido nuevo vs. viejo</h3></div>
-    <div class="sub">Solo cursos con contenido nuevo corriendo: su viejo (azul) vs nuevo (naranja), del mismo curso. Módulo + actividad práctica.</div>
+    <div class="sub">Solo cursos con contenido nuevo corriendo: su viejo (azul) vs nuevo (naranja), del mismo curso. Solo valoración de módulo.</div>
     <div id="cBreak" class="note-top" style="border-left-color:var(--coral);margin:2px 0 12px"></div>
     <div class="cv"><canvas id="chartG"></canvas></div>
     <div class="note">Últimas semanas: quedan pocas valoraciones de contenido viejo (las comisiones viejas terminan), así que esos puntos son de muestra chica.</div>
@@ -323,7 +323,7 @@ td{padding:7px 10px;border-top:1px solid var(--line)}tr:nth-child(even){backgrou
 
   <div class="panel">
     <div class="top"><h3><span class="ic">★</span> Top 10 más vendidos · viejo → nuevo</h3></div>
-    <div class="sub">Rating del contenido viejo vs. nuevo (módulo + actividad práctica) en los cursos de mayor venta. Solo aparecen los renovados con valoraciones; los que aún no se renovaron o no tienen datos se listan abajo.</div>
+    <div class="sub">Rating del contenido viejo vs. nuevo (solo valoración de módulo) en los cursos de mayor venta. Solo aparecen los renovados con valoraciones; los que aún no se renovaron o no tienen datos se listan abajo.</div>
     <div class="cv bar"><canvas id="chartT"></canvas></div>
     <div class="note">Se grafican los del top 10 que ya tienen contenido nuevo. 4 todavía no se renovaron y por eso no aparecen acá: Power BI, Diseño UX/UI, Introducción a la IA y Curso de AI Agents. Los cursos con pocas valoraciones nuevas (comisiones recién arrancadas) tomarlos con cautela.</div>
   </div>
@@ -565,7 +565,8 @@ APP.init=async function(){
   const resolveCom=(url,comRaw)=>{let c=validC(comRaw);if(!c){const ci=cohUrl(url);if(ci&&cohToCom[ci])c=cohToCom[ci];}return c;};
   // comisión -> nombre de profe (de las filas que SÍ tienen nombre), para backfillear las valoraciones que vienen sin nombre
   const com2name=(function(){const c={};for(const r of lc.slice(1)){const com=resolveCom(r[Hl["url"]],r[Hl["comision"]]);const pn=(r[Hl["class_professor_name_1"]]||"").trim();if(com&&pn){(c[com]||(c[com]={}))[pn]=(c[com][pn]||0)+1;}}const out={};Object.keys(c).forEach(k=>{out[k]=Object.entries(c[k]).sort((a,b)=>b[1]-a[1])[0][0];});return out;})();
-  // CONTENIDO = valoración de módulo + actividad práctica, clasificado por comisión (en comisiones_cc_nuevo => nuevo)
+  // CONTENIDO = SOLO valoración de módulo, clasificado por comisión (en comisiones_cc_nuevo => nuevo).
+  // La actividad práctica (Live Class Rating) NO cuenta como contenido y queda excluida.
   APP.val=[];
   // Set de nombres de profe/tutor: un comentario que menciona a una persona es sobre el profe/tutor, no el contenido.
   const _nrm=x=>(x||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
@@ -574,7 +575,7 @@ APP.init=async function(){
     return s;})();
   const Hv={};vm[0].forEach((x,i)=>{if(Hv[x.trim()]===undefined)Hv[x.trim()]=i;});
   for(const r of vm.slice(1)){const url=r[Hv["url"]];const pid=pidUrl(url);if(!rset.has(pid))continue;const rt=parseFloat(r[Hv["rating"]]);if(isNaN(rt))continue;const com=resolveCom(url,r[Hv["comision"]]);if(!com)continue;const d=day(r[Hv["timestamp"]]);if(!d)continue;const cmt=(r[Hv["comment"]]||"").trim();if(cmt&&DELIV.test(cmt))continue;APP.val.push({pid:pid,cid:cohUrl(url),com:com,rt:rt,d:d,cm:cmt,mod:(r[Hv["module_name"]]||"").trim()||"(módulo s/d)",tipo:"mod",isNew:newComis.has(com)});}
-  for(const r of lc.slice(1)){const url=r[Hl["url"]];const pid=pidUrl(url);if(!rset.has(pid))continue;const a=parseFloat(r[Hl["activity"]]);if(isNaN(a))continue;const com=resolveCom(url,r[Hl["comision"]]);if(!com)continue;const d=day(r[Hl["timestamp"]]);if(!d)continue;const cmt=(r[Hl["comment"]]||"").trim();if(cmt&&DELIV.test(cmt))continue;APP.val.push({pid:pid,cid:cohUrl(url),com:com,rt:a,d:d,cm:cmt,mod:"Actividad práctica",tipo:"act",isNew:newComis.has(com)});}
+  // (Actividad práctica eliminada del contenido — antes se agregaba acá desde la hoja live class rating con tipo:"act".)
   // ranking de comisiones (clase en vivo: profe + actividad) — se mantiene aparte
   APP.lc=[];
   for(const r of lc.slice(1)){const com=validC(r[Hl["comision"]]);const pid=APP.commCurso[com];if(!pid)continue;const p=parseFloat(r[Hl["professor_guidance"]]),a=parseFloat(r[Hl["activity"]]);let s=0,n=0;if(!isNaN(p)){s+=p;n++;}if(!isNaN(a)){s+=a;n++;}if(!n)continue;APP.lc.push({com:com,pid:pid,sc:s/n,d:day(r[Hl["timestamp"]])});}
@@ -657,7 +658,7 @@ function renderContent(){const from=APP.from,to=APP.to,ag=prodAgg(from,to);
   const br={mod:{nn:0,ns:0,vn:0,vs:0},act:{nn:0,ns:0,vn:0,vs:0}};
   for(const v of APP.val){if(!APP.matchedSet.has(v.pid)||v.d<from||v.d>to)continue;const o=br[v.tipo];if(!o)continue;if(v.isNew){o.nn++;o.ns+=v.rt;}else{o.vn++;o.vs+=v.rt;}}
   const fa=(o,k)=>o[k+"n"]?(o[k+"s"]/o[k+"n"]).toFixed(2):"—";
-  document.getElementById("cBreak").innerHTML="Desglose: Módulo → nuevo "+fa(br.mod,"n")+" vs viejo "+fa(br.mod,"v")+" (n nuevo "+br.mod.nn+") · Actividad práctica → nuevo "+fa(br.act,"n")+" vs viejo "+fa(br.act,"v")+" (n nuevo "+br.act.nn+"). El nuevo por módulo todavía tiene poca muestra porque las comisiones recién arrancaron.";
+  document.getElementById("cBreak").innerHTML="Contenido = solo valoración de módulo. Nuevo "+fa(br.mod,"n")+" vs viejo "+fa(br.mod,"v")+" (n nuevo "+br.mod.nn+"). La actividad práctica de la clase en vivo no se cuenta como contenido. El nuevo todavía tiene poca muestra porque las comisiones recién arrancaron.";
   const g=series(null,from,to);mk("chartG",{type:"line",data:{labels:g.labels,datasets:lineDs(g.newD,g.newN,g.oldD,g.oldN,ovN,ovV)},plugins:[refLines,lineLabels],options:lineOpts(3.4,5.05)});
   // top10 ventas (solo los renovados con datos para el gráfico viejo→nuevo)
   const chartItems=TOP10.filter(t=>t.pid&&ag[t.pid]&&(ag[t.pid].nn||ag[t.pid].vn));
@@ -1009,7 +1010,7 @@ function verify(){
   add("Cursos comparables coinciden", matched.length===kv[0], "panel "+kv[0]+" · calc "+matched.length);
   add("Ratings de contenido dentro de 1–5", APP.val.filter(v=>v.rt<1||v.rt>5).length===0, APP.val.filter(v=>v.rt<1||v.rt>5).length+" fuera");
   let mn=0,an=0;APP.val.forEach(v=>{if(v.d<f||v.d>t||!v.isNew||matched.indexOf(v.pid)<0)return;if(v.tipo==='mod')mn++;else an++;});
-  add("Módulo + actividad = total nuevo", (mn+an)===TN, "mód "+mn+" + act "+an+" = "+(mn+an)+" vs "+TN);
+  add("Contenido = solo módulo (sin actividad)", mn===TN&&an===0, "mód "+mn+" + act "+an+" = "+(mn+an)+" vs "+TN);
   const badP=APP.profRows.filter(r=>r.pg<1||r.pg>5).length, badT=APP.tutRows.filter(r=>r.tu<1||r.tu>5).length;
   add("Ratings de profe/tutor dentro de 1–5", badP===0&&badT===0, "profe "+badP+" · tutor "+badT+" fuera");
   const ck=Object.keys(COMNP).length;add("Mapa de profes por comisión cargado", ck>0, ck+" comisiones");
