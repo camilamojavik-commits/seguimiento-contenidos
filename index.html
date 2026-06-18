@@ -223,6 +223,42 @@ td{padding:7px 10px;border-top:1px solid var(--line)}tr:nth-child(even){backgrou
 
 /* ocultar cajas de explicación/notas */
 .note,.note-top,.mnote{display:none!important}
+
+/* ===================== SKIN v2 (look nuevo, override) ===================== */
+body{background:var(--cream)}
+/* Login */
+.gate{background:#260700;background-image:radial-gradient(520px 520px at 85% -10%,rgba(255,99,43,.34),transparent 68%),radial-gradient(560px 560px at -12% 112%,rgba(254,135,45,.20),transparent 70%)}
+.gatecard{border-radius:24px!important;padding:38px 34px!important;width:380px!important;max-width:92vw;text-align:left!important;box-shadow:0 30px 80px -30px rgba(0,0,0,.6)!important}
+.gatecard .glogo{width:150px!important;height:auto!important;margin:0 0 4px!important}
+.gpill{display:inline-flex;align-items:center;gap:6px;margin-top:18px;padding:5px 11px;border-radius:9999px;border:1px solid var(--line);background:var(--cream);font-size:11px;font-weight:700;letter-spacing:.08em;color:var(--ink2)}
+.gtitle{font-size:30px!important;font-weight:800!important;line-height:1.06;letter-spacing:-.02em;margin:14px 0 0!important;color:var(--ink)!important;text-transform:none!important;text-align:left!important}
+.gtitle span{color:var(--coral)}
+.gsub{color:var(--ink2);font-size:14px;line-height:1.45;margin:10px 0 22px}
+.gatecard input{height:48px!important;border-radius:14px!important;border:1.5px solid var(--line)!important;background:var(--cream)!important;font-size:15px!important;padding:0 16px!important;margin-bottom:0!important}
+.gatecard input:focus{border-color:var(--coral)!important;background:#fff!important;box-shadow:0 0 0 4px rgba(255,99,43,.13)!important;outline:none}
+.gatecard button{height:50px!important;border-radius:9999px!important;background:var(--coral)!important;font-size:15px!important;font-weight:700!important;margin-top:16px!important}
+.gatecard button:hover{background:#E0531C!important}
+/* Títulos de sección con palabra coral */
+.sech h2{font-size:27px!important;font-weight:800!important;letter-spacing:-.02em!important;text-transform:none!important}
+.sech h2 em{color:var(--coral);font-style:normal}
+.sech{border-bottom:none!important;margin:34px 0 14px!important}
+/* KPIs y paneles más redondeados */
+.kpi{border-radius:16px!important;box-shadow:0 1px 2px rgba(16,24,40,.05)!important;padding:16px 18px!important}
+.kpi .v{font-size:30px!important;font-weight:800!important;letter-spacing:-.01em}
+.kpi .l{letter-spacing:.04em}
+.panel{border-radius:18px!important;box-shadow:0 1px 2px rgba(16,24,40,.04)!important}
+.panel h3{font-size:17px!important;font-weight:700!important}
+/* Pills / botones / filtros */
+.fb{border-radius:9999px!important;padding:7px 14px!important;font-weight:600!important}
+.fb:hover{border-color:var(--coral)!important;color:var(--coral)!important}
+.filterbar{border-radius:14px!important;padding:11px 15px!important}
+select{border-radius:10px!important}
+.nav{border-radius:12px!important;font-weight:600!important}
+.nav.active{background:var(--coral)!important;color:#fff!important}
+.recbtn{border-radius:9999px!important}
+table{border-radius:14px!important;overflow:hidden}
+.sidebar{border-right:1px solid var(--line)!important}
+.appbar{border-radius:0 0 18px 18px}
 </style>
 </head>
 <body>
@@ -254,9 +290,11 @@ td{padding:7px 10px;border-top:1px solid var(--line)}tr:nth-child(even){backgrou
 </radialGradient>
 </defs>
 </svg>
-  <h3>Ratings Operaciones</h3>
-  <input id="pw" type="password" placeholder="Contraseña" autocomplete="off">
-  <button id="enter">Entrar</button>
+  <div class="gpill">✦ ACCESO INTERNO</div>
+  <h3 class="gtitle">Seguimiento de <span>contenidos</span></h3>
+  <p class="gsub">Panel del equipo de Operaciones · ingresá la contraseña del equipo para continuar.</p>
+  <input id="pw" type="password" placeholder="••••••••" autocomplete="off">
+  <button id="enter">Entrar →</button>
   <div class="gate-err" id="gerr">Contraseña incorrecta</div>
 </div></div>
 <div class="app">
@@ -309,7 +347,7 @@ td{padding:7px 10px;border-top:1px solid var(--line)}tr:nth-child(even){backgrou
   <div id="loading" style="padding:40px;text-align:center;color:var(--ink2);font-size:14px">Cargando datos del sheet…</div>
   <section id="sec-contenido" class="section">
 
-  <div class="sech" style="border-top:none;margin-top:6px;padding-top:0"><h2>Performance nuevos contenidos</h2></div>
+  <div class="sech" style="border-top:none;margin-top:6px;padding-top:0"><h2>Performance nuevos <em>contenidos</em></h2></div>
   <div class="kpis" id="kpisCont"></div>
 
 
@@ -358,7 +396,7 @@ td{padding:7px 10px;border-top:1px solid var(--line)}tr:nth-child(even){backgrou
 
   </section>
   <section id="sec-profes" class="section">
-  <div class="sech" style="border-top:none;margin-top:6px;padding-top:0"><h2>Rating de profesores</h2><div class="ssub">Valoración del profe en la clase en vivo (pregunta "¿Qué tan bien guió la clase el instructor hoy?", 1–5), de los cursos renovados. Fuente: hoja live class rating.</div></div>
+  <div class="sech" style="border-top:none;margin-top:6px;padding-top:0"><h2>Rating de <em>profesores</em></h2><div class="ssub">Valoración del profe en la clase en vivo (pregunta "¿Qué tan bien guió la clase el instructor hoy?", 1–5), de los cursos renovados. Fuente: hoja live class rating.</div></div>
 
   <div class="kpis" id="kpisProf"></div>
 
@@ -371,7 +409,7 @@ td{padding:7px 10px;border-top:1px solid var(--line)}tr:nth-child(even){backgrou
   </div>
   </section>
   <section id="sec-proftut" class="section">
-  <div class="sech" style="border-top:none;margin-top:6px;padding-top:0"><h2>Profes y Tutores · todas las comisiones</h2><div class="ssub">Rating de profesores (professor_guidance) y tutores (tutor_usefulness) en todas las comisiones. Fuente del rating: hoja live class rating. El nº de profes asignados por comisión viene de la asignación de staff de BigQuery (rol PROFESOR activo; la suplencia es un rol aparte y no cuenta).</div></div>
+  <div class="sech" style="border-top:none;margin-top:6px;padding-top:0"><h2>Profes y <em>Tutores</em> · todas las comisiones</h2><div class="ssub">Rating de profesores (professor_guidance) y tutores (tutor_usefulness) en todas las comisiones. Fuente del rating: hoja live class rating. El nº de profes asignados por comisión viene de la asignación de staff de BigQuery (rol PROFESOR activo; la suplencia es un rol aparte y no cuenta).</div></div>
 
   <div class="note-top" style="border-left-color:var(--coral)">Sobre el "rating compartido": en comisiones con 2 profes, el rating del Sheet está atribuido a la dupla (no se puede separar por profe). Por eso lo mostramos agregado y lo comparamos contra las comisiones de 1 profe y contra tutores.</div>
 
@@ -397,7 +435,7 @@ td{padding:7px 10px;border-top:1px solid var(--line)}tr:nth-child(even){backgrou
   </div>
   </section>
   <section id="sec-live" class="section">
-  <div class="sech"><h2>2 · Live Sessions · actividad e inscriptos</h2><div class="ssub">Sesiones / webinars en vivo (hoja live_sessions), 16 mar – 12 jun 2026.</div></div>
+  <div class="sech"><h2>Live <em>Sessions</em> · actividad e inscriptos</h2><div class="ssub">Sesiones / webinars en vivo (hoja live_sessions), 16 mar – 12 jun 2026.</div></div>
 
   <div class="note-top">Sobre la asistencia: sumamos la asistencia real (asistentes que se conectaron) tomada del tablero Teacher Ratings → Live Sessions, donde se carga a mano por sesión. La asistencia se completa con rezago, así que hoy hay dato hasta la semana del 11 may; las sesiones más recientes todavía no la tienen cargada.</div>
 
@@ -426,7 +464,7 @@ td{padding:7px 10px;border-top:1px solid var(--line)}tr:nth-child(even){backgrou
   </div>
   </section>
   <section id="sec-workshops" class="section">
-    <div class="sech"><h2>Workshops on demand</h2><div class="ssub">Performance del catálogo de workshops grabados · últimos 365 días · fuente PostHog (snapshot).</div></div>
+    <div class="sech"><h2>Workshops <em>on demand</em></h2><div class="ssub">Performance del catálogo de workshops grabados · últimos 365 días · fuente PostHog (snapshot).</div></div>
     <div class="note-top">Alto volumen de inscriptos pero completion rate bajo (~2,7%). Acá se ve qué temáticas y títulos funcionan y cuáles conviene revisar.</div>
     <div class="panel" style="border-left:5px solid var(--coral)">
       <div class="top"><h3><span class="ic">🔄</span> Renovación en curso · <span id="wsRenovN">—</span> workshops</h3></div>
@@ -447,7 +485,7 @@ td{padding:7px 10px;border-top:1px solid var(--line)}tr:nth-child(even){backgrou
     </div>
   </section>
   <section id="sec-crm" class="section">
-    <div class="sech"><h2>Renovación de Workshops · Pipeline</h2><div class="ssub">Versiones nuevas de los workshops on demand. Tablero por estado — fuente en vivo: hoja workshops (nuevas versiones).</div></div>
+    <div class="sech"><h2>Renovación de <em>Workshops</em> · Pipeline</h2><div class="ssub">Versiones nuevas de los workshops on demand. Tablero por estado — fuente en vivo: hoja workshops (nuevas versiones).</div></div>
     <div class="note-top">Cada tarjeta es un workshop a renovar (nombre viejo → nombre nuevo), con su squad, analista de contenidos y prioridad. Las columnas siguen el pipeline completo (To be assigned → Sent to content creator → Creating workshop → Internal QA → Launched); el tablero se mueve a medida que cambian el Status.</div>
     <div class="kpis" id="kpisCrm"></div>
     <div class="panel">
