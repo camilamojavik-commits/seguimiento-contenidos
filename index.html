@@ -358,17 +358,9 @@ td{padding:7px 10px;border-top:1px solid var(--line)}tr:nth-child(even){backgrou
 
   </section>
   <section id="sec-profes" class="section">
-  <div class="sech" style="border-top:none;margin-top:6px;padding-top:0"><h2>Rating de profesores</h2><div class="ssub">Valoración del profe en la clase en vivo (pregunta "¿Qué tan bien guió la clase el instructor hoy?", 1–5), de los cursos renovados. Comparamos el mismo curso dictado con contenido nuevo vs viejo según el número de comisión. Fuente: hoja live class rating.</div></div>
+  <div class="sech" style="border-top:none;margin-top:6px;padding-top:0"><h2>Rating de profesores</h2><div class="ssub">Valoración del profe en la clase en vivo (pregunta "¿Qué tan bien guió la clase el instructor hoy?", 1–5), de los cursos renovados. Fuente: hoja live class rating.</div></div>
 
   <div class="kpis" id="kpisProf"></div>
-
-  <div class="panel">
-    <div class="top"><h3><span class="ic">👩‍🏫</span> Rating del profe · contenido deprecado vs actualizado</h3>
-      <div><label class="flt">Curso:</label><select id="selProf"></select></div></div>
-    <div class="sub">Rating promedio del profe (gris = staff dictando contenido deprecado, naranja = staff dictando contenido actualizado). Sirve para ver si el contenido nuevo afecta la percepción del profe. <span id="pvSub"></span></div>
-    <div class="cv"><canvas id="chartPV"></canvas></div>
-    <div class="note">Mismos profesores, distinto contenido. Si el rating del profe se mantiene o sube con el contenido nuevo, es buena señal de que el material acompaña la clase.</div>
-  </div>
 
   <div class="panel">
     <div class="top"><h3><span class="ic">★</span> Ranking de profesores · <span id="profCount">—</span> con muestra</h3></div>
@@ -932,28 +924,14 @@ function openProfile(name){
   }
 }
 function renderProfes(){
-  const ag=profAgg();
-  const matched=Object.keys(ag).filter(p=>ag[p].nn>0&&ag[p].vn>0);
-  let TN=0,TS=0,VN=0,VS=0;matched.forEach(p=>{const o=ag[p];TN+=o.nn;TS+=o.ns;VN+=o.vn;VS+=o.vs;});
-  const ovN=TN?TS/TN:null,ovV=VN?VS/VN:null;
-  const profSet={};APP.prof.forEach(v=>{if(v.d<APP.from||v.d>APP.to)return;if(v.prof)profSet[v.prof]=1;});
+  // Rating del profe (professor_guidance) de los cursos renovados, en el rango. Sin corte nuevo/viejo:
+  // el rating del profe mide al profesor, no la versión del contenido.
+  let TS=0,TN=0;const profSet={};
+  for(const v of APP.prof){if(v.d<APP.from||v.d>APP.to)continue;TS+=v.pg;TN++;if(v.prof)profSet[v.prof]=1;}
+  const ov=TN?TS/TN:null;
   document.getElementById("kpisProf").innerHTML=
-    kpi("Rating profe · comis. nuevas",ovN!=null?ovN.toFixed(2):"—",TN.toLocaleString("es")+" valoraciones",1)+
-    kpi("Rating profe · comis. viejas",ovV!=null?ovV.toFixed(2):"—",VN.toLocaleString("es")+" valoraciones")+
-    kpi("Δ nuevo − viejo",(ovN!=null&&ovV!=null)?((ovN-ovV>=0?"+":"")+(ovN-ovV).toFixed(2)):"—","mismo profe, contenido nuevo vs viejo")+
+    kpi("Rating del profe",ov!=null?ov.toFixed(2):"—",TN.toLocaleString("es")+" valoraciones",1)+
     kpi("Profesores medidos",Object.keys(profSet).length,"con nombre cargado");
-  // chart: rating del profe por curso, viejo vs nuevo (cursos con ambos y muestra nueva >=5), de peor a mejor Δ
-  // Desplegable: "Todos (agregado)" = 2 barras (staff contenido deprecado vs actualizado). Seleccionar curso = ese curso.
-  const courseItems=matched.map(p=>({n:APP.curso[p]||p,nv:ag[p].ns/ag[p].nn,vv:ag[p].vs/ag[p].vn,nn:ag[p].nn})).sort((a,b)=>(a.nv-a.vv)-(b.nv-b.vv));
-  const selP=document.getElementById("selProf");
-  if(selP&&selP.options.length<=1)selP.innerHTML='<option value="">Todos (agregado)</option>'+courseItems.map(t=>'<option>'+esc(t.n)+'</option>').join("");
-  const fcP=selP?selP.value:"";
-  let dep=ovV,act=ovN,nNew=null;
-  if(fcP){const it=courseItems.find(t=>t.n===fcP);if(it){dep=it.vv;act=it.nv;nNew=it.nn;}}
-  var pvs=document.getElementById("pvSub");if(pvs)pvs.textContent=fcP?(fcP+" · "+(nNew||0)+" valoraciones del profe en contenido nuevo"):("Agregado de "+matched.length+" cursos renovados. Elegí un curso en el desplegable para verlo solo.");
-  mk("chartPV",{type:"bar",plugins:[barLabels],data:{labels:["Staff · contenido deprecado","Staff · contenido actualizado"],datasets:[
-    {data:[dep!=null?+dep.toFixed(3):null,act!=null?+act.toFixed(3):null],backgroundColor:["#bdb1a0","#F5A623"],borderRadius:6,maxBarThickness:160}
-  ]},options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:18}},plugins:{legend:{display:false}},scales:{y:{min:3.5,max:5,ticks:{stepSize:0.5},grid:{color:"#efe7da"},title:{display:true,text:"Rating del profe (1–5)"}},x:{grid:{display:false},ticks:{font:{size:12.5}}}}}});
   // ranking de profesores (n>=10), con su curso principal
   const pm={};
   for(const v of APP.prof){if(v.d<APP.from||v.d>APP.to)continue;if(!v.prof)continue;const o=pm[v.prof]||(pm[v.prof]={s:0,n:0,cur:{}});o.s+=v.pg;o.n++;const cn=APP.curso[v.pid]||v.pid;o.cur[cn]=(o.cur[cn]||0)+1;}
@@ -1072,8 +1050,8 @@ function botAnswer(q){
   const matched=Object.keys(ag).filter(p=>ag[p].nn>0&&ag[p].vn>0);
   const ov=set=>{let TN=0,TS=0,VN=0,VS=0;set.forEach(p=>{const o=ag[p];TN+=o.nn;TS+=o.ns;VN+=o.vn;VS+=o.vs;});return{n:TN?TS/TN:null,v:VN?VS/VN:null,nn:TN};};
   if(isProf){
-    if(pid){let ns=0,nn=0,vs=0,vn=0;APP.prof.forEach(r=>{if(r.pid!==pid||r.d<from||r.d>to)return;if(r.isNew){ns+=r.pg;nn++;}else{vs+=r.pg;vn++;}});
-      return "<b>"+APP.curso[pid]+"</b> · rating del profe:<br>nuevo <span class='big'>"+(nn?fmt(ns/nn):"—")+"</span> (n="+nn+") · viejo "+(vn?fmt(vs/vn):"—")+" (n="+vn+")";}
+    if(pid){let s=0,n=0;APP.prof.forEach(r=>{if(r.pid!==pid||r.d<from||r.d>to)return;s+=r.pg;n++;});
+      return "<b>"+APP.curso[pid]+"</b> · rating del profe: <span class='big'>"+(n?fmt(s/n):"—")+"</span> (n="+n+")";}
     let s=0,n=0;APP.profRows.forEach(r=>{if(r.d<from||r.d>to)return;s+=r.pg;n++;});
     return "Rating del profe (todas las comisiones, en el rango): <span class='big'>"+(n?fmt(s/n):"—")+"</span> · "+n+" valoraciones";}
   if(isTut){let s=0,n=0;APP.tutRows.forEach(r=>{if(r.d<from||r.d>to)return;s+=r.tu;n++;});
@@ -1122,7 +1100,6 @@ APP.start=async function(){
   df.onchange=()=>{APP.from=df.value;APP.render();};dt.onchange=()=>{APP.to=dt.value;APP.render();};
   document.querySelectorAll(".fb").forEach(b=>b.onclick=()=>{const p=b.dataset.p;if(p==="all"){APP.from=APP.minD;}else{APP.from=addDays(APP.maxD,-(+p)*7);}APP.to=APP.maxD;df.value=APP.from;dt.value=APP.to;APP.render();});
   document.getElementById("sel").onchange=function(){renderPerCourse(this.value);};
-  {const sp=document.getElementById("selProf");if(sp)sp.onchange=renderProfes;}
   document.getElementById("crmStatus").onchange=renderCRM;document.getElementById("crmSquad").onchange=renderCRM;document.getElementById("crmRev").onchange=renderCRM;document.getElementById("crmSearch").oninput=renderCRM;
   document.querySelectorAll(".nav").forEach(n=>{if(n.dataset.sec)n.onclick=()=>activate(n.dataset.sec);});
   document.getElementById("upd").textContent="Actualizado del sheet · "+new Date().toLocaleString("es");
