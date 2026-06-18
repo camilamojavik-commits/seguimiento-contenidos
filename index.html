@@ -948,6 +948,37 @@ function renderProfes(){
   document.getElementById("profBottom").innerHTML=bottom.length?bottom.map(trow).join(""):'<tr><td colspan="5" class="empty">—</td></tr>';
   document.getElementById("profCount").textContent=prof.length;
 }
+// --- Drill-down por comisión (comentarios de alumnos + oportunidades de mejora detectadas del feedback) ---
+const OFENS_C=/\b(put[oa]s?|mierda|imb[eé]cil|idiota|est[uú]pid\w*|forr[oa]s?|pelotud\w*|hij[oa] de|callate|asco)\b/i;
+const TEMAS_PROF=[
+ {re:/no se entiend|confus|no explica|cuesta entender|poco clar|no qued[oó] clar|enred|no se comprend|dif[ií]cil de seguir/i, tip:"Mejorar la claridad de las explicaciones: ir más despacio en los conceptos clave y chequear comprensión."},
+ {re:/r[aá]pid|apurad|corre much|much[oa] contenido en poco|no llega|acelerad/i, tip:"Bajar el ritmo: dar más tiempo a cada tema y no apurar el cierre de la clase."},
+ {re:/ejemplo|caso real|pr[aá]ctic|aplicad|demostr|en vivo/i, tip:"Sumar más ejemplos prácticos y casos reales resueltos en vivo."},
+ {re:/consigna|ejercicio|actividad|qu[eé] hay que hacer|no entend[ií] la tarea|qu[eé] se espera/i, tip:"Aclarar las consignas de las actividades: dejar explícito qué se espera entregar."},
+ {re:/audio|micr[oó]fono|sonido|se cort|conexi[oó]n|t[eé]cnic|pantalla|comparti|se colg|zoom/i, tip:"Resolver problemas técnicos (audio, pantalla, conexión) antes de arrancar."},
+ {re:/pregunt|duda|no respond|no contest|consult|no aclara/i, tip:"Dar más espacio a preguntas y responder las dudas durante la clase."},
+ {re:/le[ií]a|lee la|leyend|diapositiv|slide|de memoria|power ?point/i, tip:"Evitar leer las diapositivas: explicar con ejemplos y palabras propias."},
+ {re:/no prepar|improvis|desorganiz|perdid|no sab[ií]a/i, tip:"Preparar y estructurar mejor la clase de antemano."},
+ {re:/tarde|puntual|empez[oó] tarde|termin[oó] antes|tiempo de la clase/i, tip:"Cuidar la puntualidad y aprovechar el tiempo de la clase."},
+ {re:/aburr|mon[oó]ton|din[aá]mic|particip|interacci/i, tip:"Hacer la clase más dinámica y participativa."},
+];
+const GEN_PROF=["Reforzar la claridad de las explicaciones y chequear comprensión durante la clase.","Sumar ejemplos prácticos resueltos en vivo.","Dar más espacio a preguntas y dudas.","Cuidar el ritmo: ir de lo simple a lo complejo."];
+function detectOps(cs){return TEMAS_PROF.map(t=>({tip:t.tip,n:cs.filter(c=>t.re.test(c.cm)).length})).filter(x=>x.n>0).sort((a,b)=>b.n-a.n);}
+APP.lcTog=function(i){const d=document.getElementById("lcd"+i),c=document.getElementById("lcc"+i);if(!d)return;const open=d.style.display==="none";d.style.display=open?"":"none";if(c)c.textContent=open?"▾":"▸";};
+function comDetail(com,curso,prof,avg){
+  const from=APP.from,to=APP.to;
+  const cs=APP.prof.filter(v=>v.com===com&&v.cm&&v.cm.trim().length>3&&v.d>=from&&v.d<=to&&!OFENS_C.test(v.cm)).sort((a,b)=>a.pg-b.pg);
+  const ops=detectOps(cs);
+  let opsHtml;
+  if(ops.length){opsHtml='<div class="rech">✨ Oportunidades de mejora · detectadas del feedback de esta comisión</div><ul>'+ops.slice(0,5).map(o=>'<li>'+esc(o.tip)+' <span style="color:#9a8c79">('+o.n+' menció'+(o.n===1?'n':'nes')+')</span></li>').join('')+'</ul><div class="recf">Detectadas automáticamente de los comentarios de los alumnos de esta comisión.</div>';}
+  else{opsHtml='<div class="rech">✨ Oportunidades de mejora</div><ul>'+GEN_PROF.map(t=>'<li>'+esc(t)+'</li>').join('')+'</ul><div class="recf">Pocos comentarios escritos en el rango; recomendaciones generales de acompañamiento.</div>';}
+  const CAP=12;let comHtml;
+  if(!cs.length)comHtml='<div class="mnote">Sin comentarios escritos de los alumnos en el rango.</div>';
+  else comHtml=cs.slice(0,CAP).map(c=>{const r=c.pg;const bg=r<=3?"#fde2dd":r>=5?"#dcfce7":"#fef3cd",fg=r<=3?"#b91c1c":r>=5?"#166534":"#92400e";return '<div class="qc"><span class="qcr" style="background:'+bg+';color:'+fg+'">'+r.toFixed(0)+'★</span><div class="qcb"><div class="qcm">“'+esc(c.cm).slice(0,280)+'”</div></div></div>';}).join("")+(cs.length>CAP?'<div class="mnote">+ '+(cs.length-CAP)+' comentarios más</div>':'');
+  return '<div class="mnote"><b>'+esc(curso)+'</b> · comisión #'+esc(com)+' · profe '+esc(prof)+' · rating '+avg.toFixed(2)+'</div>'+
+    '<div class="recbox" style="display:block;margin-top:6px">'+opsHtml+'</div>'+
+    '<div class="qch">💬 Qué dicen los alumnos · '+cs.length+' comentario'+(cs.length===1?'':'s')+' (peor primero)</div>'+comHtml;
+}
 function renderProfTut(){
   const from=APP.from,to=APP.to;
   let g1={s:0,n:0,c:{}},g2={s:0,n:0,c:{}},tut={s:0,n:0};const byDay={};
@@ -977,7 +1008,10 @@ function renderProfTut(){
   let low=Object.keys(cmap).map(c=>{const o=cmap[c];const pf=Object.entries(o.pf).sort((a,b)=>b[1]-a[1])[0];return {com:c,avg:o.s/o.n,n:o.n,np:o.np,curso:comCurso[c]||COMCUR[c]||"—",prof:pf?cleanNm(pf[0]):"—"};}).filter(p=>p.n>=LOWMIN&&p.avg<LOWT).sort((a,b)=>a.avg-b.avg);
   const bandLow=a=>a<4.0?["A reforzar","#d6432b"]:["A seguir","#d97706"];
   const lcb=document.getElementById("lowComBody");
-  if(lcb)lcb.innerHTML=low.length?low.map(p=>{const t=bandLow(p.avg);return '<tr><td>'+esc(p.com)+'</td><td>'+esc(p.curso)+'</td><td>'+esc(p.prof)+'</td><td class="num">'+(p.np||"—")+'</td><td class="num">'+p.avg.toFixed(2)+'</td><td class="num">'+p.n+'</td><td><span class="sev" style="background:'+t[1]+'22;color:'+t[1]+'">'+t[0]+'</span></td></tr>';}).join(""):'<tr><td colspan="7" class="empty">Ninguna comisión por debajo de 4,30 (con n≥5) en el rango elegido.</td></tr>';
+  if(lcb)lcb.innerHTML=low.length?low.map((p,i)=>{const t=bandLow(p.avg);
+    const main='<tr class="clk" onclick="APP.lcTog('+i+')"><td><span id="lcc'+i+'" style="color:#FF632B;margin-right:6px">▸</span>'+esc(p.com)+'</td><td>'+esc(p.curso)+'</td><td>'+esc(p.prof)+'</td><td class="num">'+(p.np||"—")+'</td><td class="num">'+p.avg.toFixed(2)+'</td><td class="num">'+p.n+'</td><td><span class="sev" style="background:'+t[1]+'22;color:'+t[1]+'">'+t[0]+'</span></td></tr>';
+    const det='<tr id="lcd'+i+'" style="display:none"><td colspan="7" style="background:#faf7f2;padding:8px 12px 14px">'+comDetail(p.com,p.curso,p.prof,p.avg)+'</td></tr>';
+    return main+det;}).join(""):'<tr><td colspan="7" class="empty">Ninguna comisión por debajo de 4,30 (con n≥5) en el rango elegido.</td></tr>';
   const lcc=document.getElementById("lowComCount");if(lcc)lcc.textContent="· "+low.length+" comisiones";
   var et=document.getElementById("evoTotal");if(et)et.textContent=pN?(pS/pN).toFixed(2):"—";
   var en=document.getElementById("evoN");if(en)en.textContent=pN?("promedio del período · "+pN.toLocaleString("es")+" valoraciones"):"";
