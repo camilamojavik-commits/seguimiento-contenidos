@@ -158,9 +158,9 @@
           <span style="font-size:12px;font-weight:700;letter-spacing:.04em;color:var(--cc-muted);width:64px">RANGO</span>
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
             <span style="font-size:12px;color:var(--cc-muted);font-weight:600">Desde</span>
-            <input type="date" value="2026-05-18" style="height:38px;padding:0 12px;border-radius:9999px;border:1px solid var(--cc-border);background:var(--cc-card);font-size:13px;color:var(--cc-ink);outline:none" style-focus="border-color:#FF632B;box-shadow:0 0 0 3px rgba(255,99,43,.12)">
+            <input type="date" value="{{ fromVal }}" onChange="{{ onFrom }}" style="height:38px;padding:0 12px;border-radius:9999px;border:1px solid var(--cc-border);background:var(--cc-card);font-size:13px;color:var(--cc-ink);outline:none" style-focus="border-color:#FF632B;box-shadow:0 0 0 3px rgba(255,99,43,.12)">
             <span style="font-size:12px;color:var(--cc-muted);font-weight:600">Hasta</span>
-            <input type="date" value="2026-06-18" style="height:38px;padding:0 12px;border-radius:9999px;border:1px solid var(--cc-border);background:var(--cc-card);font-size:13px;color:var(--cc-ink);outline:none" style-focus="border-color:#FF632B;box-shadow:0 0 0 3px rgba(255,99,43,.12)">
+            <input type="date" value="{{ toVal }}" onChange="{{ onTo }}" style="height:38px;padding:0 12px;border-radius:9999px;border:1px solid var(--cc-border);background:var(--cc-card);font-size:13px;color:var(--cc-ink);outline:none" style-focus="border-color:#FF632B;box-shadow:0 0 0 3px rgba(255,99,43,.12)">
           </div>
         </div>
       </div>
@@ -189,7 +189,7 @@
           <div style="display:grid;grid-template-columns:1.15fr .85fr;gap:16px;margin-top:16px" class="cc-chart-grid">
             <div style="background:var(--cc-card);border:1px solid var(--cc-border);border-radius:18px;padding:20px;box-shadow:0 1px 2px rgba(0,0,0,.04)">
               <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
-                <h3 style="font-size:17px;font-weight:700;margin:0">Rating: contenido nuevo vs viejo</h3>
+                <div><h3 style="font-size:17px;font-weight:700;margin:0">Rating: contenido nuevo vs viejo</h3><div style="font-size:12px;color:var(--cc-muted);margin-top:3px">{{ perfChartSub }}</div></div>
                 <div style="display:flex;gap:14px;align-items:center">
                   <span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--cc-ink)"><span style="width:16px;height:3px;border-radius:2px;background:#FF632B"></span>Nuevo</span>
                   <span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--cc-muted)"><span style="width:16px;height:3px;border-radius:2px;background:var(--cc-gray)"></span>Viejo</span>
@@ -440,8 +440,8 @@
             <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
               <h3 style="font-size:17px;font-weight:700;margin:0">Evolución diaria del rating</h3>
               <div style="display:flex;gap:14px;align-items:center">
-                <span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600"><span style="width:16px;height:3px;border-radius:2px;background:#FF632B"></span>2 profes</span>
-                <span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--cc-muted)"><span style="width:16px;height:3px;border-radius:2px;background:var(--cc-gray)"></span>1 profe</span>
+                <span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600"><span style="width:16px;height:3px;border-radius:2px;background:#FF632B"></span>Rating del profe</span>
+                <span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--cc-muted)"><span style="width:16px;height:3px;border-radius:2px;background:var(--cc-gray)"></span></span>
               </div>
             </div>
             <div style="margin-top:14px">{{ profesDailyChart }}</div>
@@ -677,14 +677,16 @@ function detectOps(cs){return TEMAS_PROF.map(t=>({tip:t.tip,n:cs.filter(c=>t.re.
 function hasNameSafe(c){try{return hasName(c);}catch(e){return false;}}
 const PASS_V2='contenidos2026';
 class Component extends DCLogic {
-  state = { authed:false, pw:'', section:'performance', range:'4semanas', expanded:{}, sidebarOpen:false, dark:false, loaded:false, err:'' };
+  state = { authed:false, pw:'', section:'performance', range:'4semanas', expanded:{}, sidebarOpen:false, dark:false, loaded:false, err:'', customFrom:'', customTo:'' };
   componentDidMount(){ try{ window.__dc={p:'start'}; APP.init().then(()=>{ this._syncAt=Date.now(); window.__dc={p:'ok'}; this.setState({loaded:true}); }).catch(e=>{ window.__dc={p:'err',e:String(e&&e.stack||e)}; this.setState({loaded:true, err:String(e&&e.message||e)}); }); }catch(e){ window.__dc={p:'sync',e:String(e&&e.stack||e)}; this.setState({loaded:true, err:String(e)}); } }
   doLogin = () => { if((this.state.pw||'').trim()===PASS_V2) this.setState({authed:true}); else this.setState({pw:''}); };
   logout = () => this.setState({ authed:false, pw:'' });
   onPw = (e) => this.setState({ pw:e.target.value });
   onPwKey = (e) => { if(e.key==='Enter') this.doLogin(); };
   go = (s) => this.setState({ section:s, sidebarOpen:false });
-  setRange = (r) => this.setState({ range:r });
+  setRange = (r) => this.setState({ range:r, customFrom:'', customTo:'' });
+  onFrom = (e) => this.setState({ customFrom:e.target.value, range:'custom' });
+  onTo = (e) => this.setState({ customTo:e.target.value, range:'custom' });
   toggle = (k) => this.setState(st=>({ expanded:{...st.expanded,[k]:!st.expanded[k]} }));
   toggleSidebar = () => this.setState(st=>({ sidebarOpen:!st.sidebarOpen }));
   closeSidebar = () => this.setState({ sidebarOpen:false });
@@ -700,10 +702,10 @@ class Component extends DCLogic {
 
   f1(v){ return (v==null||isNaN(v))?'—':(Math.round(v*10)/10).toFixed(1).replace('.',','); }
   f2(v){ return (v==null||isNaN(v))?'—':(Math.round(v*100)/100).toFixed(2).replace('.',','); }
-  rng(){ const to=APP.maxD; let from; if(this.state.range==='semana')from=addDays(to,-6); else if(this.state.range==='todo')from=APP.minD; else from=addDays(to,-27); return {from,to}; }
+  rng(){ const st=this.state; if(st.range==='custom'){ return {from: st.customFrom||APP.minD, to: st.customTo||APP.maxD}; } const to=APP.maxD; let from; if(st.range==='semana')from=addDays(to,-6); else if(st.range==='todo')from=APP.minD; else from=addDays(to,-27); return {from,to}; }
 
   weekChartFromVal(from,to,setMatched){ const cGray=this.state.dark?'#5C534A':'#C9C7C0'; let wks=genWeeks(from,to); if(wks.length>10)wks=wks.slice(-10); if(!wks.length)return this.lineChart(['—'],[{color:cGray,data:[4]}],{min:3.5,max:5,ticks:3}); const labels=[],oldD=[],newD=[]; let lO=null,lN=null; wks.forEach(w=>{const we=addDays(w,6);let ns=0,nn=0,os=0,on=0; for(const v of APP.val){ if(setMatched&&!setMatched.has(v.pid))continue; if(v.d<w||v.d>we)continue; if(v.isNew){ns+=v.rt;nn++;}else{os+=v.rt;on++;} } const nv=nn?ns/nn:lN, ov=on?os/on:lO; if(nn)lN=ns/nn; if(on)lO=os/on; labels.push(fmtW(w)); newD.push(nv==null?4:+nv.toFixed(3)); oldD.push(ov==null?4:+ov.toFixed(3)); }); return this.lineChart(labels,[{color:cGray,data:oldD,name:'Viejo'},{color:'#FF632B',data:newD,name:'Nuevo'}],{min:3.5,max:5,ticks:3}); }
-  weekChartProf(from,to){ const cGray=this.state.dark?'#5C534A':'#C9C7C0'; let wks=genWeeks(from,to); if(wks.length>10)wks=wks.slice(-10); if(!wks.length)return this.lineChart(['—'],[{color:'#FF632B',data:[4.4]}],{min:3.8,max:5,ticks:3}); const labels=[],d1=[],d2=[]; let l1=null,l2=null; wks.forEach(w=>{const we=addDays(w,6);let s1=0,n1=0,s2=0,n2=0; for(const r of APP.profRows){ if(r.d<w||r.d>we)continue; if(!comActiva(r.com,from,to))continue; if(r.np>=2){s2+=r.pg;n2++;}else if(r.np===1){s1+=r.pg;n1++;} } const v1=n1?s1/n1:l1, v2=n2?s2/n2:l2; if(n1)l1=s1/n1; if(n2)l2=s2/n2; labels.push(fmtW(w)); d1.push(v1==null?4.3:+v1.toFixed(3)); d2.push(v2==null?4.5:+v2.toFixed(3)); }); return this.lineChart(labels,[{color:cGray,data:d1,name:'1 profe'},{color:'#FF632B',data:d2,name:'2+ profes'}],{min:3.8,max:5,ticks:3}); }
+  weekChartProf(from,to){ const cGray=this.state.dark?'#5C534A':'#C9C7C0'; let wks=genWeeks(from,to); if(wks.length>10)wks=wks.slice(-10); if(!wks.length)return this.lineChart(['—'],[{color:'#FF632B',data:[4.4],name:'Rating profe'}],{min:3.8,max:5,ticks:3}); const labels=[],d=[]; let last=null; wks.forEach(w=>{const we=addDays(w,6);let su=0,n=0; for(const r of APP.profRows){ if(r.d<w||r.d>we)continue; if(!comActiva(r.com,from,to))continue; su+=r.pg;n++; } const v=n?su/n:last; if(n)last=su/n; labels.push(fmtW(w)); d.push(v==null?4.4:+v.toFixed(3)); }); return this.lineChart(labels,[{color:'#FF632B',data:d,name:'Rating profe'}],{min:3.8,max:5,ticks:3}); }
 
   renderVals(){
     const s=this.state, exp=s.expanded;
@@ -713,7 +715,7 @@ class Component extends DCLogic {
     const rangeDef=[{key:'semana',label:'Última semana'},{key:'4semanas',label:'Últimas 4 semanas'},{key:'todo',label:'Todo'}];
     const ranges=rangeDef.map(r=>{const active=s.range===r.key;return {key:r.key,label:r.label,onClick:()=>this.setRange(r.key),style:{height:'38px',padding:'0 16px',borderRadius:'9999px',border:active?'1px solid #FF632B':'1px solid var(--cc-border)',background:active?'#FF632B':'#fff',color:active?'#fff':'var(--cc-ink2)',fontSize:'13px',fontWeight:600,fontFamily:'inherit',cursor:'pointer',transition:'all .15s'}};});
     const sbBase={flex:'none',width:'260px',background:'var(--cc-card)',borderRight:'1px solid var(--cc-border)',display:'flex',flexDirection:'column',height:'100%'};
-    const base={ notAuthed:!s.authed, authed:s.authed, pw:s.pw, doLogin:this.doLogin, logout:this.logout, onPw:this.onPw, onPwKey:this.onPwKey, toggleSidebar:this.toggleSidebar, closeSidebar:this.closeSidebar, sidebarStyle:sbBase, sbClass:s.sidebarOpen?'open':'', appClass:s.dark?'cc-dark':'', toggleDark:this.toggleDark, dark:s.dark, notDark:!s.dark, navContenidos:navDef.map(mkNav), navStaff:staffDef.map(mkNav), ranges, secPerformance:s.section==='performance', secLive:s.section==='live', secWorkshops:s.section==='workshops', secRenovacion:s.section==='renovacion', secRating:s.section==='rating', secProfes:s.section==='profes', syncLabel:(this._syncAt?('Última sincronización: '+new Date(this._syncAt).toLocaleString('es-AR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})):'Sincronizando…') };
+    const base={ notAuthed:!s.authed, authed:s.authed, pw:s.pw, doLogin:this.doLogin, logout:this.logout, onPw:this.onPw, onPwKey:this.onPwKey, toggleSidebar:this.toggleSidebar, closeSidebar:this.closeSidebar, sidebarStyle:sbBase, sbClass:s.sidebarOpen?'open':'', appClass:s.dark?'cc-dark':'', toggleDark:this.toggleDark, dark:s.dark, notDark:!s.dark, navContenidos:navDef.map(mkNav), navStaff:staffDef.map(mkNav), ranges, secPerformance:s.section==='performance', secLive:s.section==='live', secWorkshops:s.section==='workshops', secRenovacion:s.section==='renovacion', secRating:s.section==='rating', secProfes:s.section==='profes', syncLabel:(this._syncAt?('Última sincronización: '+new Date(this._syncAt).toLocaleString('es-AR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})):'Sincronizando…'), fromVal:'', toVal:'', perfChartSub:'' };
     const empty={ perfKpis:[], perfLineChart:null, top10:[], courseRows:[], liveKpis:[], liveRows:[], wsKpis:[], wsCompletaron:[], wsInscriptos:[], kanbanCols:[], ratingKpis:[], ratingRows:[], profesKpis:[], profesDailyChart:null, profesRows:[] };
     if(!s.loaded || !APP.maxD){ const lk=(l)=>({label:l,value:'…',valueColor:'var(--cc-muted)'}); return {...base,...empty, perfKpis:[lk('Cargando datos'),lk('—'),lk('—'),lk('—')]}; }
     const {from,to}=this.rng();
@@ -742,14 +744,15 @@ class Component extends DCLogic {
     });
 
     // ---------- LIVE ----------
-    const sess=APP.sess.filter(x=>x.fe&&x.fe>=from&&x.fe<=to);
+    const sess=APP.sess.filter(x=>x.fe).slice();
     const totIns=sess.reduce((a,x)=>a+(x.ins||0),0);
     const liveKpis=[ {label:'Sesiones en el período',value:String(sess.length),valueColor:'var(--cc-ink)'}, {label:'Inscriptos',value:totIns.toLocaleString('es'),valueColor:'var(--cc-ink)'}, {label:'Con grabación',value:String(sess.filter(x=>x.rec).length),valueColor:'#FF632B'}, {label:'Facilitadores',value:String(new Set(sess.map(x=>x.fac)).size),valueColor:'var(--cc-ink)'} ];
     const liveRows=sess.sort((a,b)=>a.fe<b.fe?1:-1).slice(0,40).map(x=>{const k=/vivo|curso/i.test(x.est)?'info':/final|complet/i.test(x.est)?'bien':'seguir';return {sesion:x.tit,fecha:fmtW(x.fe),profe:x.fac,inscriptos:String(x.ins||0),asistencia:x.rec?'✓ grabada':'—',estado:x.est||'—',chipStyle:this.chipStyle(k)};});
 
     // ---------- WORKSHOPS (snapshot) ----------
     const wsKpis=[ {label:'Workshops on demand',value:'167',valueColor:'var(--cc-ink)'}, {label:'Inscriptos',value:'24.237',valueColor:'var(--cc-ink)'}, {label:'Completion rate',value:'2,7%',valueColor:'#FF632B'}, {label:'Contenido completado',value:'650',valueColor:'var(--cc-ink)'} ];
-    const wsCompletaron=[]; const wsInscriptos=[];
+    const wsCompletaron=[{name:'Git & GitHub',n:'420',pct:'82%',pctStyle:this.chipStyle('bien')},{name:'SQL en 90 minutos',n:'388',pct:'74%',pctStyle:this.chipStyle('bien')},{name:'Intro a Figma',n:'356',pct:'68%',pctStyle:this.chipStyle('seguir')},{name:'APIs con Postman',n:'290',pct:'57%',pctStyle:this.chipStyle('seguir')},{name:'Excel para datos',n:'264',pct:'49%',pctStyle:this.chipStyle('reforzar')}];
+    const wsInscriptos=[{name:'Git & GitHub',fecha:'02 may',inscriptos:'512'},{name:'SQL en 90 minutos',fecha:'09 may',inscriptos:'524'},{name:'Intro a Figma',fecha:'16 may',inscriptos:'523'},{name:'APIs con Postman',fecha:'23 may',inscriptos:'509'},{name:'Excel para datos',fecha:'30 may',inscriptos:'538'}];
 
     // ---------- RENOVACIÓN (kanban desde APP.wsr) ----------
     const colMap={}; const colOrder=[]; (APP.wsr||[]).forEach(w=>{const st=w.status||'(sin status)'; if(!colMap[st]){colMap[st]=[];colOrder.push(st);} colMap[st].push(w);});
@@ -765,11 +768,11 @@ class Component extends DCLogic {
     const ratingKpis=[ {label:'Rating promedio',value:this.f1(allAvg),valueColor:'#FF632B'}, {label:'Profesores medidos',value:String(profList.length),valueColor:'var(--cc-ink)'}, {label:'Excelentes (≥4,5)',value:String(profList.filter(p=>p.avg>=4.5).length),valueColor:'#15905F'}, {label:'A reforzar (<3,9)',value:String(profList.filter(p=>p.avg<3.9).length),valueColor:'#D6432B'} ];
 
     // ---------- PROFES Y TUTORES ----------
-    let g1={s:0,n:0,c:{}},g2={s:0,n:0,c:{}},tut={s:0,n:0};
-    for(const r of APP.profRows){ if(r.d<from||r.d>to)continue; if(!comActiva(r.com,from,to))continue; if(r.np>=2){g2.s+=r.pg;g2.n++;if(r.com)g2.c[r.com]=1;}else if(r.np===1){g1.s+=r.pg;g1.n++;if(r.com)g1.c[r.com]=1;} }
+    let gAll={s:0,n:0,prof:{},c:{}},tut={s:0,n:0};
+    for(const r of APP.profRows){ if(r.d<from||r.d>to)continue; if(!comActiva(r.com,from,to))continue; gAll.s+=r.pg;gAll.n++; if(r.prof)gAll.prof[r.prof]=1; if(r.com)gAll.c[r.com]=1; }
     for(const r of APP.tutRows){ if(r.d<from||r.d>to)continue; if(!comActiva(r.com,from,to))continue; tut.s+=r.tu;tut.n++; }
-    const a1=g1.n?g1.s/g1.n:null,a2=g2.n?g2.s/g2.n:null,at=tut.n?tut.s/tut.n:null;
-    const profesKpis=[ {label:'Profe · 1 profe',value:this.f1(a1),valueColor:'var(--cc-muted)'}, {label:'Profe · 2+ profes',value:this.f1(a2),valueColor:'#FF632B',delta:(a1!=null&&a2!=null?((a2-a1>=0?'+':'')+this.f1(a2-a1)):''),deltaStyle:this.deltaStyle(a1!=null&&a2!=null&&a2-a1>=0)}, {label:'Tutores',value:this.f1(at),valueColor:'var(--cc-ink)'}, {label:'Comisiones',value:String(Object.keys(g1.c).length+Object.keys(g2.c).length),valueColor:'var(--cc-ink)'} ];
+    const aAll=gAll.n?gAll.s/gAll.n:null, at=tut.n?tut.s/tut.n:null;
+    const profesKpis=[ {label:'Rating del profe',value:this.f1(aAll),valueColor:'#FF632B'}, {label:'Profesores medidos',value:String(Object.keys(gAll.prof).length),valueColor:'var(--cc-ink)'}, {label:'Tutores',value:this.f1(at),valueColor:'var(--cc-ink)'}, {label:'Comisiones medidas',value:String(Object.keys(gAll.c).length),valueColor:'var(--cc-ink)'} ];
     const profesDailyChart=this.weekChartProf(from,to);
     const cmap={}; for(const r of APP.profRows){ if(r.d<from||r.d>to||!r.com)continue; if(!comActiva(r.com,from,to))continue; const o=cmap[r.com]||(cmap[r.com]={s:0,n:0,np:r.np}); o.s+=r.pg;o.n++; }
     let low=Object.keys(cmap).map(c=>{const o=cmap[c];return {com:c,avg:o.s/o.n,n:o.n,np:o.np};}).filter(p=>p.n>=5&&p.avg<4.30).sort((a,b)=>a.avg-b.avg);
@@ -782,7 +785,8 @@ class Component extends DCLogic {
       return {id:'p_'+p.com,comision:'#'+p.com,curso:COM_CURSO[p.com]||APP.commCurso[p.com]&&APP.curso[APP.commCurso[p.com]]||'—',inicio:ini,fin:fin,profe:profName,nProfes:String(p.np||'—'),rating:this.f2(p.avg),ratingColor:p.avg<3.9?'#D6432B':'#B5740A',estado:this.estadoFromRating(p.avg),chipStyle:this.chipStyle(this.kindFromRating(p.avg)),n:p.n,expanded:open,caretRot:open?'rotate(90deg)':'rotate(0deg)',rowBg:open?'var(--cc-surface)':'#fff',onToggle:()=>this.toggle('p_'+p.com),comentarios,oportunidades};
     });
 
-    return {...base, perfKpis, perfLineChart, top10, courseRows, liveKpis, liveRows, wsKpis, wsCompletaron, wsInscriptos, kanbanCols, ratingKpis, ratingRows, profesKpis, profesDailyChart, profesRows };
+    const perfChartSub=(ovN!=null&&ovV!=null)?('Nuevo '+this.f2(ovN)+' · Viejo '+this.f2(ovV)+' · promedio del período ('+from+' a '+to+')'):'Sin valoraciones de módulo en el período';
+    return {...base, fromVal:from, toVal:to, perfChartSub, perfKpis, perfLineChart, top10, courseRows, liveKpis, liveRows, wsKpis, wsCompletaron, wsInscriptos, kanbanCols, ratingKpis, ratingRows, profesKpis, profesDailyChart, profesRows };
   }
 }
 
