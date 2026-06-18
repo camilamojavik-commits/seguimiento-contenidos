@@ -507,6 +507,7 @@
 </sc-if>
 </x-dc>
 <script type="text/x-dc" data-dc-script>
+const SHEET='1VvmrIcslmEZQCyW30iW7GZexcqGHuIOLP1nJNOMQ-F0';
 /* === Folios de feedback en vivo ===
    Dejar FOLIOS_API="" => usa el snapshot horneado abajo (FOLIOS_COM).
    Al deployar en el dominio de Coder con el proxy de Intercom, poner acá la URL del endpoint, ej:
@@ -677,7 +678,7 @@ function hasNameSafe(c){try{return hasName(c);}catch(e){return false;}}
 const PASS_V2='contenidos2026';
 class Component extends DCLogic {
   state = { authed:false, pw:'', section:'performance', range:'4semanas', expanded:{}, sidebarOpen:false, dark:false, loaded:false, err:'' };
-  componentDidMount(){ try{ APP.init().then(()=>{ this.setState({loaded:true}); }).catch(e=>{ this.setState({loaded:true, err:String(e&&e.message||e)}); }); }catch(e){ this.setState({loaded:true, err:String(e)}); } }
+  componentDidMount(){ try{ window.__dc={p:'start'}; APP.init().then(()=>{ window.__dc={p:'ok',maxD:APP.maxD,val:(APP.val||[]).length,prof:(APP.prof||[]).length}; this.setState({loaded:true}); }).catch(e=>{ window.__dc={p:'err',e:String(e&&e.stack||e)}; this.setState({loaded:true, err:String(e&&e.message||e)}); }); }catch(e){ window.__dc={p:'sync',e:String(e&&e.stack||e)}; this.setState({loaded:true, err:String(e)}); } }
   doLogin = () => { if((this.state.pw||'').trim()===PASS_V2) this.setState({authed:true}); else this.setState({pw:''}); };
   logout = () => this.setState({ authed:false, pw:'' });
   onPw = (e) => this.setState({ pw:e.target.value });
