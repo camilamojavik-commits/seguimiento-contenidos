@@ -393,7 +393,7 @@ td{padding:7px 10px;border-top:1px solid var(--line)}tr:nth-child(even){backgrou
   <div class="panel">
     <div class="top"><h3><span class="ic">▼</span> Comisiones con rating bajo · en el rango <span id="lowComCount" class="folstat"></span></h3></div>
     <div class="sub">Comisiones cuyo rating de profe (professor_guidance) en el rango de fechas elegido está por debajo de 4,30, con al menos 5 valoraciones. Ordenadas de peor a mejor. Cambiá el filtro de fechas de arriba para recalcular.</div>
-    <table id="tblLowCom"><thead><tr><th>Comisión</th><th>Curso</th><th>Profe</th><th class="num">Nº profes</th><th class="num">Rating</th><th class="num">n</th><th>Estado</th></tr></thead><tbody id="lowComBody"></tbody></table>
+    <table id="tblLowCom"><thead><tr><th>Comisión</th><th>Curso</th><th>Inicio</th><th>Fin</th><th>Profe</th><th class="num">Nº profes</th><th class="num">Rating</th><th class="num">n</th><th>Estado</th></tr></thead><tbody id="lowComBody"></tbody></table>
   </div>
   </section>
   <section id="sec-live" class="section">
@@ -974,7 +974,7 @@ function comDetail(com,curso,prof,avg){
   else{opsHtml='<div class="rech">✨ Oportunidades de mejora</div><ul>'+GEN_PROF.map(t=>'<li>'+esc(t)+'</li>').join('')+'</ul><div class="recf">Pocos comentarios escritos en el rango; recomendaciones generales de acompañamiento.</div>';}
   const CAP=12;let comHtml;
   if(!cs.length)comHtml='<div class="mnote">Sin comentarios escritos de los alumnos en el rango.</div>';
-  else comHtml=cs.slice(0,CAP).map(c=>{const r=c.pg;const bg=r<=3?"#fde2dd":r>=5?"#dcfce7":"#fef3cd",fg=r<=3?"#b91c1c":r>=5?"#166534":"#92400e";return '<div class="qc"><span class="qcr" style="background:'+bg+';color:'+fg+'">'+r.toFixed(0)+'★</span><div class="qcb"><div class="qcm">“'+esc(c.cm).slice(0,280)+'”</div></div></div>';}).join("")+(cs.length>CAP?'<div class="mnote">+ '+(cs.length-CAP)+' comentarios más</div>':'');
+  else comHtml=cs.slice(0,CAP).map(c=>{const r=c.pg;const bg=r<=3?"#fde2dd":r>=5?"#dcfce7":"#fef3cd",fg=r<=3?"#b91c1c":r>=5?"#166534":"#92400e";return '<div class="qc"><span class="qcr" style="background:'+bg+';color:'+fg+'">'+r.toFixed(0)+'★</span><div class="qcb"><div class="qcm">“'+esc(c.cm).slice(0,280)+'”</div><div class="qcs">'+(c.d?fmtW(c.d):"")+'</div></div></div>';}).join("")+(cs.length>CAP?'<div class="mnote">+ '+(cs.length-CAP)+' comentarios más</div>':'');
   return '<div class="mnote"><b>'+esc(curso)+'</b> · comisión #'+esc(com)+' · profe '+esc(prof)+' · rating '+avg.toFixed(2)+'</div>'+
     '<div class="recbox" style="display:block;margin-top:6px">'+opsHtml+'</div>'+
     '<div class="qch">💬 Qué dicen los alumnos · '+cs.length+' comentario'+(cs.length===1?'':'s')+' (peor primero)</div>'+comHtml;
@@ -1008,10 +1008,10 @@ function renderProfTut(){
   let low=Object.keys(cmap).map(c=>{const o=cmap[c];const pf=Object.entries(o.pf).sort((a,b)=>b[1]-a[1])[0];return {com:c,avg:o.s/o.n,n:o.n,np:o.np,curso:comCurso[c]||COMCUR[c]||"—",prof:pf?cleanNm(pf[0]):"—"};}).filter(p=>p.n>=LOWMIN&&p.avg<LOWT).sort((a,b)=>a.avg-b.avg);
   const bandLow=a=>a<4.0?["A reforzar","#d6432b"]:["A seguir","#d97706"];
   const lcb=document.getElementById("lowComBody");
-  if(lcb)lcb.innerHTML=low.length?low.map((p,i)=>{const t=bandLow(p.avg);
-    const main='<tr class="clk" onclick="APP.lcTog('+i+')"><td><span id="lcc'+i+'" style="color:#FF632B;margin-right:6px">▸</span>'+esc(p.com)+'</td><td>'+esc(p.curso)+'</td><td>'+esc(p.prof)+'</td><td class="num">'+(p.np||"—")+'</td><td class="num">'+p.avg.toFixed(2)+'</td><td class="num">'+p.n+'</td><td><span class="sev" style="background:'+t[1]+'22;color:'+t[1]+'">'+t[0]+'</span></td></tr>';
-    const det='<tr id="lcd'+i+'" style="display:none"><td colspan="7" style="background:#faf7f2;padding:8px 12px 14px">'+comDetail(p.com,p.curso,p.prof,p.avg)+'</td></tr>';
-    return main+det;}).join(""):'<tr><td colspan="7" class="empty">Ninguna comisión por debajo de 4,30 (con n≥5) en el rango elegido.</td></tr>';
+  if(lcb)lcb.innerHTML=low.length?low.map((p,i)=>{const t=bandLow(p.avg);const cd=COM_DATES[p.com];const ini=cd?fmtW(cd[0]):"—";const fin=cd?fmtW(cd[1]):"—";
+    const main='<tr class="clk" onclick="APP.lcTog('+i+')"><td><span id="lcc'+i+'" style="color:#FF632B;margin-right:6px">▸</span>'+esc(p.com)+'</td><td>'+esc(p.curso)+'</td><td>'+ini+'</td><td>'+fin+'</td><td>'+esc(p.prof)+'</td><td class="num">'+(p.np||"—")+'</td><td class="num">'+p.avg.toFixed(2)+'</td><td class="num">'+p.n+'</td><td><span class="sev" style="background:'+t[1]+'22;color:'+t[1]+'">'+t[0]+'</span></td></tr>';
+    const det='<tr id="lcd'+i+'" style="display:none"><td colspan="9" style="background:#faf7f2;padding:8px 12px 14px">'+comDetail(p.com,p.curso,p.prof,p.avg)+'</td></tr>';
+    return main+det;}).join(""):'<tr><td colspan="9" class="empty">Ninguna comisión por debajo de 4,30 (con n≥5) en el rango elegido.</td></tr>';
   const lcc=document.getElementById("lowComCount");if(lcc)lcc.textContent="· "+low.length+" comisiones";
   var et=document.getElementById("evoTotal");if(et)et.textContent=pN?(pS/pN).toFixed(2):"—";
   var en=document.getElementById("evoN");if(en)en.textContent=pN?("promedio del período · "+pN.toLocaleString("es")+" valoraciones"):"";
