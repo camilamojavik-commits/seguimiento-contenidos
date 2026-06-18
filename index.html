@@ -967,7 +967,7 @@ function detectOps(cs){return TEMAS_PROF.map(t=>({tip:t.tip,n:cs.filter(c=>t.re.
 APP.lcTog=function(i){const d=document.getElementById("lcd"+i),c=document.getElementById("lcc"+i);if(!d)return;const open=d.style.display==="none";d.style.display=open?"":"none";if(c)c.textContent=open?"▾":"▸";};
 function comDetail(com,curso,prof,avg){
   const from=APP.from,to=APP.to;
-  const cs=APP.prof.filter(v=>v.com===com&&v.cm&&v.cm.trim().length>3&&v.d>=from&&v.d<=to&&!OFENS_C.test(v.cm)).sort((a,b)=>a.pg-b.pg);
+  const cs=APP.prof.filter(v=>v.com===com&&v.cm&&v.cm.trim().length>3&&v.d>=from&&v.d<=to&&!OFENS_C.test(v.cm)).sort((a,b)=>a.d<b.d?1:(a.d>b.d?-1:0));
   const ops=detectOps(cs);
   let opsHtml;
   if(ops.length){opsHtml='<div class="rech">✨ Oportunidades de mejora · detectadas del feedback de esta comisión</div><ul>'+ops.slice(0,5).map(o=>'<li>'+esc(o.tip)+' <span style="color:#9a8c79">('+o.n+' menció'+(o.n===1?'n':'nes')+')</span></li>').join('')+'</ul><div class="recf">Detectadas automáticamente de los comentarios de los alumnos de esta comisión.</div>';}
@@ -977,7 +977,7 @@ function comDetail(com,curso,prof,avg){
   else comHtml=cs.slice(0,CAP).map(c=>{const r=c.pg;const bg=r<=3?"#fde2dd":r>=5?"#dcfce7":"#fef3cd",fg=r<=3?"#b91c1c":r>=5?"#166534":"#92400e";return '<div class="qc"><span class="qcr" style="background:'+bg+';color:'+fg+'">'+r.toFixed(0)+'★</span><div class="qcb"><div class="qcm">“'+esc(c.cm).slice(0,280)+'”</div><div class="qcs">'+(c.d?fmtW(c.d):"")+'</div></div></div>';}).join("")+(cs.length>CAP?'<div class="mnote">+ '+(cs.length-CAP)+' comentarios más</div>':'');
   return '<div class="mnote"><b>'+esc(curso)+'</b> · comisión #'+esc(com)+' · profe '+esc(prof)+' · rating '+avg.toFixed(2)+'</div>'+
     '<div class="recbox" style="display:block;margin-top:6px">'+opsHtml+'</div>'+
-    '<div class="qch">💬 Qué dicen los alumnos · '+cs.length+' comentario'+(cs.length===1?'':'s')+' (peor primero)</div>'+comHtml;
+    '<div class="qch">💬 Qué dicen los alumnos · '+cs.length+' comentario'+(cs.length===1?'':'s')+' (más recientes primero)</div>'+comHtml;
 }
 function renderProfTut(){
   const from=APP.from,to=APP.to;
