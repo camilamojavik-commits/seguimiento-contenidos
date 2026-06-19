@@ -399,7 +399,7 @@ table{border-radius:14px!important;overflow:hidden}
 
   </section>
   <section id="sec-proftut" class="section">
-  <div class="sech" style="border-top:none;margin-top:6px;padding-top:0"><h2>Rating <em>profesores</em></h2><div class="ssub">Rating del profe (professor_guidance) en la clase en vivo y rating de tutores, por comisión. Solo comisiones activas en el rango elegido. Fuente: hoja live class rating.</div></div>
+  <div class="sech" style="border-top:none;margin-top:6px;padding-top:0"><h2>Rating <em>profesores</em></h2><div class="ssub">Rating del profe (professor_guidance), actividad práctica (el ejercicio que arma el profe en la clase en vivo) y rating de tutores, por comisión. Solo comisiones activas en el rango elegido. Fuente: hoja live class rating.</div></div>
 
   <div class="kpis" id="kpisPT"></div>
 
@@ -610,13 +610,15 @@ APP.init=async function(){
   APP.prof=[];
   for(const r of lc.slice(1)){const url=r[Hl["url"]];const pid=pidUrl(url);const pg=parseFloat(r[Hl["professor_guidance"]]);if(isNaN(pg))continue;const com=resolveCom(url,r[Hl["comision"]]);if(!com)continue;const d=day(r[Hl["timestamp"]]);if(!d)continue;const prof=(r[Hl["class_professor_name_1"]]||"").trim()||com2name[com]||COMPROF[com]||"";const cmt=(r[Hl["comment"]]||"").trim();APP.prof.push({pid:pid,com:com,pg:pg,d:d,prof:prof,cm:cmt});}
   // PROFES Y TUTORES — guardamos cada valoración con su fecha para poder filtrar por rango. nº de profes por comisión desde BQ (COMNP).
-  APP.profRows=[];APP.tutRows=[];
+  APP.profRows=[];APP.tutRows=[];APP.actRows=[];
   for(const r of lc.slice(1)){
     const com=resolveCom(r[Hl["url"]],r[Hl["comision"]]);const np=com?COMNP[com]:undefined;const d=day(r[Hl["timestamp"]]);if(!d)continue;
     const pg=parseFloat(r[Hl["professor_guidance"]]);const pn=cleanName((r[Hl["class_professor_name_1"]]||"").trim()||com2name[com]||COMPROF[com]||"");
     if(pn&&/[a-zA-Z]/.test(pn)&&!isNaN(pg))APP.profRows.push({d:d,com:com,np:np,pg:pg,prof:pn});
     const tu=parseFloat(r[Hl["tutor_usefulness"]]);const tn=cleanName(r[Hl["tutor_name"]]);
     if(tn&&/[a-zA-Z]/.test(tn)&&!isNaN(tu))APP.tutRows.push({d:d,tu:tu,com:com});
+    const ac=parseFloat(r[Hl["activity"]]);
+    if(!isNaN(ac))APP.actRows.push({d:d,ac:ac,com:com});
   }
   const Hs={};ls[0].forEach((x,i)=>{if(Hs[x.trim()]===undefined)Hs[x.trim()]=i;});
   const numF=v=>{const n=parseInt(String(v||"").replace(/[^0-9]/g,""));return isNaN(n)?0:n;};
@@ -1013,13 +1015,16 @@ function renderProfTut(){
     else if(r.np===1){g1.s+=r.pg;g1.n++;if(r.com)g1.c[r.com]=1;}
   }
   for(const r of APP.tutRows){if(r.d<from||r.d>to)continue;if(!comActiva(r.com,from,to))continue;tut.s+=r.tu;tut.n++;const pd=byDay[r.d]||(byDay[r.d]={s:0,n:0});pd.s+=r.tu;pd.n++;}
+  let act={s:0,n:0};
+  for(const r of (APP.actRows||[])){if(r.d<from||r.d>to)continue;if(!comActiva(r.com,from,to))continue;act.s+=r.ac;act.n++;}
   const a1=g1.n?g1.s/g1.n:null, a2=g2.n?g2.s/g2.n:null, at=tut.n?tut.s/tut.n:null;
+  const aAct=act.n?act.s/act.n:null;
   const aAll=(g1.n+g2.n)?((g1.s+g2.s)/(g1.n+g2.n)):null;
   document.getElementById("kpisPT").innerHTML=
-    kpi("Rating del profe",aAll!=null?aAll.toFixed(2):"—","promedio del período",1)+
+    kpi("Rating del profe",aAll!=null?aAll.toFixed(2):"—","professor_guidance · "+(g1.n+g2.n).toLocaleString("es")+" valoraciones",1)+
+    kpi("Actividad práctica",aAct!=null?aAct.toFixed(2):"—","ejercicio de la clase en vivo · "+act.n.toLocaleString("es")+" valoraciones")+
     kpi("Tutores",at!=null?at.toFixed(2):"—",tut.n.toLocaleString("es")+" valoraciones")+
-    kpi("Comisiones medidas",String(Object.keys(g1.c).length+Object.keys(g2.c).length),"en el rango")+
-    kpi("Valoraciones de profe",(g1.n+g2.n).toLocaleString("es"),"en el rango");
+    kpi("Comisiones medidas",String(Object.keys(g1.c).length+Object.keys(g2.c).length),"en el rango");
   mk("chartPT",{type:"bar",plugins:[barLabels],data:{labels:["Comis. 1 profe","Comis. 2+ profes","Tutores"],datasets:[{data:[a1!=null?+a1.toFixed(3):null,a2!=null?+a2.toFixed(3):null,at!=null?+at.toFixed(3):null],backgroundColor:["#8a97a8","#F5A623","#15a06b"],borderRadius:5,maxBarThickness:90}]},options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:18}},plugins:{legend:{display:false}},scales:{y:{min:4,max:5,ticks:{stepSize:0.25},grid:{color:"#efe7da"},title:{display:true,text:"Rating (1–5)"}},x:{grid:{display:false}}}}});
   // Evolución diaria del rating del profe (en el rango filtrado) — para ver picos de la semana
   let pS=0,pN=0;for(const d in byDay){pS+=byDay[d].s;pN+=byDay[d].n;}
