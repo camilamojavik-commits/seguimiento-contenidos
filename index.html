@@ -404,15 +404,15 @@ table{border-radius:14px!important;overflow:hidden}
   <div class="kpis" id="kpisPT"></div>
 
   <div class="panel">
-    <div class="top"><h3><span class="ic">↗</span> Evolución del rating de staff (profe + tutor) · por día</h3>
+    <div class="top"><h3><span class="ic">↗</span> Evolución del rating de staff (profe + actividad + tutor) · por día</h3>
       <div class="evobig"><span class="evonum" id="evoTotal">—</span><span class="evolab" id="evoN"></span></div></div>
-    <div class="sub">Rating promedio del profe (professor_guidance) por día, en el rango elegido. Usá el filtro de fechas de arriba (4 / 8 / 12 sem) para acercarte a una semana y ver los picos y caídas. El número grande es el promedio del período seleccionado.</div>
+    <div class="sub">Rating promedio del staff por día (combina guía del profe, actividad práctica y tutores), en el rango elegido. Usá el filtro de fechas de arriba (4 / 8 / 12 sem) para acercarte a una semana y ver los picos y caídas. El número grande es el promedio del período seleccionado.</div>
     <div class="cv"><canvas id="chartEvo"></canvas></div>
   </div>
 
   <div class="panel">
     <div class="top"><h3><span class="ic">▼</span> Comisiones con rating bajo · en el rango <span id="lowComCount" class="folstat"></span></h3></div>
-    <div class="sub">Comisiones cuyo rating de profe (professor_guidance) en el rango de fechas elegido está por debajo de 4,30, con al menos 5 valoraciones. Ordenadas de peor a mejor. Cambiá el filtro de fechas de arriba para recalcular.</div>
+    <div class="sub">Comisiones cuya performance del profe (guía + actividad práctica) en el rango de fechas elegido está por debajo de 4,30, con al menos 5 valoraciones. Ordenadas de peor a mejor. Cambiá el filtro de fechas de arriba para recalcular.</div>
     <table id="tblLowCom"><thead><tr><th>Comisión</th><th>Curso</th><th>Inicio</th><th>Fin</th><th>Profe</th><th class="num">Nº profes</th><th class="num">Rating</th><th class="num">n</th><th>Estado</th></tr></thead><tbody id="lowComBody"></tbody></table>
   </div>
   </section>
@@ -1016,21 +1016,26 @@ function renderProfTut(){
   }
   for(const r of APP.tutRows){if(r.d<from||r.d>to)continue;if(!comActiva(r.com,from,to))continue;tut.s+=r.tu;tut.n++;const pd=byDay[r.d]||(byDay[r.d]={s:0,n:0});pd.s+=r.tu;pd.n++;}
   let act={s:0,n:0};
-  for(const r of (APP.actRows||[])){if(r.d<from||r.d>to)continue;if(!comActiva(r.com,from,to))continue;act.s+=r.ac;act.n++;}
+  for(const r of (APP.actRows||[])){if(r.d<from||r.d>to)continue;if(!comActiva(r.com,from,to))continue;act.s+=r.ac;act.n++;const pd=byDay[r.d]||(byDay[r.d]={s:0,n:0});pd.s+=r.ac;pd.n++;}
   const a1=g1.n?g1.s/g1.n:null, a2=g2.n?g2.s/g2.n:null, at=tut.n?tut.s/tut.n:null;
   const aAct=act.n?act.s/act.n:null;
   const aAll=(g1.n+g2.n)?((g1.s+g2.s)/(g1.n+g2.n)):null;
+  // Performance del profe = combinación de guía del profe + actividad práctica (todo el desempeño del profe)
+  const perfS=g1.s+g2.s+act.s, perfN=g1.n+g2.n+act.n;
+  const aPerf=perfN?perfS/perfN:null;
   document.getElementById("kpisPT").innerHTML=
-    kpi("Rating del profe",aAll!=null?aAll.toFixed(2):"—","professor_guidance · "+(g1.n+g2.n).toLocaleString("es")+" valoraciones",1)+
-    kpi("Actividad práctica",aAct!=null?aAct.toFixed(2):"—","ejercicio de la clase en vivo · "+act.n.toLocaleString("es")+" valoraciones")+
-    kpi("Tutores",at!=null?at.toFixed(2):"—",tut.n.toLocaleString("es")+" valoraciones")+
-    kpi("Comisiones medidas",String(Object.keys(g1.c).length+Object.keys(g2.c).length),"en el rango");
+    kpi("Performance del profe",aPerf!=null?aPerf.toFixed(2):"—","guía + actividad práctica · "+perfN.toLocaleString("es")+" valoraciones",1)+
+    kpi("Rating del profe",aAll!=null?aAll.toFixed(2):"—","professor_guidance · "+(g1.n+g2.n).toLocaleString("es"))+
+    kpi("Actividad práctica",aAct!=null?aAct.toFixed(2):"—","ejercicio de la clase en vivo · "+act.n.toLocaleString("es"))+
+    kpi("Tutores",at!=null?at.toFixed(2):"—",tut.n.toLocaleString("es")+" valoraciones");
   mk("chartPT",{type:"bar",plugins:[barLabels],data:{labels:["Comis. 1 profe","Comis. 2+ profes","Tutores"],datasets:[{data:[a1!=null?+a1.toFixed(3):null,a2!=null?+a2.toFixed(3):null,at!=null?+at.toFixed(3):null],backgroundColor:["#8a97a8","#F5A623","#15a06b"],borderRadius:5,maxBarThickness:90}]},options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:18}},plugins:{legend:{display:false}},scales:{y:{min:4,max:5,ticks:{stepSize:0.25},grid:{color:"#efe7da"},title:{display:true,text:"Rating (1–5)"}},x:{grid:{display:false}}}}});
   // Evolución diaria del rating del profe (en el rango filtrado) — para ver picos de la semana
   let pS=0,pN=0;for(const d in byDay){pS+=byDay[d].s;pN+=byDay[d].n;}
   // ---- Comisiones con rating bajo en el rango (professor_guidance por comisión) ----
   const LOWT=4.30, LOWMIN=5;
   const cmap={};for(const r of APP.profRows){if(r.d<from||r.d>to||!r.com)continue;if(!comActiva(r.com,from,to))continue;const o=cmap[r.com]||(cmap[r.com]={s:0,n:0,np:r.np,pf:{}});o.s+=r.pg;o.n++;if(r.prof)o.pf[r.prof]=(o.pf[r.prof]||0)+1;}
+  // sumar actividad práctica a la performance de cada comisión (mismo criterio que el KPI Performance del profe)
+  for(const r of (APP.actRows||[])){if(r.d<from||r.d>to||!r.com)continue;if(!comActiva(r.com,from,to))continue;const o=cmap[r.com];if(!o)continue;o.s+=r.ac;o.n++;}
   // curso conocido de cursos renovados (APP.curso); el resto se completa con COMCUR (BigQuery)
   const comCurso={};for(const v of APP.prof){if(v.com&&v.pid&&APP.curso[v.pid])comCurso[v.com]=APP.curso[v.pid];}
   const cleanNm=s=>(s||"").replace(/\|/g," ").replace(/\[[^\]]*\]/g,"").replace(/\b(Profe|Profesor|Profesora|Tutor|Instructor)\b/g,"").replace(/\s+/g," ").trim();
