@@ -241,7 +241,11 @@ body{background:var(--cream)}
 /* Títulos de sección con palabra coral */
 .sech h2{font-size:27px!important;font-weight:800!important;letter-spacing:-.02em!important;text-transform:none!important}
 .sech h2 em{color:var(--coral);font-style:normal}
-.sech{border-bottom:none!important;margin:34px 0 14px!important}
+.sech{display:block!important;border:none!important;margin:34px 0 14px!important}
+.sech .ssub{display:block!important;font-size:13px!important;color:var(--ink2)!important;margin-top:5px!important;max-width:780px;font-weight:500}
+.main{padding:26px 36px 70px!important}
+.panel{padding:20px!important;margin-bottom:16px!important}
+.kpis{gap:14px!important}
 /* KPIs y paneles más redondeados */
 .kpi{border-radius:16px!important;box-shadow:0 1px 2px rgba(16,24,40,.05)!important;padding:16px 18px!important}
 .kpi .v{font-size:30px!important;font-weight:800!important;letter-spacing:-.01em}
@@ -333,8 +337,7 @@ table{border-radius:14px!important;overflow:hidden}
     <a class="nav" data-sec="workshops"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M10 9l4 2.5-4 2.5z" fill="currentColor" stroke="none"/><path d="M8 21h8"/></svg> Workshops on demand</a>
     <a class="nav" data-sec="crm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="5" height="16" rx="1"/><rect x="10" y="4" width="5" height="11" rx="1"/><rect x="17" y="4" width="5" height="7" rx="1"/></svg> Renovación workshops</a>
     <div class="navgroup">Staff académico</div>
-    <a class="nav" data-sec="profes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M21 8v5"/><path d="M7 11v4c0 1 2 2 5 2s5-1 5-2v-4"/></svg> Rating de profesores</a>
-    <a class="nav" data-sec="proftut"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.2"/><path d="M3 20c0-3 2.5-5 6-5s6 2 6 5"/><path d="M15.5 20c0-2 1-3.5 3-3.5s3 1.5 3 3.5"/></svg> Profes y Tutores</a>
+    <a class="nav" data-sec="proftut"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M21 8v5"/><path d="M7 11v4c0 1 2 2 5 2s5-1 5-2v-4"/></svg> Rating profesores</a>
   </nav>
 </aside>
 <main class="main">
@@ -395,31 +398,10 @@ table{border-radius:14px!important;overflow:hidden}
   </div>
 
   </section>
-  <section id="sec-profes" class="section">
-  <div class="sech" style="border-top:none;margin-top:6px;padding-top:0"><h2>Rating de <em>profesores</em></h2><div class="ssub">Valoración del profe en la clase en vivo (pregunta "¿Qué tan bien guió la clase el instructor hoy?", 1–5), de los cursos renovados. Fuente: hoja live class rating.</div></div>
-
-  <div class="kpis" id="kpisProf"></div>
-
-  <div class="panel">
-    <div class="top"><h3><span class="ic">★</span> Ranking de profesores · <span id="profCount">—</span> con muestra</h3></div>
-    <div class="sub">Profesores de los cursos renovados con al menos 10 valoraciones, ordenados por rating promedio. Arriba los mejores; abajo los que conviene acompañar.</div>
-    <table id="tblProfTop"><thead><tr><th>Profesor</th><th>Curso principal</th><th class="num">n</th><th class="num">Rating</th><th>—</th></tr></thead><tbody id="profTop"></tbody></table>
-    <div class="sub" style="margin:14px 0 4px;font-weight:600;color:var(--ink)">A reforzar (rating más bajo)</div>
-    <table id="tblProfBottom"><thead><tr><th>Profesor</th><th>Curso principal</th><th class="num">n</th><th class="num">Rating</th><th>—</th></tr></thead><tbody id="profBottom"></tbody></table>
-  </div>
-  </section>
   <section id="sec-proftut" class="section">
-  <div class="sech" style="border-top:none;margin-top:6px;padding-top:0"><h2>Profes y <em>Tutores</em> · todas las comisiones</h2><div class="ssub">Rating de profesores (professor_guidance) y tutores (tutor_usefulness) en todas las comisiones. Fuente del rating: hoja live class rating. El nº de profes asignados por comisión viene de la asignación de staff de BigQuery (rol PROFESOR activo; la suplencia es un rol aparte y no cuenta).</div></div>
-
-  <div class="note-top" style="border-left-color:var(--coral)">Sobre el "rating compartido": en comisiones con 2 profes, el rating del Sheet está atribuido a la dupla (no se puede separar por profe). Por eso lo mostramos agregado y lo comparamos contra las comisiones de 1 profe y contra tutores.</div>
+  <div class="sech" style="border-top:none;margin-top:6px;padding-top:0"><h2>Rating <em>profesores</em></h2><div class="ssub">Rating del profe (professor_guidance) en la clase en vivo y rating de tutores, por comisión. Solo comisiones activas en el rango elegido. Fuente: hoja live class rating.</div></div>
 
   <div class="kpis" id="kpisPT"></div>
-
-  <div class="panel">
-    <div class="top"><h3><span class="ic">↗</span> Comparación de rating · 1 profe vs 2 profes vs tutores</h3></div>
-    <div class="sub">Rating promedio del profe en comisiones con 1 profe (azul) vs comisiones con 2+ profes (naranja, rating compartido), y el rating de tutores (verde). Nº de profes por comisión según BigQuery.</div>
-    <div class="cv bar"><canvas id="chartPT"></canvas></div>
-  </div>
 
   <div class="panel">
     <div class="top"><h3><span class="ic">↗</span> Evolución del rating de staff (profe + tutor) · por día</h3>
@@ -671,7 +653,7 @@ function lineDs(nD,nN,oD,oN,na,oa){
   {label:"Contenido nuevo · últ. "+(ln!=null?ln.toFixed(2):"s/d"),data:nD,borderColor:"#F5A623",backgroundColor:"rgba(245,166,35,0.13)",fill:true,borderWidth:3,tension:.4,spanGaps:true,pointBackgroundColor:"#F5A623",pointRadius:nN.map(radN),pointHoverRadius:nN.map(n=>radN(n)+2),_cnt:nN},
   {label:"Contenido viejo · últ. "+(lo!=null?lo.toFixed(2):"s/d"),data:oD,borderColor:"#8a97a8",fill:false,borderWidth:2.5,tension:.4,spanGaps:true,pointBackgroundColor:"#8a97a8",pointRadius:oN.map(radO),pointHoverRadius:oN.map(n=>radO(n)+2),_cnt:oN}
 ];}
-function mk(id,cfg){if(APP.ch[id])APP.ch[id].destroy();APP.ch[id]=new Chart(document.getElementById(id),cfg);}
+function mk(id,cfg){const el=document.getElementById(id);if(!el)return;if(APP.ch[id])APP.ch[id].destroy();APP.ch[id]=new Chart(el,cfg);}
 const kpi=(l,v,d,g)=>'<div class="kpi'+(g?" good":"")+'"><div class="l">'+l+'</div><div class="v">'+v+'</div><div class="d">'+d+'</div></div>';
 
 function renderMovements(ag){
@@ -1032,11 +1014,12 @@ function renderProfTut(){
   }
   for(const r of APP.tutRows){if(r.d<from||r.d>to)continue;if(!comActiva(r.com,from,to))continue;tut.s+=r.tu;tut.n++;const pd=byDay[r.d]||(byDay[r.d]={s:0,n:0});pd.s+=r.tu;pd.n++;}
   const a1=g1.n?g1.s/g1.n:null, a2=g2.n?g2.s/g2.n:null, at=tut.n?tut.s/tut.n:null;
+  const aAll=(g1.n+g2.n)?((g1.s+g2.s)/(g1.n+g2.n)):null;
   document.getElementById("kpisPT").innerHTML=
-    kpi("Profe · comis. 1 profe",a1!=null?a1.toFixed(2):"—",Object.keys(g1.c).length+" comis · "+g1.n.toLocaleString("es")+" valoraciones")+
-    kpi("Profe · comis. 2+ profes",a2!=null?a2.toFixed(2):"—",Object.keys(g2.c).length+" comis · rating compartido")+
-    kpi("Δ (2 profes − 1 profe)",(a1!=null&&a2!=null)?((a2-a1>=0?"+":"")+(a2-a1).toFixed(2)):"—","misma escala, distinta dotación")+
-    kpi("Tutores",at!=null?at.toFixed(2):"—",tut.n.toLocaleString("es")+" valoraciones",1);
+    kpi("Rating del profe",aAll!=null?aAll.toFixed(2):"—","promedio del período",1)+
+    kpi("Tutores",at!=null?at.toFixed(2):"—",tut.n.toLocaleString("es")+" valoraciones")+
+    kpi("Comisiones medidas",String(Object.keys(g1.c).length+Object.keys(g2.c).length),"en el rango")+
+    kpi("Valoraciones de profe",(g1.n+g2.n).toLocaleString("es"),"en el rango");
   mk("chartPT",{type:"bar",plugins:[barLabels],data:{labels:["Comis. 1 profe","Comis. 2+ profes","Tutores"],datasets:[{data:[a1!=null?+a1.toFixed(3):null,a2!=null?+a2.toFixed(3):null,at!=null?+at.toFixed(3):null],backgroundColor:["#8a97a8","#F5A623","#15a06b"],borderRadius:5,maxBarThickness:90}]},options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:18}},plugins:{legend:{display:false}},scales:{y:{min:4,max:5,ticks:{stepSize:0.25},grid:{color:"#efe7da"},title:{display:true,text:"Rating (1–5)"}},x:{grid:{display:false}}}}});
   // Evolución diaria del rating del profe (en el rango filtrado) — para ver picos de la semana
   let pS=0,pN=0;for(const d in byDay){pS+=byDay[d].s;pN+=byDay[d].n;}
@@ -1061,7 +1044,7 @@ function renderProfTut(){
   const cnts=days.map(d=>{const pd=byDay[d];return pd?pd.n:0;});
   mk("chartEvo",{type:"line",data:{labels:days.map(fmtW),datasets:[{label:"Rating staff",data:vals,borderColor:"#F5A623",backgroundColor:"rgba(245,166,35,0.14)",fill:true,borderWidth:3,tension:.4,spanGaps:true,pointRadius:cnts.map(n=>n?3.5:0),pointHoverRadius:5,pointBackgroundColor:"#F5A623",_cnt:cnts}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label(c){const n=c.dataset._cnt[c.dataIndex];return "Rating staff: "+(c.parsed.y!=null?c.parsed.y.toFixed(2):"—")+(n?"  (n="+n+")":"");}}}},scales:{y:{min:3.5,max:5,ticks:{stepSize:0.5},grid:{color:"#efe7da"},title:{display:true,text:"Rating (1–5)"}},x:{grid:{display:false},ticks:{maxRotation:0,autoSkip:true,maxTicksLimit:12}}}}});
 }
-APP.render=function(){document.querySelectorAll(".section").forEach(x=>x.style.display="block");renderContent();renderProfes();renderProfTut();renderLive();renderWorkshops();renderCRM();activate(APP.cur||"contenido");document.getElementById("frange").textContent="Rango: "+APP.from+" → "+APP.to+" · todo (KPIs, gráficos y foco) se calcula en este rango";};
+APP.render=function(){document.querySelectorAll(".section").forEach(x=>x.style.display="block");renderContent();renderProfTut();renderLive();renderWorkshops();renderCRM();activate(APP.cur||"contenido");document.getElementById("frange").textContent="Rango: "+APP.from+" → "+APP.to+" · todo (KPIs, gráficos y foco) se calcula en este rango";};
 function verify(){
   const R=[];const add=(l,ok,d)=>R.push({l,ok,d});
   const f=APP.from,t=APP.to;
