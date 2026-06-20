@@ -702,9 +702,8 @@ function renderContent(){const from=APP.from,to=APP.to,ag=prodAgg(from,to);
   const ovNall=allNN?allNS/allNN:null;
   document.getElementById("kpisCont").innerHTML=
     kpi("Rating contenido nuevo",ovNall!=null?ovNall.toFixed(2):"—","todos los cursos nuevos · "+nCur+" cursos · "+allNN.toLocaleString("es")+" val",1)+
-    kpi("Avg viejo",ovV!=null?ovV.toFixed(2):"—",VN.toLocaleString("es")+" val · mismos cursos")+
-    kpi("Avg nuevo comparable",ovN!=null?ovN.toFixed(2):"—",matched.length+" cursos con viejo y nuevo")+
-    kpi("Δ nuevo − viejo",(ovN!=null&&ovV!=null)?((ovN-ovV>=0?"+":"")+(ovN-ovV).toFixed(2)):"—","del mismo curso (comparables)",1);
+    kpi("Rating contenido viejo",ovV!=null?ovV.toFixed(2):"—",VN.toLocaleString("es")+" val · cursos renovados")+
+    kpi("Δ nuevo − viejo",(ovNall!=null&&ovV!=null)?((ovNall-ovV>=0?"+":"")+(ovNall-ovV).toFixed(2)):"—","contenido nuevo vs viejo",1);
   // desglose módulo vs actividad práctica (en el rango filtrado)
   const br={mod:{nn:0,ns:0,vn:0,vs:0},act:{nn:0,ns:0,vn:0,vs:0}};
   for(const v of APP.val){if(!APP.matchedSet.has(v.pid)||v.d<from||v.d>to)continue;const o=br[v.tipo];if(!o)continue;if(v.isNew){o.nn++;o.ns+=v.rt;}else{o.vn++;o.vs+=v.rt;}}
