@@ -575,7 +575,11 @@ const fmtW=m=>{const p=m.split("-");return (+p[2])+" "+MES[+p[1]-1];};
 const addDays=(ds,n)=>{const d=new Date(ds+"T00:00:00Z");d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10);};
 
 const APP={ch:{},commTotal:{},commCohort:{}};
+const BQ_URL="https://tablero-bigquery.vercel.app/api/contenidos";
 APP.init=async function(){
+  // Bloques 1 (contenidos) y 2 (profes) vienen EN VIVO de BigQuery vía el endpoint; arranca en paralelo.
+  // Si falla, el tablero usa los datos del Sheet (fallback) sin romperse.
+  const _bqP=(async()=>{try{const r=await fetch(BQ_URL+"?_="+Date.now());if(r.ok){const j=await r.json();if(j&&j.val&&j.val.length)return j;}}catch(e){}return null;})();
   const [cc,vm,lc,ls,wr]=await Promise.all([tab("comisiones_cc_nuevo"),tab("Valoraciones por Modulo"),tab("live class rating"),tab("live_sessions"),tabGid("24053768")]);
   const Hc={};cc[0].forEach((x,i)=>Hc[x.trim()]=i);
   APP.vinc={};APP.curso={};APP.commCurso={};APP.comIni={};
@@ -622,6 +626,15 @@ APP.init=async function(){
     const ac=parseFloat(r[Hl["activity"]]);
     if(!isNaN(ac))APP.actRows.push({d:d,ac:ac,com:com});
   }
+  // --- Override de bloques 1 y 2 con datos EN VIVO de BigQuery (si el endpoint respondió) ---
+  APP._bq=await _bqP;
+  if(APP._bq){const b=APP._bq;
+    APP.val=(b.val||[]).filter(v=>!(v.cm&&DELIV.test(v.cm)));
+    APP.lc=b.lc||[];APP.prof=b.prof||[];APP.profRows=b.profRows||[];APP.tutRows=b.tutRows||[];APP.actRows=b.actRows||[];
+    Object.assign(COM_DATES,b.comDates||{});Object.assign(COMNP,b.comNp||{});Object.assign(COM_CURSO,b.comCurso2||{});
+    APP.curso=Object.assign({},b.curso||{},APP.curso);Object.assign(APP.commCurso,b.commCurso||{});
+    APP.src="BigQuery (en vivo)";
+  }else{APP.src="Google Sheet";}
   const Hs={};ls[0].forEach((x,i)=>{if(Hs[x.trim()]===undefined)Hs[x.trim()]=i;});
   const numF=v=>{const n=parseInt(String(v||"").replace(/[^0-9]/g,""));return isNaN(n)?0:n;};
   const nf=f=>{f=(f||"").trim();if(!f)return "(s/d)";const w=f.split(/\s+/);return w.length>=2?w[0]+" "+w[w.length-1]:f;};
@@ -1188,7 +1201,7 @@ APP.start=async function(){
   document.getElementById("sel").onchange=function(){renderPerCourse(this.value);};
   document.getElementById("crmStatus").onchange=renderCRM;document.getElementById("crmSquad").onchange=renderCRM;document.getElementById("crmRev").onchange=renderCRM;document.getElementById("crmSearch").oninput=renderCRM;
   document.querySelectorAll(".nav").forEach(n=>{if(n.dataset.sec)n.onclick=()=>activate(n.dataset.sec);});
-  document.getElementById("upd").textContent="Actualizado del sheet · "+new Date().toLocaleString("es");
+  document.getElementById("upd").textContent="Fuente: "+(APP.src||"Google Sheet")+" · "+new Date().toLocaleString("es");
   APP.render();
   setupBot();
 };
