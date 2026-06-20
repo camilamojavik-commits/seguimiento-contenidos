@@ -697,7 +697,14 @@ function renderContent(){const from=APP.from,to=APP.to,ag=prodAgg(from,to);
   APP.matchedSet=new Set(matched);
   let TN=0,TS=0,VN=0,VS=0,med=0;matched.forEach(pid=>{const o=ag[pid];TN+=o.nn;TS+=o.ns;VN+=o.vn;VS+=o.vs;if(o.nn>=8)med++;});
   const ovN=TN?TS/TN:null,ovV=VN?VS/VN:null;
-  document.getElementById("kpisCont").innerHTML=kpi("Cursos comparables",matched.length,med+" con muestra sólida (n≥8)")+kpi("Avg viejo",ovV!=null?ovV.toFixed(2):"—",VN.toLocaleString("es")+" val. (mismos cursos)")+kpi("Avg nuevo",ovN!=null?ovN.toFixed(2):"—",TN.toLocaleString("es")+" valoraciones",1)+kpi("Δ nuevo − viejo",(ovN!=null&&ovV!=null)?((ovN-ovV>=0?"+":"")+(ovN-ovV).toFixed(2)):"—","viejo vs nuevo del mismo curso",1);
+  // TODOS los cursos con contenido nuevo (no solo los comparables). Se suman solos a medida que aparecen versiones nuevas en BigQuery.
+  let allNN=0,allNS=0,nCur=0;Object.keys(ag).forEach(pid=>{const o=ag[pid];if(o.nn>0){allNN+=o.nn;allNS+=o.ns;nCur++;}});
+  const ovNall=allNN?allNS/allNN:null;
+  document.getElementById("kpisCont").innerHTML=
+    kpi("Rating contenido nuevo",ovNall!=null?ovNall.toFixed(2):"—","todos los cursos nuevos · "+nCur+" cursos · "+allNN.toLocaleString("es")+" val",1)+
+    kpi("Avg viejo",ovV!=null?ovV.toFixed(2):"—",VN.toLocaleString("es")+" val · mismos cursos")+
+    kpi("Avg nuevo comparable",ovN!=null?ovN.toFixed(2):"—",matched.length+" cursos con viejo y nuevo")+
+    kpi("Δ nuevo − viejo",(ovN!=null&&ovV!=null)?((ovN-ovV>=0?"+":"")+(ovN-ovV).toFixed(2)):"—","del mismo curso (comparables)",1);
   // desglose módulo vs actividad práctica (en el rango filtrado)
   const br={mod:{nn:0,ns:0,vn:0,vs:0},act:{nn:0,ns:0,vn:0,vs:0}};
   for(const v of APP.val){if(!APP.matchedSet.has(v.pid)||v.d<from||v.d>to)continue;const o=br[v.tipo];if(!o)continue;if(v.isNew){o.nn++;o.ns+=v.rt;}else{o.vn++;o.vs+=v.rt;}}
