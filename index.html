@@ -638,7 +638,7 @@ APP.init=async function(){
 };
 
 function genWeeks(from,to){const out=[];let m=monday(from),e=monday(to);if(!m||!e)return out;let d=new Date(m+"T00:00:00Z"),ed=new Date(e+"T00:00:00Z");while(d<=ed){out.push(d.toISOString().slice(0,10));d.setUTCDate(d.getUTCDate()+7);}return out;}
-function series(pid,from,to){const dys=[];let dd=from;for(let i=0;i<400&&dd<=to;i++){dys.push(dd);dd=addDays(dd,1);}const idx={};dys.forEach((w,i)=>idx[w]=i);const nD=dys.map(()=>null),nS=dys.map(()=>0),nN=dys.map(()=>0),oD=dys.map(()=>null),oS=dys.map(()=>0),oN=dys.map(()=>0);let ns=0,nn=0,os=0,on=0;
+function series(pid,from,to){const dys=[];let dd=from;for(let i=0;i<400&&dd<=to;i++){if(!APP.excl||!APP.excl.has(dd))dys.push(dd);dd=addDays(dd,1);}const idx={};dys.forEach((w,i)=>idx[w]=i);const nD=dys.map(()=>null),nS=dys.map(()=>0),nN=dys.map(()=>0),oD=dys.map(()=>null),oS=dys.map(()=>0),oN=dys.map(()=>0);let ns=0,nn=0,os=0,on=0;
   for(const v of APP.val){if(pid){if(v.pid!==pid)continue;}else if(APP.matchedSet&&!APP.matchedSet.has(v.pid))continue;if(v.d<from||v.d>to)continue;const i=idx[v.d];if(i===undefined)continue;if(v.isNew){nS[i]+=v.rt;nN[i]++;ns+=v.rt;nn++;}else{oS[i]+=v.rt;oN[i]++;os+=v.rt;on++;}}
   for(let i=0;i<dys.length;i++){if(nN[i])nD[i]=+(nS[i]/nN[i]).toFixed(3);if(oN[i])oD[i]=+(oS[i]/oN[i]).toFixed(3);}
   return {labels:dys.map(fmtW),newD:nD,newN:nN,oldD:oD,oldN:oN,newAvg:nn?ns/nn:null,oldAvg:on?os/on:null};}
@@ -1051,7 +1051,7 @@ function renderProfTut(){
   const lcc=document.getElementById("lowComCount");if(lcc)lcc.textContent="· "+low.length+" comisiones";
   var et=document.getElementById("evoTotal");if(et)et.textContent=pN?(pS/pN).toFixed(2):"—";
   var en=document.getElementById("evoN");if(en)en.textContent=pN?("promedio del período · "+pN.toLocaleString("es")+" valoraciones"):"";
-  const days=[];let dd=from;for(let i=0;i<400&&dd<=to;i++){days.push(dd);dd=addDays(dd,1);}
+  const days=[];let dd=from;for(let i=0;i<400&&dd<=to;i++){if(!APP.excl||!APP.excl.has(dd))days.push(dd);dd=addDays(dd,1);}
   const vals=days.map(d=>{const pd=byDay[d];return pd&&pd.n?+(pd.s/pd.n).toFixed(3):null;});
   const cnts=days.map(d=>{const pd=byDay[d];return pd?pd.n:0;});
   mk("chartEvo",{type:"line",data:{labels:days.map(fmtW),datasets:[{label:"Rating staff",data:vals,borderColor:"#F5A623",backgroundColor:"rgba(245,166,35,0.14)",fill:true,borderWidth:3,tension:.4,spanGaps:true,pointRadius:cnts.map(n=>n?3.5:0),pointHoverRadius:5,pointBackgroundColor:"#F5A623",_cnt:cnts}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label(c){const n=c.dataset._cnt[c.dataIndex];return "Rating staff: "+(c.parsed.y!=null?c.parsed.y.toFixed(2):"—")+(n?"  (n="+n+")":"");}}}},scales:{y:{min:3.5,max:5,ticks:{stepSize:0.5},grid:{color:"#efe7da"},title:{display:true,text:"Rating (1–5)"}},x:{grid:{display:false},ticks:{maxRotation:0,autoSkip:true,maxTicksLimit:12}}}}});
