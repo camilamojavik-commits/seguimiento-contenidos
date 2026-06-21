@@ -277,6 +277,15 @@ body.dark tr[id^="lcd"] td,body.dark .qch,body.dark .mnote{background:#20232b!im
 body.dark .brandlogo{filter:brightness(0) invert(1)}
 body.dark .painrow,body.dark .vbox,body.dark .bot-panel,body.dark .modal-card{background:#1b1d24!important;color:var(--ink)!important}
 body.dark input[type=date]{color-scheme:dark}
+/* Seguimiento de acciones */
+.accrow{display:flex;gap:14px;align-items:flex-start;padding:12px 0;border-top:1px solid var(--line)}
+.accrow:first-child{border-top:none}
+.accnum{flex:none;width:62px;text-align:center;font-weight:800;font-size:18px;color:var(--coral);background:var(--cream);border:1px solid var(--line);border-radius:12px;padding:12px 6px}
+.accbody{flex:1}
+.acchead{font-size:13px;font-weight:600;margin-bottom:6px}
+.accmeta{font-weight:400;color:var(--ink2);font-size:11px;margin-left:8px}
+.acctxt{width:100%;min-height:64px;border:1px solid var(--line);border-radius:12px;padding:10px 12px;font:inherit;font-size:13px;color:var(--ink);background:var(--card);resize:vertical}
+.acctxt:focus{outline:none;border-color:var(--coral)}
 </style>
 </head>
 <body>
@@ -431,6 +440,13 @@ body.dark input[type=date]{color-scheme:dark}
     <div class="sub">Comisiones cuya performance del profe (guía + actividad práctica) en el rango de fechas elegido está por debajo de 4,30, con al menos 5 valoraciones. Ordenadas de peor a mejor. Cambiá el filtro de fechas de arriba para recalcular.</div>
     <input type="text" id="lowComSearch" placeholder="🔍 Buscar comisión…" oninput="APP.lcFilter&&APP.lcFilter()" style="padding:8px 14px;border:1.5px solid var(--line);border-radius:999px;font:inherit;font-size:13px;color:var(--ink);background:var(--card);min-width:240px;margin-bottom:12px">
     <table id="tblLowCom"><thead><tr><th>Comisión</th><th>Curso</th><th>Inicio</th><th>Fin</th><th>Profe</th><th class="num">Nº profes</th><th class="num">Rating</th><th class="num">n</th><th>Estado</th></tr></thead><tbody id="lowComBody"></tbody></table>
+  </div>
+
+  <div class="panel" id="accPanel">
+    <div class="top"><h3><span class="ic">✎</span> Seguimiento de acciones</h3></div>
+    <div class="sub">Buscá una comisión por número y dejá registrado qué accionable tomaron. Se guarda y lo ve todo el equipo. El rating (guía + actividad) de cada comisión se actualiza solo desde BigQuery. <span id="accState" style="color:var(--ink2)"></span></div>
+    <input type="text" id="accSearch" placeholder="🔍 Buscar comisión (número) para agregar o ver…" oninput="APP.renderAcc&&APP.renderAcc()" style="padding:8px 14px;border:1.5px solid var(--line);border-radius:999px;font:inherit;font-size:13px;color:var(--ink);background:var(--card);min-width:280px;margin-bottom:14px">
+    <div id="accList"></div>
   </div>
   </section>
   <section id="sec-live" class="section">
@@ -1091,13 +1107,19 @@ function renderProfTut(){
   const cnts=days.map(d=>{const pd=byDay[d];return pd?pd.n:0;});
   mk("chartEvo",{type:"line",data:{labels:days.map(fmtW),datasets:[{label:"Rating staff",data:vals,borderColor:"#F5A623",backgroundColor:"rgba(245,166,35,0.14)",fill:true,borderWidth:3,tension:.4,spanGaps:true,pointRadius:cnts.map(n=>n?3.5:0),pointHoverRadius:5,pointBackgroundColor:"#F5A623",_cnt:cnts}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label(c){const n=c.dataset._cnt[c.dataIndex];return "Rating staff: "+(c.parsed.y!=null?c.parsed.y.toFixed(2):"—")+(n?"  (n="+n+")":"");}}}},scales:{y:{min:3.5,max:5,ticks:{stepSize:0.5},grid:{color:"#efe7da"},title:{display:true,text:"Rating (1–5)"}},x:{grid:{display:false},ticks:{maxRotation:0,autoSkip:true,maxTicksLimit:12}}}}});
 }
+const ACC_URL="https://tablero-bigquery.vercel.app/api/accionables";
+APP.acc={};
+APP.fetchAcc=async function(){try{const r=await fetch(ACC_URL+"?_="+Date.now());if(r.ok){APP.acc=(await r.json())||{};var s=document.getElementById('accState');if(s)s.textContent='';}else throw 0;}catch(e){var s2=document.getElementById('accState');if(s2)s2.textContent='· (guardado todavía no publicado)';}};
+APP.comRatingMap=function(){var m={};function add(c,v){if(!c||isNaN(v))return;var o=m[c]||(m[c]={s:0,n:0});o.s+=v;o.n++;}(APP.profRows||[]).forEach(function(r){add(r.com,r.pg);});(APP.actRows||[]).forEach(function(r){add(r.com,r.ac);});var out={};Object.keys(m).forEach(function(c){out[c]=m[c].s/m[c].n;});return out;};
+APP.saveAcc=async function(com,text){var prev=(APP.acc[com]&&APP.acc[com].text)||'';if((text||'')===(prev||''))return;try{var r=await fetch(ACC_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({com:com,text:text})});if(r.ok){if(text&&text.trim())APP.acc[com]={text:text,updatedAt:new Date().toISOString()};else delete APP.acc[com];APP.renderAcc();}else alert('No se pudo guardar el accionable (¿ya publicaste el endpoint con npx vercel --prod?).');}catch(e){alert('No se pudo guardar: '+e);}};
+APP.renderAcc=function(){var cont=document.getElementById('accList');if(!cont)return;var rmap=APP.comRatingMap();var q=((document.getElementById('accSearch')||{}).value||'').trim();var set={};Object.keys(APP.acc||{}).forEach(function(c){set[c]=1;});if(q){Object.keys(rmap).forEach(function(c){if(c.indexOf(q)>=0)set[c]=1;});}var list=Object.keys(set);if(q)list=list.filter(function(c){return c.indexOf(q)>=0;});list.sort();if(!list.length){cont.innerHTML='<div class="mnote">'+(q?'No hay comisiones que coincidan con "'+esc(q)+'".':'Todavía no hay accionables cargados. Buscá una comisión arriba para agregar el primero.')+'</div>';return;}cont.innerHTML=list.map(function(com){var rt=rmap[com];var cur=COM_CURSO[com]||APP.curso[APP.commCurso[com]]||'—';var a=APP.acc[com];var saved=(a&&a.text)||'';var meta=a&&a.updatedAt?('guardado '+new Date(a.updatedAt).toLocaleDateString('es')):'';return '<div class="accrow"><div class="accnum">'+(rt!=null?rt.toFixed(2):'—')+'</div><div class="accbody"><div class="acchead">Comisión '+esc(com)+' · '+esc(cur)+' <span class="accmeta">'+meta+'</span></div><textarea class="acctxt" data-com="'+esc(com)+'" placeholder="Seguimiento de acciones…">'+esc(saved)+'</textarea></div></div>';}).join('');cont.querySelectorAll('.acctxt').forEach(function(t){t.onblur=function(){APP.saveAcc(t.dataset.com,t.value);};});};
 APP.lcFilter=function(){var i=document.getElementById('lowComSearch');var q=(i?i.value:'').trim().toLowerCase();document.querySelectorAll('#lowComBody tr').forEach(function(r){if(r.classList.contains('clk')){var c=r.querySelector('td');var com=(c?c.textContent:'').toLowerCase();r.style.display=(!q||com.indexOf(q)>=0)?'':'none';var d=r.nextElementSibling;if(d&&d.id&&d.id.indexOf('lcd')===0)d.style.display='none';}});};
 APP.render=function(){
   // Días excluidos: se sacan del cálculo en todo el tablero (sobre copias originales), sin perder los extremos del rango.
   if(APP._raw){const ex=APP.excl;const f=a=>(ex&&ex.size)?a.filter(r=>!ex.has(r.d)):a;
     APP.val=f(APP._raw.val);APP.prof=f(APP._raw.prof);APP.profRows=f(APP._raw.profRows);APP.tutRows=f(APP._raw.tutRows);APP.actRows=f(APP._raw.actRows);APP.lc=f(APP._raw.lc);
     APP.sess=(ex&&ex.size)?APP._raw.sess.filter(r=>!ex.has(r.fe)):APP._raw.sess;}
-  document.querySelectorAll(".section").forEach(x=>x.style.display="block");renderContent();renderProfTut();renderLive();renderWorkshops();renderCRM();activate(APP.cur||"contenido");
+  document.querySelectorAll(".section").forEach(x=>x.style.display="block");renderContent();renderProfTut();if(APP.renderAcc)APP.renderAcc();renderLive();renderWorkshops();renderCRM();activate(APP.cur||"contenido");
   var exn=(APP.excl&&APP.excl.size)?" · sin: "+[...APP.excl].sort().join(", "):"";
   document.getElementById("frange").textContent="Rango: "+APP.from+" → "+APP.to+exn+" · todo (KPIs, gráficos y foco) se calcula en este rango";};
 function verify(){
@@ -1227,6 +1249,7 @@ APP.start=async function(){
   document.getElementById("crmStatus").onchange=renderCRM;document.getElementById("crmSquad").onchange=renderCRM;document.getElementById("crmRev").onchange=renderCRM;document.getElementById("crmSearch").oninput=renderCRM;
   document.querySelectorAll(".nav").forEach(n=>{if(n.dataset.sec)n.onclick=()=>activate(n.dataset.sec);});
   document.getElementById("upd").textContent="Fuente: "+(APP.src||"Google Sheet")+" · "+new Date().toLocaleString("es");
+  await APP.fetchAcc();
   APP.render();
   setupBot();
 };
