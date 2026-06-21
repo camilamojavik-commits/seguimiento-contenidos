@@ -263,6 +263,17 @@ select{border-radius:10px!important}
 table{border-radius:14px!important;overflow:hidden}
 .sidebar{border-right:1px solid var(--line)!important}
 .appbar{border-radius:0 0 18px 18px}
+/* ===================== DARK MODE ===================== */
+#darkBtn{position:fixed;top:14px;right:16px;z-index:400;width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer;font-size:18px;box-shadow:0 2px 10px rgba(0,0,0,.12)}
+body.dark{--cream:#13141a;--ink:#eef0f3;--ink2:#9aa6b2;--line:#2a2d36;--card:#1b1d24;--base:#6b7686;}
+body.dark .sidebar{background:#16181f!important}
+body.dark .nav:hover{background:#23262f!important}
+body.dark select,body.dark input[type=text],body.dark input[type=date],body.dark textarea{background:#1b1d24!important;color:var(--ink)!important;border-color:var(--line)!important}
+body.dark thead th{background:#22252e!important;color:#9aa6b2!important}
+body.dark tbody tr:hover{background:#23262f!important}
+body.dark .fb{background:#1b1d24!important;color:var(--ink)!important;border-color:var(--line)!important}
+body.dark .sech h2{color:var(--ink)!important}
+body.dark tr[id^="lcd"] td,body.dark .qch,body.dark .mnote{background:#20232b!important;color:var(--ink)!important}
 </style>
 </head>
 <body>
@@ -340,6 +351,7 @@ table{border-radius:14px!important;overflow:hidden}
     <a class="nav" data-sec="proftut"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M21 8v5"/><path d="M7 11v4c0 1 2 2 5 2s5-1 5-2v-4"/></svg> Rating profesores</a>
   </nav>
 </aside>
+<button id="darkBtn" title="Modo oscuro / claro">🌙</button>
 <main class="main">
   <div class="filterbar">
     <span class="fl">Rango de fechas:</span>
@@ -414,6 +426,7 @@ table{border-radius:14px!important;overflow:hidden}
   <div class="panel">
     <div class="top"><h3><span class="ic">▼</span> Comisiones con rating bajo · en el rango <span id="lowComCount" class="folstat"></span></h3></div>
     <div class="sub">Comisiones cuya performance del profe (guía + actividad práctica) en el rango de fechas elegido está por debajo de 4,30, con al menos 5 valoraciones. Ordenadas de peor a mejor. Cambiá el filtro de fechas de arriba para recalcular.</div>
+    <input type="text" id="lowComSearch" placeholder="🔍 Buscar comisión…" oninput="APP.lcFilter&&APP.lcFilter()" style="padding:8px 14px;border:1.5px solid var(--line);border-radius:999px;font:inherit;font-size:13px;color:var(--ink);background:var(--card);min-width:240px;margin-bottom:12px">
     <table id="tblLowCom"><thead><tr><th>Comisión</th><th>Curso</th><th>Inicio</th><th>Fin</th><th>Profe</th><th class="num">Nº profes</th><th class="num">Rating</th><th class="num">n</th><th>Estado</th></tr></thead><tbody id="lowComBody"></tbody></table>
   </div>
   </section>
@@ -1075,6 +1088,7 @@ function renderProfTut(){
   const cnts=days.map(d=>{const pd=byDay[d];return pd?pd.n:0;});
   mk("chartEvo",{type:"line",data:{labels:days.map(fmtW),datasets:[{label:"Rating staff",data:vals,borderColor:"#F5A623",backgroundColor:"rgba(245,166,35,0.14)",fill:true,borderWidth:3,tension:.4,spanGaps:true,pointRadius:cnts.map(n=>n?3.5:0),pointHoverRadius:5,pointBackgroundColor:"#F5A623",_cnt:cnts}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label(c){const n=c.dataset._cnt[c.dataIndex];return "Rating staff: "+(c.parsed.y!=null?c.parsed.y.toFixed(2):"—")+(n?"  (n="+n+")":"");}}}},scales:{y:{min:3.5,max:5,ticks:{stepSize:0.5},grid:{color:"#efe7da"},title:{display:true,text:"Rating (1–5)"}},x:{grid:{display:false},ticks:{maxRotation:0,autoSkip:true,maxTicksLimit:12}}}}});
 }
+APP.lcFilter=function(){var i=document.getElementById('lowComSearch');var q=(i?i.value:'').trim().toLowerCase();document.querySelectorAll('#lowComBody tr').forEach(function(r){if(r.classList.contains('clk')){var c=r.querySelector('td');var com=(c?c.textContent:'').toLowerCase();r.style.display=(!q||com.indexOf(q)>=0)?'':'none';var d=r.nextElementSibling;if(d&&d.id&&d.id.indexOf('lcd')===0)d.style.display='none';}});};
 APP.render=function(){
   // Días excluidos: se sacan del cálculo en todo el tablero (sobre copias originales), sin perder los extremos del rango.
   if(APP._raw){const ex=APP.excl;const f=a=>(ex&&ex.size)?a.filter(r=>!ex.has(r.d)):a;
@@ -1217,6 +1231,8 @@ APP.start=async function(){
 (function(){var g=document.getElementById("gate"),pw=document.getElementById("pw"),b=document.getElementById("enter"),e=document.getElementById("gerr");
 function go(){if(pw.value==="contenidos2026"){g.style.display="none";APP.start();}else{e.style.display="block";pw.value="";pw.focus();}}
 b.onclick=go;pw.addEventListener("keydown",function(ev){if(ev.key==="Enter")go();});pw.focus();})();
+// Dark mode (preferencia guardada en el navegador)
+(function(){var dkb=document.getElementById('darkBtn');function setDark(on){document.body.classList.toggle('dark',on);if(dkb)dkb.textContent=on?'☀️':'🌙';try{localStorage.setItem('cdh_dark',on?'1':'0');}catch(e){}}if(dkb)dkb.onclick=function(){setDark(!document.body.classList.contains('dark'));};var saved='0';try{saved=localStorage.getItem('cdh_dark')||'0';}catch(e){}setDark(saved==='1');})();
 
 </script>
 </body>
