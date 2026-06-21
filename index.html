@@ -1090,10 +1090,12 @@ function verify(){
   const matched=Object.keys(ag).filter(p=>ag[p].nn>0&&ag[p].vn>0);
   let TN=0,TS=0,VN=0,VS=0;matched.forEach(p=>{const o=ag[p];TN+=o.nn;TS+=o.ns;VN+=o.vn;VS+=o.vs;});
   const ovN=TN?TS/TN:null,ovV=VN?VS/VN:null;
+  let allNN=0,allNS=0;Object.keys(ag).forEach(p=>{const o=ag[p];allNN+=o.nn;allNS+=o.ns;});
+  const ovNall=allNN?allNS/allNN:null;
   const kv=[...document.querySelectorAll('#kpisCont .v')].map(x=>parseFloat(x.textContent.replace(',','.')));
-  add("KPI contenido nuevo = recomputo", ovN!=null&&Math.abs(ovN-kv[2])<=0.011, "panel "+(isNaN(kv[2])?"—":kv[2].toFixed(2))+" · calc "+(ovN!=null?ovN.toFixed(2):"—"));
+  add("KPI contenido nuevo = recomputo", ovNall!=null&&Math.abs(ovNall-kv[0])<=0.011, "panel "+(isNaN(kv[0])?"—":kv[0].toFixed(2))+" · calc "+(ovNall!=null?ovNall.toFixed(2):"—"));
   add("KPI contenido viejo = recomputo", ovV!=null&&Math.abs(ovV-kv[1])<=0.011, "panel "+(isNaN(kv[1])?"—":kv[1].toFixed(2))+" · calc "+(ovV!=null?ovV.toFixed(2):"—"));
-  add("Cursos comparables coinciden", matched.length===kv[0], "panel "+kv[0]+" · calc "+matched.length);
+  add("Δ nuevo − viejo = recomputo", (ovNall!=null&&ovV!=null)&&Math.abs((ovNall-ovV)-kv[2])<=0.011, "panel "+(isNaN(kv[2])?"—":kv[2].toFixed(2))+" · calc "+((ovNall!=null&&ovV!=null)?(ovNall-ovV).toFixed(2):"—"));
   add("Ratings de contenido dentro de 1–5", APP.val.filter(v=>v.rt<1||v.rt>5).length===0, APP.val.filter(v=>v.rt<1||v.rt>5).length+" fuera");
   let mn=0,an=0;APP.val.forEach(v=>{if(v.d<f||v.d>t||!v.isNew||matched.indexOf(v.pid)<0)return;if(v.tipo==='mod')mn++;else an++;});
   add("Contenido = solo módulo (sin actividad)", mn===TN&&an===0, "mód "+mn+" + act "+an+" = "+(mn+an)+" vs "+TN);
