@@ -861,14 +861,14 @@ function renderCoverage(ag){
     const started=inis.filter(d=>d<=TODAY).length;
     const n=nv[pid]||0;const nCom=APP.commTotal[pid]||inis.length;
     let rank,lab,col;
-    if(n>=8){rank=0;lab="Midiéndose";col="#15a06b";}
-    else if(n>0){rank=1;lab="Primeras valoraciones ("+n+")";col="#8a97a8";}
+    if(n>=8){rank=0;lab="Midiendo ("+n+")";col="#15a06b";}
+    else if(n>0){rank=1;lab="Midiendo ("+n+") · muestra baja";col="#15a06b";}
     else if(started>0){rank=2;lab="En marcha, sin valoraciones aún";col="#F5A623";}
     else{rank=3;lab="Por arrancar";col="#9a8c79";}
     return {name:APP.curso[pid]||pid,nCom,started,first:inis[0]||"—",rank,lab,col};
   }).sort((a,b)=>a.rank-b.rank || (a.first<b.first?-1:a.first>b.first?1:0) || b.nCom-a.nCom);
   const c0=rows.filter(r=>r.rank===0).length,c1=rows.filter(r=>r.rank===1).length,c2=rows.filter(r=>r.rank===2).length,c3=rows.filter(r=>r.rank===3).length;
-  document.getElementById("covNote").innerHTML="De los "+rows.length+" cursos renovados: "+c0+" ya se miden en el tablero · "+c1+" con primeras valoraciones · "+c2+" con comisiones en marcha sin valoraciones aún · "+c3+" por arrancar. Todos tienen comisiones nuevas cargadas.";
+  document.getElementById("covNote").innerHTML="De los "+rows.length+" cursos renovados: "+(c0+c1)+" ya están midiendo ("+c1+" con muestra baja) · "+c2+" con comisiones en marcha sin valoraciones de módulo aún · "+c3+" por arrancar. Todos tienen comisiones nuevas cargadas.";
   const fI=d=>{if(!d||d==="—")return "—";const p=d.split("-");return (+p[2])+" "+MES[+p[1]-1];};
   document.querySelector("#tblCov tbody").innerHTML=rows.map(r=>'<tr><td>'+esc(r.name)+'</td><td class="num">'+r.nCom+'</td><td class="num">'+r.started+'</td><td>'+fI(r.first)+'</td><td><span class="pchip" style="background:'+r.col+'22;color:'+r.col+'">'+r.lab+'</span></td></tr>').join("");
 }
