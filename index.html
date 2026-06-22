@@ -286,6 +286,13 @@ body.dark input[type=date]{color-scheme:dark}
 .accmeta{font-weight:400;color:var(--ink2);font-size:11px;margin-left:8px}
 .acctxt{width:100%;min-height:64px;border:1px solid var(--line);border-radius:12px;padding:10px 12px;font:inherit;font-size:13px;color:var(--ink);background:var(--card);resize:vertical}
 .acctxt:focus{outline:none;border-color:var(--coral)}
+/* Cursos renovados · cobertura */
+.rrow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 2px;border-top:1px solid var(--line)}
+.rrow:first-child{border-top:none}
+.rname{font-size:13px;font-weight:600}
+.rnum{font-weight:800;font-size:15px;color:var(--coral)}
+.rmeta{font-size:11px;color:var(--ink2)}
+.rpend{font-size:11.5px;color:var(--ink2);background:var(--cream);border:1px solid var(--line);border-radius:999px;padding:3px 10px}
 </style>
 </head>
 <body>
@@ -377,6 +384,13 @@ body.dark input[type=date]{color-scheme:dark}
 
   <div class="sech" style="border-top:none;margin-top:6px;padding-top:0"><h2>Performance nuevos <em>contenidos</em></h2></div>
   <div class="kpis" id="kpisCont"></div>
+
+  <div class="panel" id="renovPanel">
+    <div class="top"><h3><span class="ic">✦</span> Cursos renovados · cobertura <span id="renovCount" class="folstat"></span></h3></div>
+    <div class="sub">Los cursos con contenido nuevo (lista oficial). Muestra el rating de módulo de los que ya tienen valoraciones; los demás figuran como "pendiente" hasta que lleguen. Se actualiza solo desde BigQuery.</div>
+    <input type="text" id="renovSearch" placeholder="🔍 Buscar curso…" oninput="APP.renderRenov&&APP.renderRenov()" style="padding:8px 14px;border:1.5px solid var(--line);border-radius:999px;font:inherit;font-size:13px;color:var(--ink);background:var(--card);min-width:240px;margin-bottom:12px">
+    <div id="renovList"></div>
+  </div>
 
 
   <div class="panel">
@@ -723,6 +737,9 @@ function renderMovements(ag){
   const row=(lab,ups,dns)=>'<div class="mvrow"><span class="mvlab">'+lab+'</span>'+(ups.map(x=>chip(x,1)).join('')||'<span class="mvnone">sin subas relevantes</span>')+(dns.map(x=>chip(x,0)).join('')||(ups.length?'':'<span class="mvnone">sin bajas</span>'))+'</div>';
   el.innerHTML=row("Últimos 7 días",wkUp,wkDn)+row("Nuevo vs viejo",nvUp,nvDn);
 }
+const RENOV42=["Administración de empresas (V2)","AI Automation (V2)","AI Automation avanzado (V2)","AI Engineering (V2)","Excel avanzado (En vivo)","Business Analytics (V3)","Canva (V2)","Ciberseguridad (V2)","Cloud Computing (AWS) (V2)","Contabilidad (V3)","Contenido para redes sociales (V3)","Copywriting (V2)","Creación de contenido con AI (V2)","Customer experience (CX) (V2)","Data Analytics (V4)","Data Engineering (V2)","Desarrollo web (V3)","Diseño UX/UI (V3)","Diseño UX/UI Avanzado (V2)","E-Commerce (V2)","Excel (V2)","Finanzas personales (V2)","Fotografía para RRSS (V2)","Fundamentos del Marketing Digital (V2)","Google Ads (V2)","Growth Marketing (V2)","Javascript (V2)","Liderazgo y gestión de equipos (V3)","Marketing Digital: Community Manager & Publicidad (V2)","Oratoria (V2)","Photoshop e Illustrator (V3)","Power BI (V2)","Product Manager (V2)","Programación Backend I: Desarrollo Avanzado de Backend (V2)","Programación Backend II: Diseño y Arquitectura Backend (V2)","Programación Backend III: Testing y Escalabilidad Backend (V2)","Publicidad en Redes Avanzado (V2)","Scrum (V2)","SQL (V2)","Técnicas de negociación (V2)","UX Research (V2)","UX Writing (V2)"];
+function normCourse(s){s=(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');s=s.replace(/\brrss\b/g,'redes sociales').replace(/\bai\b/g,'ia');s=s.replace(/\((?:v\d+|en vivo|diplomaturas?|mb)\)/g,'');s=s.replace(/\bflex\b/g,'');s=s.replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim();return s;}
+APP.renderRenov=function(){var cont=document.getElementById('renovList');if(!cont)return;var src=(APP._raw&&APP._raw.val)?APP._raw.val:(APP.val||[]);var by={};src.forEach(function(v){if(v.tipo!=='mod'||!v.isNew)return;var name=APP.curso[v.pid];if(!name)return;var k=normCourse(name);var o=by[k]||(by[k]={s:0,n:0});o.s+=v.rt;o.n++;});var rows=RENOV42.map(function(disp){var k=normCourse(disp);var o=by[k];return {disp:disp,k:k,rt:o?o.s/o.n:null,n:o?o.n:0};});var conDatos=rows.filter(function(r){return r.n>0;}).length;var cc=document.getElementById('renovCount');if(cc)cc.textContent='· '+conDatos+' de '+RENOV42.length+' con valoraciones';var qraw=((document.getElementById('renovSearch')||{}).value||'').trim();if(qraw){var q=normCourse(qraw);rows=rows.filter(function(r){return r.k.indexOf(q)>=0;});}rows.sort(function(a,b){var ad=a.n>0?1:0,bd=b.n>0?1:0;if(ad!==bd)return bd-ad;if(a.n>0&&b.n>0)return a.rt-b.rt;return a.disp.localeCompare(b.disp);});cont.innerHTML=rows.length?rows.map(function(r){var badge=r.n>0?('<span class="rnum">'+r.rt.toFixed(2)+'</span><span class="rmeta">'+r.n+' val</span>'):'<span class="rpend">pendiente</span>';return '<div class="rrow"><span class="rname">'+esc(r.disp)+'</span><span style="display:flex;align-items:center;gap:4px">'+badge+'</span></div>';}).join(''):'<div class="mnote">Sin coincidencias.</div>';};
 function renderContent(){const from=APP.from,to=APP.to,ag=prodAgg(from,to);
   // Comparar SOLO cursos que ya tienen contenido nuevo Y viejo (viejo vs nuevo del MISMO curso), no global mezclado.
   const matched=Object.keys(ag).filter(p=>ag[p].nn>0&&ag[p].vn>0);
@@ -1119,7 +1136,7 @@ APP.render=function(){
   if(APP._raw){const ex=APP.excl;const f=a=>(ex&&ex.size)?a.filter(r=>!ex.has(r.d)):a;
     APP.val=f(APP._raw.val);APP.prof=f(APP._raw.prof);APP.profRows=f(APP._raw.profRows);APP.tutRows=f(APP._raw.tutRows);APP.actRows=f(APP._raw.actRows);APP.lc=f(APP._raw.lc);
     APP.sess=(ex&&ex.size)?APP._raw.sess.filter(r=>!ex.has(r.fe)):APP._raw.sess;}
-  document.querySelectorAll(".section").forEach(x=>x.style.display="block");renderContent();renderProfTut();if(APP.renderAcc)APP.renderAcc();renderLive();renderWorkshops();renderCRM();activate(APP.cur||"contenido");
+  document.querySelectorAll(".section").forEach(x=>x.style.display="block");renderContent();if(APP.renderRenov)APP.renderRenov();renderProfTut();if(APP.renderAcc)APP.renderAcc();renderLive();renderWorkshops();renderCRM();activate(APP.cur||"contenido");
   var exn=(APP.excl&&APP.excl.size)?" · sin: "+[...APP.excl].sort().join(", "):"";
   document.getElementById("frange").textContent="Rango: "+APP.from+" → "+APP.to+exn+" · todo (KPIs, gráficos y foco) se calcula en este rango";};
 function verify(){
