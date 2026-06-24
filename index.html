@@ -359,6 +359,7 @@ body.dark input[type=date]{color-scheme:dark}
     <a class="nav" data-sec="live"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg> Live Sessions</a>
     <a class="nav" data-sec="workshops"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M10 9l4 2.5-4 2.5z" fill="currentColor" stroke="none"/><path d="M8 21h8"/></svg> Workshops on demand</a>
     <a class="nav" data-sec="crm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="5" height="16" rx="1"/><rect x="10" y="4" width="5" height="11" rx="1"/><rect x="17" y="4" width="5" height="7" rx="1"/></svg> Renovación workshops</a>
+    <a class="nav" data-sec="gmode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8"/><circle cx="12" cy="12" r="3"/></svg> Versiones nuevas</a>
     <div class="navgroup">Staff académico</div>
     <a class="nav" data-sec="proftut"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M21 8v5"/><path d="M7 11v4c0 1 2 2 5 2s5-1 5-2v-4"/></svg> Rating profesores</a>
   </nav>
@@ -517,6 +518,17 @@ body.dark input[type=date]{color-scheme:dark}
     </div>
     <div class="kanban" id="kanban"></div>
   </section>
+  <section id="sec-gmode" class="section">
+    <div class="sech"><h2>Versiones <em>nuevas</em> · Pipeline</h2><div class="ssub">Estado de producción de las versiones nuevas de contenido. Tablero por estado — fuente en vivo: hoja Group Mode (versiones nuevas).</div></div>
+    <div class="note-top">Cada tarjeta es un curso con versión nueva, ubicado según su Estado (Sin empezar → In progress → Contenidista ajustando feedback → En revisión DI → Vinculado). El chip indica si ya está vinculado en BO y desde qué fecha.</div>
+    <div class="kpis" id="kpisGM"></div>
+    <div class="crm-filters">
+      <span class="fl">Filtrar:</span>
+      <select id="gmStatus"><option value="">Todos los estados</option></select>
+      <input type="text" id="gmSearch" placeholder="Buscar curso…" style="min-width:200px">
+    </div>
+    <div class="kanban" id="kanbanGM"></div>
+  </section>
 </main>
 </div>
 
@@ -612,7 +624,7 @@ APP.init=async function(){
   // Bloques 1 (contenidos) y 2 (profes) vienen EN VIVO de BigQuery vía el endpoint; arranca en paralelo.
   // Si falla, el tablero usa los datos del Sheet (fallback) sin romperse.
   const _bqP=(async()=>{try{const r=await fetch(BQ_URL+"?_="+Date.now());if(r.ok){const j=await r.json();if(j&&j.val&&j.val.length)return j;}}catch(e){}return null;})();
-  const [cc,vm,lc,ls,wr]=await Promise.all([tab("comisiones_cc_nuevo"),tab("Valoraciones por Modulo"),tab("live class rating"),tab("live_sessions"),tabGid("24053768")]);
+  const [cc,vm,lc,ls,wr,gm]=await Promise.all([tab("comisiones_cc_nuevo"),tab("Valoraciones por Modulo"),tab("live class rating"),tab("live_sessions"),tabGid("24053768"),tabGid("178265278")]);
   const Hc={};cc[0].forEach((x,i)=>Hc[x.trim()]=i);
   APP.vinc={};APP.curso={};APP.commCurso={};APP.comIni={};
   const toISO=s=>{s=(s||"").trim();let m=s.match(/(\d{4})-(\d{2})-(\d{2})/);if(m)return m[0];m=s.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);if(m)return m[3]+"-"+String(m[2]).padStart(2,"0")+"-"+String(m[1]).padStart(2,"0");return "";};
@@ -680,6 +692,11 @@ APP.init=async function(){
   APP.wsr=[];
   for(const r of wr.slice(1)){const nuevo=cv(r,"Nombre nuevo"),viejo=cv(r,"Nombre viejo");if(!nuevo&&!viejo)continue;
     APP.wsr.push({viejo,nuevo,prio:cv(r,"Priority"),rev:cv(r,"Revisión Interna"),squad:cv(r,"Squad"),status:cv(r,"Status")||"(sin status)",launched:cv(r,"Date - Launched"),bo:cv(r,"BO"),complej:cv(r,"Nivel de complejidad"),empresa:cv(r,"Pertenece a alguna empresa / Cuál?")});}
+  // --- Versiones nuevas (pipeline por Estado · hoja Group Mode) ---
+  const Hg={};(gm[0]||[]).forEach((x,i)=>{if(Hg[x.trim()]===undefined)Hg[x.trim()]=i;});
+  const gg=n=>Hg[n]!==undefined?Hg[n]:-1;const gcv=(r,n)=>{const i=gg(n);return i>=0?(r[i]||"").trim():"";};
+  APP.gm=[];
+  for(const r of gm.slice(1)){const curso=gcv(r,"Curso");if(!curso)continue;APP.gm.push({curso,estado:gcv(r,"Estado")||"(sin estado)",bo:gcv(r,"VInculado en BO")});}
 };
 
 function genWeeks(from,to){const out=[];let m=monday(from),e=monday(to);if(!m||!e)return out;let d=new Date(m+"T00:00:00Z"),ed=new Date(e+"T00:00:00Z");while(d<=ed){out.push(d.toISOString().slice(0,10));d.setUTCDate(d.getUTCDate()+7);}return out;}
@@ -977,6 +994,42 @@ function renderCRM(){
     return '<div class="kcol"><div class="kcol-h" style="border-color:'+stColor(s)+'"><span>'+esc(s)+'</span><span class="cnt">'+list.length+'</span></div><div>'+cards+'</div></div>';
   }).join("");
 }
+// --- Versiones nuevas (pipeline por Estado · hoja Group Mode) ---
+const GMORDER=["Sin empezar","In progress","Contenidista ajustando feedback","En revisión DI","Vinculado"];
+const GMCOL={"Sin empezar":"#cbd5e1","In progress":"#9aa3af","Contenidista ajustando feedback":"#7c8696","En revisión DI":"#475569","Vinculado":"#FF632B"};
+const gmIdx=s=>GMORDER.findIndex(x=>x.toLowerCase()===(s||"").trim().toLowerCase());
+const gmColor=s=>{const i=gmIdx(s);return i>=0?GMCOL[GMORDER[i]]:"#94a3b8";};
+const boVinc=b=>{b=(b||"").trim();return !!b&&!/^no\s/i.test(b)&&/\d/.test(b);};
+function renderGM(){
+  const rows=APP.gm||[];
+  const selSt=document.getElementById("gmStatus");
+  const present=[...new Set(rows.map(r=>r.estado).filter(Boolean))];
+  const extra=present.filter(s=>gmIdx(s)<0).sort();
+  if(selSt.options.length<=1){selSt.innerHTML='<option value="">Todos los estados</option>'+GMORDER.concat(extra).map(s=>'<option>'+esc(s)+'</option>').join("");}
+  const fSt=selSt.value,fTx=(document.getElementById("gmSearch").value||"").toLowerCase();
+  const fl=rows.filter(r=>(!fSt||r.estado===fSt)&&(!fTx||r.curso.toLowerCase().indexOf(fTx)>=0));
+  const total=rows.length;
+  const dev=rows.filter(r=>{const i=gmIdx(r.estado);return i===0||i===1||i===2;}).length;
+  const rev=rows.filter(r=>gmIdx(r.estado)===3).length;
+  const vinc=rows.filter(r=>gmIdx(r.estado)===4).length;
+  const bo=rows.filter(r=>boVinc(r.bo)).length;
+  document.getElementById("kpisGM").innerHTML=kpi("Versiones nuevas",total,"en el pipeline")+kpi("En desarrollo",dev,"sin empezar · in progress · ajustes")+kpi("En revisión DI",rev,"revisa Diseño Instruccional")+kpi("Vinculadas",vinc,"estado vinculado")+kpi("Vinculadas en BO",bo,"con fecha de vinculación",1);
+  const stats={};fl.forEach(r=>{(stats[r.estado]=stats[r.estado]||[]).push(r);});
+  let colNames=GMORDER.concat(extra);
+  if(fSt)colNames=colNames.filter(s=>s===fSt);
+  const board=document.getElementById("kanbanGM");
+  board.innerHTML=colNames.map(s=>{
+    const list=(stats[s]||[]).slice().sort((a,b)=>a.curso.localeCompare(b.curso));
+    const cards=list.length?list.map(r=>{
+      const v=boVinc(r.bo);
+      return '<div class="kcard" style="border-left-color:'+gmColor(r.estado)+'">'+
+        '<div class="kt">'+esc(r.curso)+'</div>'+
+        '<div class="kf"><span class="sqb" style="background:'+(v?"#15a06b":"#bdb1a0")+'">'+(v?'BO: '+esc(r.bo):'BO: pendiente')+'</span></div>'+
+        '</div>';
+    }).join(""):'<div class="kempty" style="padding:16px 8px;font-size:11.5px">Sin versiones en este estado.</div>';
+    return '<div class="kcol"><div class="kcol-h" style="border-color:'+gmColor(s)+'"><span>'+esc(s)+'</span><span class="cnt">'+list.length+'</span></div><div>'+cards+'</div></div>';
+  }).join("");
+}
 
 function folioKey(s){return (s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/\|/g," ").replace(/\[[^\]]*\]/g,"").replace(/\b(profe|profesor|profesora|tutor|instructor)\b/g," ").replace(/[^a-z ]/g," ").replace(/\s+/g," ").trim();}
 function folioCard(x){return '<div class="pmfolio">'+(x.url?'<a href="'+x.url+'" target="_blank">':'')+esc(x.t||'Feedback de cursada')+(x.url?'</a>':'')+'<div class="r">Comisión '+esc(x.com)+(x.date?' · '+esc(x.date):'')+(x.state?' · '+esc(x.state):'')+'</div>'+(x.mail?'<div class="r">'+esc(x.mail)+'</div>':'')+'</div>';}
@@ -1119,7 +1172,7 @@ APP.render=function(){
   if(APP._raw){const ex=APP.excl;const f=a=>(ex&&ex.size)?a.filter(r=>!ex.has(r.d)):a;
     APP.val=f(APP._raw.val);APP.prof=f(APP._raw.prof);APP.profRows=f(APP._raw.profRows);APP.tutRows=f(APP._raw.tutRows);APP.actRows=f(APP._raw.actRows);APP.lc=f(APP._raw.lc);
     APP.sess=(ex&&ex.size)?APP._raw.sess.filter(r=>!ex.has(r.fe)):APP._raw.sess;}
-  document.querySelectorAll(".section").forEach(x=>x.style.display="block");renderContent();renderProfTut();if(APP.renderAcc)APP.renderAcc();renderLive();renderWorkshops();renderCRM();activate(APP.cur||"contenido");
+  document.querySelectorAll(".section").forEach(x=>x.style.display="block");renderContent();renderProfTut();if(APP.renderAcc)APP.renderAcc();renderLive();renderWorkshops();renderCRM();renderGM();activate(APP.cur||"contenido");
   var exn=(APP.excl&&APP.excl.size)?" · sin: "+[...APP.excl].sort().join(", "):"";
   document.getElementById("frange").textContent="Rango: "+APP.from+" → "+APP.to+exn+" · todo (KPIs, gráficos y foco) se calcula en este rango";};
 function verify(){
@@ -1247,6 +1300,7 @@ APP.start=async function(){
   document.querySelectorAll(".fb").forEach(b=>b.onclick=()=>{const p=b.dataset.p;if(p==="all"){APP.from=APP.minD;}else{APP.from=addDays(APP.maxD,-(+p)*7);}APP.to=APP.maxD;df.value=APP.from;dt.value=APP.to;APP.render();});
   document.getElementById("sel").onchange=function(){renderPerCourse(this.value);};
   document.getElementById("crmStatus").onchange=renderCRM;document.getElementById("crmSquad").onchange=renderCRM;document.getElementById("crmRev").onchange=renderCRM;document.getElementById("crmSearch").oninput=renderCRM;
+  document.getElementById("gmStatus").onchange=renderGM;document.getElementById("gmSearch").oninput=renderGM;
   document.querySelectorAll(".nav").forEach(n=>{if(n.dataset.sec)n.onclick=()=>activate(n.dataset.sec);});
   document.getElementById("upd").textContent="Fuente: "+(APP.src||"Google Sheet")+" · "+new Date().toLocaleString("es");
   await APP.fetchAcc();
