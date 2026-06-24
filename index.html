@@ -443,6 +443,13 @@ body.dark input[type=date]{color-scheme:dark}
     <table id="tblLowCom"><thead><tr><th>Comisión</th><th>Curso</th><th>Inicio</th><th>Fin</th><th>Profe</th><th class="num">Nº profes</th><th class="num">Rating</th><th class="num">n</th><th>Estado</th></tr></thead><tbody id="lowComBody"></tbody></table>
   </div>
 
+  <div class="panel" id="profCommentsPanel">
+    <div class="top"><h3><span class="ic">💬</span> Comentarios por profesor · en el rango <span id="profListCount" class="folstat"></span></h3></div>
+    <div class="sub">Buscá un profesor por nombre y hacé clic en su fila para ver <b>todos</b> los comentarios que dejaron los alumnos sobre él/ella en el período elegido. Solo comisiones en curso en el rango. Ordenados de menor a mayor rating.</div>
+    <input type="text" id="profSearch" placeholder="🔍 Buscar profesor por nombre…" oninput="APP.renderProfList&&APP.renderProfList()" style="padding:8px 14px;border:1.5px solid var(--line);border-radius:999px;font:inherit;font-size:13px;color:var(--ink);background:var(--card);min-width:280px;margin-bottom:12px">
+    <table id="tblProfList"><thead><tr><th>Profesor</th><th>Curso principal</th><th class="num">Rating</th><th class="num">n</th><th class="num">Comentarios</th></tr></thead><tbody id="profListBody"></tbody></table>
+  </div>
+
   <div class="panel" id="accPanel">
     <div class="top"><h3><span class="ic">✎</span> Seguimiento de acciones</h3></div>
     <div class="sub">Buscá una comisión por número y dejá registrado qué accionable tomaron. Se guarda y lo ve todo el equipo. El rating (guía + actividad) de cada comisión se actualiza solo desde BigQuery. Solo muestra comisiones en curso en el período elegido (las ya cerradas no aparecen). <span id="accState" style="color:var(--ink2)"></span></div>
@@ -1036,13 +1043,13 @@ function folioCard(x){return '<div class="pmfolio">'+(x.url?'<a href="'+x.url+'"
 function renderFolios(fol,comsPersona){return fol.length? fol.map(folioCard).join("") : "<div class='pmempty'>Sin folios de feedback para las comisiones de esta persona ("+(comsPersona.join(", ")||"s/d")+").</div>";}
 function openProfile(name){
   const f=APP.from,t=APP.to;
-  const coms=APP.prof.filter(r=>r.prof===name&&r.cm&&/[a-zA-Z]{3,}/.test(r.cm)&&r.d>=f&&r.d<=t).sort((a,b)=>b.d<a.d?-1:1);
+  const coms=APP.prof.filter(r=>r.prof===name&&r.cm&&/[a-zA-Z]{3,}/.test(r.cm)&&r.d>=f&&r.d<=t&&comActiva(r.com,f,t)).sort((a,b)=>b.d<a.d?-1:1);
   // comisiones de esta persona (para cruzar con folios de feedback de Intercom)
   const comsPersona=[...new Set(APP.prof.filter(r=>r.prof===name&&r.com).map(r=>r.com))];
   let snap=[];comsPersona.forEach(c=>{(FOLIOS_COM[c]||[]).forEach(x=>snap.push(Object.assign({com:c},x)));});
   const clean=name.replace(/\|/g," ").replace(/\[[^\]]*\]/g,"").replace(/\b(Profe|Profesor|Profesora|Tutor|Instructor)\b/g,"").replace(/\s+/g," ").trim();
   let html="<div class='pmh'>💬 Comentarios de alumnos ("+coms.length+")</div>";
-  html+= coms.length? coms.slice(0,40).map(c=>'<div class="pmcom"><div class="r">'+c.d+' · '+c.pg.toFixed(0)+'★</div>'+esc(c.cm).slice(0,400)+'</div>').join("") : "<div class='pmempty'>Sin comentarios escritos en el rango elegido.</div>";
+  html+= coms.length? coms.map(c=>'<div class="pmcom"><div class="r">'+c.d+' · '+c.pg.toFixed(0)+'★ · com '+esc(c.com)+'</div>'+esc(c.cm).slice(0,400)+'</div>').join("") : "<div class='pmempty'>Sin comentarios escritos en el rango elegido.</div>";
   html+="<div class='pmh'>📋 Folios de feedback · Intercom <span id='folStat' class='folstat'>"+(FOLIOS_API?"· actualizando…":"· snapshot")+"</span></div><div id='folBox'>"+renderFolios(snap,comsPersona)+"</div>";
   document.getElementById("profMTitle").textContent=clean;
   document.getElementById("profMBody").innerHTML=html;
@@ -1058,6 +1065,27 @@ function openProfile(name){
       }).catch(()=>{const st=document.getElementById("folStat");if(st)st.textContent="· snapshot (sin conexión a la API)";});
   }
 }
+// Lista de comentarios por profesor: todos los profes (no solo top/bottom), buscables, clic → modal con TODOS sus comentarios del rango.
+APP.renderProfList=function(){
+  const from=APP.from,to=APP.to;
+  const q=((document.getElementById('profSearch')||{}).value||'').trim().toLowerCase();
+  const pm={};
+  for(const v of APP.prof){
+    if(v.d<from||v.d>to)continue;
+    if(!comActiva(v.com,from,to))continue;
+    if(!v.prof)continue;
+    const o=pm[v.prof]||(pm[v.prof]={s:0,n:0,c:0,cur:{}});
+    o.s+=v.pg;o.n++;
+    if(v.cm&&/[a-zA-Z]{3,}/.test(v.cm))o.c++;
+    const cn=APP.curso[v.pid]||v.pid;if(cn)o.cur[cn]=(o.cur[cn]||0)+1;
+  }
+  let prof=Object.keys(pm).map(name=>{const o=pm[name];const top=Object.entries(o.cur).sort((a,b)=>b[1]-a[1])[0];return {name:name,avg:o.s/o.n,n:o.n,c:o.c,curso:top?top[0]:''};});
+  if(q)prof=prof.filter(p=>p.name.toLowerCase().indexOf(q)>=0);
+  prof.sort((a,b)=>a.avg-b.avg);
+  const cnt=document.getElementById('profListCount');if(cnt)cnt.textContent='· '+prof.length+' profes';
+  const body=document.getElementById('profListBody');if(!body)return;
+  body.innerHTML=prof.length?prof.map(p=>'<tr class="clk" data-p="'+esc(p.name)+'" onclick="openProfile(this.dataset.p)" style="cursor:pointer"><td>'+esc(p.name)+'</td><td>'+esc(p.curso)+'</td><td class="num">'+p.avg.toFixed(2)+'</td><td class="num">'+p.n+'</td><td class="num">'+p.c+'</td></tr>').join(''):'<tr><td colspan="5" class="empty">'+(q?'No hay profesores que coincidan con "'+esc(q)+'".':'Sin profesores con valoraciones en el rango.')+'</td></tr>';
+};
 function renderProfes(){
   // Rating del profe (professor_guidance), TODAS las comisiones, en el rango. Sin corte nuevo/viejo (mide al profe, no el contenido).
   // Solo comisiones ACTIVAS en el período elegido (comActiva): no se cuentan valoraciones de comisiones ya finalizadas.
@@ -1175,7 +1203,7 @@ APP.render=function(){
   if(APP._raw){const ex=APP.excl;const f=a=>(ex&&ex.size)?a.filter(r=>!ex.has(r.d)):a;
     APP.val=f(APP._raw.val);APP.prof=f(APP._raw.prof);APP.profRows=f(APP._raw.profRows);APP.tutRows=f(APP._raw.tutRows);APP.actRows=f(APP._raw.actRows);APP.lc=f(APP._raw.lc);
     APP.sess=(ex&&ex.size)?APP._raw.sess.filter(r=>!ex.has(r.fe)):APP._raw.sess;}
-  document.querySelectorAll(".section").forEach(x=>x.style.display="block");renderContent();renderProfTut();if(APP.renderAcc)APP.renderAcc();renderLive();renderWorkshops();renderCRM();renderGM();activate(APP.cur||"contenido");
+  document.querySelectorAll(".section").forEach(x=>x.style.display="block");renderContent();renderProfTut();if(APP.renderProfList)APP.renderProfList();if(APP.renderAcc)APP.renderAcc();renderLive();renderWorkshops();renderCRM();renderGM();activate(APP.cur||"contenido");
   var exn=(APP.excl&&APP.excl.size)?" · sin: "+[...APP.excl].sort().join(", "):"";
   document.getElementById("frange").textContent="Rango: "+APP.from+" → "+APP.to+exn+" · todo (KPIs, gráficos y foco) se calcula en este rango";};
 function verify(){
