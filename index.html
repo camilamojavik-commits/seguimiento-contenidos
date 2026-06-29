@@ -207,6 +207,10 @@ td{padding:7px 10px;border-top:1px solid var(--line)}tr:nth-child(even){backgrou
 @media(max-width:680px){.mbar .mbl{flex-basis:130px}}
 .recbtn{flex:0 0 auto;font-size:9.5px;font-weight:700;color:#7c3aed;background:#f3e8ff;border:1px solid #e2cffc;border-radius:20px;padding:3px 9px;cursor:pointer;white-space:nowrap;margin-left:6px;font-family:inherit}
 .recbtn:hover{background:#e9d5ff}
+.recbtn.cbtn{color:#b5740a;background:#fef3cd;border-color:#f5d98a}
+.recbtn.cbtn:hover{background:#fce9b0}
+.mbcl{flex:0 0 auto;font-size:9.5px;font-weight:700;border:1px solid;border-radius:20px;padding:2px 7px;margin-left:6px;white-space:nowrap;background:#fff}
+.cflag{color:#b5740a;font-weight:700}
 .recbox{background:#faf5ff;border:1px solid #e2cffc;border-left:3px solid #7c3aed;border-radius:8px;padding:9px 13px;margin:2px 0 9px}
 .rech{font-size:11.5px;font-weight:700;color:#6b21a8;margin-bottom:5px}
 .recbox ul{margin:0;padding-left:17px}
@@ -360,6 +364,7 @@ body.dark input[type=date]{color-scheme:dark}
     <a class="nav" data-sec="workshops"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M10 9l4 2.5-4 2.5z" fill="currentColor" stroke="none"/><path d="M8 21h8"/></svg> Workshops on demand</a>
     <a class="nav" data-sec="crm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="5" height="16" rx="1"/><rect x="10" y="4" width="5" height="11" rx="1"/><rect x="17" y="4" width="5" height="7" rx="1"/></svg> Renovación workshops</a>
     <a class="nav" data-sec="gmode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8"/><circle cx="12" cy="12" r="3"/></svg> Versiones nuevas</a>
+    <a class="nav" data-sec="clarity"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg> Claridad consignas</a>
     <div class="navgroup">Staff académico</div>
     <a class="nav" data-sec="proftut"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M21 8v5"/><path d="M7 11v4c0 1 2 2 5 2s5-1 5-2v-4"/></svg> Rating profesores</a>
   </nav>
@@ -536,6 +541,22 @@ body.dark input[type=date]{color-scheme:dark}
     </div>
     <div class="kanban" id="kanbanGM"></div>
   </section>
+  <section id="sec-clarity" class="section">
+    <div class="sech"><h2>Claridad de <em>consignas</em></h2><div class="ssub">Pregunta nueva de la encuesta de módulo (<code>delivery_clarity</code>): ¿qué tan clara fue la consigna? Solo contenido nuevo, respuestas de alumnos (producción). Valores: clara / parcial / poco clara.</div></div>
+    <div class="note-top">Las recomendaciones de IA se generan leyendo el programa (.md) de cada módulo marcado como poco claro o parcial, y sugieren cómo precisar la consigna. Se recalculan al re-correr el análisis.</div>
+    <div class="kpis" id="kpisClar"></div>
+    <div class="panel">
+      <div class="top"><h3><span class="ic">▤</span> Claridad por módulo · contenido nuevo <span id="clarCount" class="folstat"></span></h3></div>
+      <div class="sub">Módulos ordenados de menor a mayor claridad (primero los que más alumnos marcaron parcial / poco clara). Clic en un módulo para ver la recomendación de IA.</div>
+      <input type="text" id="clarSearch" placeholder="🔍 Buscar curso o módulo…" oninput="APP.renderClarity&&APP.renderClarity()" style="padding:8px 14px;border:1.5px solid var(--line);border-radius:999px;font:inherit;font-size:13px;color:var(--ink);background:var(--card);min-width:280px;margin-bottom:12px">
+      <table id="tblClar"><thead><tr><th>Curso</th><th>Módulo</th><th class="num">Clara</th><th class="num">Parcial</th><th class="num">Poco clara</th><th class="num">% clara</th></tr></thead><tbody id="clarBody"></tbody></table>
+    </div>
+    <div class="panel" id="clarRecPanel">
+      <div class="top"><h3><span class="ic">✨</span> Recomendaciones de IA para precisar consignas</h3></div>
+      <div class="sub">Para los módulos de contenido nuevo con señales de baja claridad, leyendo su programa (.md).</div>
+      <div id="clarRecList"></div>
+    </div>
+  </section>
 </main>
 </div>
 
@@ -685,7 +706,7 @@ APP.init=async function(){
   APP._bq=await _bqP;
   if(APP._bq){const b=APP._bq;
     APP.val=(b.val||[]).filter(v=>!exclProf(v.cm));
-    APP.lc=b.lc||[];APP.prof=b.prof||[];APP.profRows=b.profRows||[];APP.tutRows=b.tutRows||[];APP.actRows=b.actRows||[];
+    APP.lc=b.lc||[];APP.prof=b.prof||[];APP.profRows=b.profRows||[];APP.tutRows=b.tutRows||[];APP.actRows=b.actRows||[];APP.clarity=b.clarity||[];
     Object.assign(COM_DATES,b.comDates||{});Object.assign(COMNP,b.comNp||{});Object.assign(COM_CURSO,b.comCurso2||{});
     APP.curso=Object.assign({},b.curso||{},APP.curso);Object.assign(APP.commCurso,b.commCurso||{});
     APP.src="BigQuery (en vivo)";
@@ -816,31 +837,46 @@ const REC={
  "Creación de contenido con AI (V2)|||Fundamentos y Prompting Creativo 2.0":{n:2,src:1,tips:["Muestra chica (n=13) y los 2 comentarios son positivos ('muy bueno', 'excelente material'): el rating bajo parece más de poca muestra que de un problema de contenido. Revisar de nuevo cuando entren más valoraciones."]},
  "Growth Marketing (V2)|||Growth strategy: el framework AARRR y métricas de negocio":{n:1,tips:["Desarrollar más el módulo yendo de lo general a lo particular; no dar por sentado conocimientos previos.","Agregar ejemplos concretos del framework AARRR aplicado a un caso real."]}
 };
+const REC_CONSIGNA={
+ "AI Automation (V2)|||Construcción práctica de workflows con Make y n8n":{src:1,tips:["Sumar al enunciado de la Pre-Entrega 3 un ejemplo del entregable esperado: una captura del escenario terminado (Router + 2 filtros + módulo OpenAI + Error Handler en Break) y un JSON blueprint de muestra, para que el alumno vea a qué tiene que llegar.","Cerrar la consigna con un checklist de entrega visible: Trigger conectado / Router con 2 rutas / filtros que no se solapan / OpenAI con prompt mapeado / Error Handler en Break con 3 reintentos / link público del blueprint.","Reemplazar la subsección 'Cómo se ve en pantalla (referencia sin capturas)' por capturas reales paso a paso: hoy la consigna pide evidencia visual (Run once con ambas rutas) pero el material no muestra cómo se ve cada paso en Make."]},
+ "AI Automation (V2)|||Fundamentos de Automatización y Evaluación de Procesos":{src:1,tips:["Completar la rúbrica de la Pre-Entrega 1: hoy tiene un solo criterio ('Diseño Técnico Visual', con el título cortado) al 40% y los pesos no suman 100%. Agregar los criterios faltantes y que cierren en 100%.","Alinear la rúbrica con los pasos del enunciado: sumar criterios para el etiquetado explícito de Trigger / Inputs / Output y para el párrafo de gobernanza (GDPR / IA Act), que el enunciado pide pero la rúbrica no evalúa.","Aclarar en el enunciado qué se espera en el párrafo de gobernanza: pedir 2-3 medidas concretas (anonimización, consentimiento, punto de revisión humana) con un mini-ejemplo."]}
+};
+const GEN_CONSIGNA=["Reescribir la consigna con un ejemplo del entregable esperado: qué se entrega y en qué formato.","Sumar un checklist de criterios de entrega visible antes de enviar.","Alinear la rúbrica con los pasos del enunciado y que los pesos sumen 100%."];
 APP.recTog=function(id){const d=document.getElementById(id);if(d)d.style.display=d.style.display==="none"?"block":"none";};
 APP.tblTog=function(i){const d=document.getElementById("tbld"+i);if(d)d.style.display=d.style.display==="none"?"":"none";const c=document.getElementById("tblc"+i);if(c)c.textContent=(d&&d.style.display==="none")?"▸":"▾";};
 function hasName(cmt){const ns=APP.nameSet;if(!ns)return false;const w=(cmt||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").split(/[^a-z]+/);for(const t of w){if(t.length>=4&&ns.has(t))return true;}return false;}
 function modBreakdown(pid,base){
   const m={};const coms=[];
-  for(const v of APP.val){if(v.pid!==pid||!v.isNew||v.d<APP.from||v.d>APP.to)continue;const k=v.mod||"(sin módulo)";const o=m[k]||(m[k]={s:0,n:0,c:0});o.s+=v.rt;o.n++;if(v.cm&&v.cm.trim().length>1&&!hasName(v.cm)){o.c++;coms.push({mod:k,rt:v.rt,cm:v.cm.trim(),com:v.com});}}
-  let arr=Object.entries(m).map(([mod,o])=>({mod,n:o.n,avg:o.s/o.n,c:o.c})).sort((a,b)=>a.avg-b.avg);
+  for(const v of APP.val){if(v.pid!==pid||!v.isNew||v.d<APP.from||v.d>APP.to)continue;const k=v.mod||"(sin módulo)";const o=m[k]||(m[k]={s:0,n:0,c:0,dcC:0,dcP:0,dcU:0});o.s+=v.rt;o.n++;if(v.dc==='clear')o.dcC++;else if(v.dc==='partial')o.dcP++;else if(v.dc==='unclear')o.dcU++;if(v.cm&&v.cm.trim().length>1&&!hasName(v.cm)){o.c++;coms.push({mod:k,rt:v.rt,cm:v.cm.trim(),com:v.com,dc:v.dc||''});}}
+  let arr=Object.entries(m).map(([mod,o])=>{const nc=o.dcC+o.dcP+o.dcU,noc=o.dcP+o.dcU;return {mod,n:o.n,avg:o.s/o.n,c:o.c,nc,noc,dcP:o.dcP,dcU:o.dcU,clarity:nc?noc/nc:null};}).sort((a,b)=>a.avg-b.avg);
   if(!arr.length)return '<div class="mnote">Sin valoraciones del contenido nuevo en el rango.</div>';
   const bc=a=>a<base-0.15?"#dc2626":(a>=base+0.15?"#15a06b":"#e8954a");
   const GEN=["Revisar la claridad de las consignas: que quede explícito qué se espera entregar.","Sumar ejemplos prácticos y demos paso a paso.","Alinear lo evaluado (quiz/integrador) con lo efectivamente enseñado en el módulo.","Cuidar el ritmo y la progresión: de lo simple a lo complejo."];
   const cn=(APP.curso[pid]||"");const pfx='rec_'+String(pid).replace(/[^a-z0-9]/gi,'');
-  const bars=arr.map((x,bi)=>{const rec=REC[cn+"|||"+x.mod];const low=x.avg<base;const rid=pfx+'_'+bi;
+  const bars=arr.map((x,bi)=>{const rec=REC[cn+"|||"+x.mod];const crec=REC_CONSIGNA[cn+"|||"+x.mod];const low=x.avg<base;const rid=pfx+'_'+bi;
+    const claPct=x.nc?Math.round(x.clarity*100):null;const claCol=claPct==null?'':(claPct>=35?'#dc2626':claPct>=15?'#e8954a':'#15a06b');
+    const claChip=x.nc?'<span class="mbcl" style="color:'+claCol+';border-color:'+claCol+'" title="'+x.nc+' valoraron la claridad de la consigna; '+x.noc+' la marcaron poco clara">📋 '+claPct+'%</span>':'';
+    const claLow=(x.nc>=3&&x.clarity>=0.30)||!!crec;
     const btn=low?'<button class="recbtn" onclick="APP.recTog(\''+rid+'\')">✨ Recomendaciones AI</button>':'';
-    let row='<div class="mbar"><span class="mbl" title="'+esc(x.mod)+'">'+esc(x.mod)+'</span><span class="mbt"><span class="mbf" style="width:'+(x.avg/5*100).toFixed(0)+'%;background:'+bc(x.avg)+'"></span></span><span class="mbv" style="color:'+bc(x.avg)+'">'+x.avg.toFixed(2)+'</span><span class="mbn">n='+x.n+'</span>'+btn+'</div>';
+    const cbtn=claLow?'<button class="recbtn cbtn" onclick="APP.recTog(\'c'+rid+'\')">📋 Consigna AI</button>':'';
+    let row='<div class="mbar"><span class="mbl" title="'+esc(x.mod)+'">'+esc(x.mod)+'</span><span class="mbt"><span class="mbf" style="width:'+(x.avg/5*100).toFixed(0)+'%;background:'+bc(x.avg)+'"></span></span><span class="mbv" style="color:'+bc(x.avg)+'">'+x.avg.toFixed(2)+'</span><span class="mbn">n='+x.n+'</span>'+claChip+btn+cbtn+'</div>';
     if(low){let inner;
       if(rec){inner='<div class="rech">✨ Cómo mejorar este módulo · basado en '+rec.n+' comentario'+(rec.n===1?'':'s')+(rec.src?' + el contenido del módulo':' de alumnos')+'</div><ul>'+rec.tips.map(t=>'<li>'+esc(t)+'</li>').join('')+'</ul><div class="recf">Generado con IA cruzando el feedback de los alumnos'+(rec.src?' con el material del módulo':'')+' (snapshot, no en vivo).</div>';}
       else{const nota=x.c>0?'Este módulo tiene '+x.c+' comentario'+(x.c===1?'':'s')+' pero todavía no generé su recomendación puntual — pedímelo y la sumo.':'Sin comentarios escritos todavía (n='+x.n+').';inner='<div class="rech">✨ Recomendación general</div><ul>'+GEN.map(t=>'<li>'+esc(t)+'</li>').join('')+'</ul><div class="recf">'+nota+' Recomendación general; se afina cuando haya feedback de los alumnos.</div>';}
       row+='<div class="recbox" id="'+rid+'" style="display:none">'+inner+'</div>';}
+    if(claLow){let cinner;
+      if(crec){cinner='<div class="rech">📋 Cómo aclarar la consigna'+(x.nc?' · '+x.noc+' de '+x.nc+' valoraron la consigna poco clara':'')+(crec.src?' + leí el enunciado/rúbrica':'')+'</div><ul>'+crec.tips.map(t=>'<li>'+esc(t)+'</li>').join('')+'</ul><div class="recf">Generado con IA cruzando la claridad de consigna (delivery_clarity) con el programa/enunciado del módulo (snapshot, no en vivo).</div>';}
+      else{cinner='<div class="rech">📋 Recomendación general · consigna</div><ul>'+GEN_CONSIGNA.map(t=>'<li>'+esc(t)+'</li>').join('')+'</ul><div class="recf">'+x.noc+' de '+x.nc+' valoraciones marcaron la consigna como poco clara. Recomendación general; pedímela puntual y la curo leyendo el enunciado del módulo.</div>';}
+      row+='<div class="recbox" id="c'+rid+'" style="display:none">'+cinner+'</div>';}
     return row;}).join("");
   coms.sort((a,b)=>a.rt-b.rt);
   const CAP=10;
   let comHtml;
   if(!coms.length){comHtml='<div class="mnote">Sin comentarios escritos todavía en el contenido nuevo.</div>';}
-  else{comHtml=coms.slice(0,CAP).map(c=>{const bg=c.rt<=3?"#fde2dd":c.rt>=5?"#dcfce7":"#fef3cd",fg=c.rt<=3?"#b91c1c":c.rt>=5?"#166534":"#92400e";return '<div class="qc"><span class="qcr" style="background:'+bg+';color:'+fg+'">'+c.rt.toFixed(0)+'★</span><div class="qcb"><div class="qcm">“'+esc(c.cm).slice(0,260)+'”</div><div class="qcs">'+esc(c.mod)+(c.com?' · comisión #'+esc(c.com):'')+'</div></div></div>';}).join("")+(coms.length>CAP?'<div class="mnote">+ '+(coms.length-CAP)+' comentarios más</div>':'');}
-  return '<div class="mnote">Valoración del contenido nuevo por módulo (línea de base = viejo del curso: '+base.toFixed(2)+'), del más flojo al mejor.</div>'+
+  else{comHtml=coms.slice(0,CAP).map(c=>{const bg=c.rt<=3?"#fde2dd":c.rt>=5?"#dcfce7":"#fef3cd",fg=c.rt<=3?"#b91c1c":c.rt>=5?"#166534":"#92400e";return '<div class="qc"><span class="qcr" style="background:'+bg+';color:'+fg+'">'+c.rt.toFixed(0)+'★</span><div class="qcb"><div class="qcm">“'+esc(c.cm).slice(0,260)+'”</div><div class="qcs">'+esc(c.mod)+(c.com?' · comisión #'+esc(c.com):'')+(c.dc&&c.dc!=='clear'?' · <span class="cflag">📋 consigna '+(c.dc==='unclear'?'no clara':'parcial')+'</span>':'')+'</div></div></div>';}).join("")+(coms.length>CAP?'<div class="mnote">+ '+(coms.length-CAP)+' comentarios más</div>':'');}
+  const _tNc=arr.reduce((a,x)=>a+x.nc,0),_tNoc=arr.reduce((a,x)=>a+x.noc,0);
+  const claNote=_tNc>0?'<div class="mnote">📋 Claridad de consigna (curso): <b>'+Math.round(_tNoc/_tNc*100)+'%</b> valoró la consigna poco clara ('+_tNoc+'/'+_tNc+' valoraciones con dato). Pregunta nueva en la encuesta desde el 08/06.</div>':'';
+  return claNote+'<div class="mnote">Valoración del contenido nuevo por módulo (línea de base = viejo del curso: '+base.toFixed(2)+'), del más flojo al mejor.</div>'+
     '<div class="mbars">'+bars+'</div>'+
     '<div class="qch">💬 Qué dicen los alumnos · '+coms.length+' comentario'+(coms.length===1?'':'s')+' (peor primero)</div>'+comHtml;
 }
@@ -1011,6 +1047,68 @@ const GMCOL={"Sin empezar":"#cbd5e1","In progress":"#9aa3af","Contenidista ajust
 const gmIdx=s=>GMORDER.findIndex(x=>x.toLowerCase()===(s||"").trim().toLowerCase());
 const gmColor=s=>{const i=gmIdx(s);return i>=0?GMCOL[GMORDER[i]]:"#94a3b8";};
 const boVinc=b=>{b=(b||"").trim();return !!b&&!/^no\s/i.test(b)&&/\d/.test(b);};
+// ===== Claridad de consignas (delivery_clarity) =====
+const _normC=s=>(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\s+/g,' ').trim();
+const clarRecKey=(c,m)=>_normC(c)+'||'+_normC(m);
+// Recomendaciones generadas leyendo el programa (.md) de cada módulo marcado poco claro/parcial.
+const REC_CLARIDAD_RAW=[
+ {curso:'Excel (V2)', mod:'Procesamiento de datos en Excel', tips:[
+   'El módulo tiene <b>dos entregables</b> (ejercicio de Regex y Checkpoint 1 de normalización) y no queda explícito cuál es el evaluado: marcar claramente cuál es la entrega obligatoria y cuál es práctica.',
+   'La consigna de Regex usa <code>REGEX.TEST</code>/<code>REGEX.REPLACE</code>, que solo existen en Excel 365 y Google Sheets nuevo: aclarar la versión requerida y dar una alternativa (p. ej. ESPACIOS/SUSTITUIR) para quien no las tenga.',
+   'El Checkpoint 1 ya tiene un excelente "ejemplo de presentación esperada": replicar ese nivel de ejemplo en el ejercicio de Regex.']},
+ {curso:'Data Analytics (V4)', mod:'Introducción al Análisis de Datos', tips:[
+   'La consigna del caso CoffeeInsight está bien armada (4 pasos con ejemplos), pero el módulo incluye además un segundo entregable (modelado 3NF) y puede confundir cuál corresponde a este checkpoint: rotular "entrega del Módulo 1 = CoffeeInsight" y separar el ejercicio de modelado.',
+   'Confirmar que el dataset y los links del caso estén accesibles desde la consigna.',
+   'Mantener visible arriba el formato esperado (1-2 páginas, PDF) para que no se pierda entre los pasos.']},
+ {curso:'IA Automation (V2)', mod:'Fundamentos de IA y Mentalidad de Arquitecto de Automatización', tips:[
+   'La consigna pide un diagrama (óvalo/rectángulo/rombo) <b>más</b> un párrafo de gobernanza GDPR/IA Act; para un módulo de fundamentos lo normativo es lo más confuso: sumar un párrafo de gobernanza de muestra (3-4 líneas) que sirva de molde.',
+   'Incluir un diagrama de ejemplo ya resuelto (1 imagen modelo) y una plantilla en Draw.io/Lucidchart.',
+   'Aclarar el alcance mínimo (cuántos nodos/pasos) para no sobre-exigir ni dejar dudas de "cuánto es suficiente".']},
+ {curso:'Creación de Contenido con IA (V2)', mod:'Fundamentos y Prompting Creativo 2.0', tips:[
+   'El entregable usa jerga (System Prompt, Chain-of-Thought, Guardrails) y referencia "técnicas de la Unidad 2" sin recordarlas en la consigna: incluir un mini-ejemplo de cada pieza (un System Prompt corto, una sesión CoT, 2 guardrails de muestra).',
+   'Repetir o linkear dentro de la consigna las técnicas de la Unidad 2 que hay que aplicar.',
+   'Dejar una plantilla de PDF con los apartados a completar (briefing, system prompt, CoT, guardrails).']},
+ {curso:'Marketing digital: community manager & publicidad (V2)', mod:'Plan de marketing y diagnóstico IA', tips:[
+   'El módulo mezcla una "Práctica 4P" (1 página) con la "Pre-entrega 1" (auditoría + 2 objetivos SMART) y no queda claro qué es obligatorio: rotular explícitamente "práctica opcional" vs "pre-entrega obligatoria (evaluada)".',
+   'El entregable aparece descripto dos veces: dejar una sola definición para evitar dudas.',
+   'Mantener arriba los ejemplos de objetivo SMART correcto/incorrecto (son muy útiles para la claridad).']},
+];
+const REC_CLARIDAD={};REC_CLARIDAD_RAW.forEach(r=>{REC_CLARIDAD[clarRecKey(r.curso,r.mod)]=r.tips;});
+APP.renderClarity=function(){
+  const from=APP.from,to=APP.to;
+  const rows=(APP.clarity||[]).filter(r=>(!r.d)||(r.d>=from&&r.d<=to));
+  const cnt={clear:0,partial:0,unclear:0};
+  rows.forEach(r=>{if(cnt[r.dc]!=null)cnt[r.dc]++;});
+  const tot=cnt.clear+cnt.partial+cnt.unclear;
+  const pct=n=>tot?Math.round(n*100/tot)+'%':'0%';
+  const kc=document.getElementById('kpisClar');
+  if(kc)kc.innerHTML=
+    kpi('Respuestas',tot,'claridad de consignas · cursos nuevos',1)+
+    kpi('Clara',pct(cnt.clear),cnt.clear+' respuestas · se entendió')+
+    kpi('Parcial',pct(cnt.partial),cnt.partial+' respuestas · a medias')+
+    kpi('Poco clara',pct(cnt.unclear),cnt.unclear+' respuestas · no se entendió');
+  const q=((document.getElementById('clarSearch')||{}).value||'').trim().toLowerCase();
+  const m={};
+  rows.forEach(r=>{const k=r.curso+' :: '+r.mod;const o=m[k]||(m[k]={curso:r.curso,mod:r.mod,clear:0,partial:0,unclear:0});if(o[r.dc]!=null)o[r.dc]++;});
+  let list=Object.values(m);
+  if(q)list=list.filter(o=>(o.curso+' '+o.mod).toLowerCase().indexOf(q)>=0);
+  list.forEach(o=>{o.t=o.clear+o.partial+o.unclear;o.flag=o.partial+o.unclear;o.pc=o.t?o.clear/o.t:1;o.rk=clarRecKey(o.curso,o.mod);});
+  list.sort((a,b)=>b.flag-a.flag||a.pc-b.pc);
+  const cc=document.getElementById('clarCount');if(cc)cc.textContent='· '+list.length+' módulos';
+  const body=document.getElementById('clarBody');
+  if(body)body.innerHTML=list.length?list.map(o=>{
+    const hasRec=!!REC_CLARIDAD[o.rk];
+    const clickable=o.flag>0&&hasRec;
+    return '<tr'+(clickable?' class="clk" data-rk="'+esc(o.rk.replace(/[^a-z0-9]/g,''))+'" style="cursor:pointer"':'')+'><td>'+esc(o.curso)+'</td><td>'+esc(o.mod)+(hasRec?' <span title="hay recomendación" style="color:#FF632B">✨</span>':'')+'</td><td class="num">'+o.clear+'</td><td class="num">'+o.partial+'</td><td class="num">'+o.unclear+'</td><td class="num">'+Math.round(o.pc*100)+'%</td></tr>';
+  }).join(''):'<tr><td colspan="6" class="empty">Sin respuestas de claridad en el rango (la pregunta arrancó el 25 jun).</td></tr>';
+  const shown=list.filter(o=>o.flag>0&&REC_CLARIDAD[o.rk]);
+  const rl=document.getElementById('clarRecList');
+  if(rl)rl.innerHTML=shown.length?shown.map(o=>{
+    const r=REC_CLARIDAD[o.rk];
+    return '<div class="recbox" id="crec_'+esc(o.rk.replace(/[^a-z0-9]/g,''))+'" style="display:block;margin-bottom:12px"><div class="rech">'+esc(o.curso)+' · '+esc(o.mod)+' <span style="color:#9a8c79;font-weight:400">('+o.partial+' parcial · '+o.unclear+' poco clara)</span></div><ul>'+r.map(t=>'<li>'+t+'</li>').join('')+'</ul><div class="recf">Generada leyendo el programa (.md) del módulo.</div></div>';
+  }).join(''):'<div class="mnote">Todavía no hay módulos de contenido nuevo con baja claridad y programa .md analizado en el rango. Aparecerán acá cuando lleguen respuestas parcial / poco clara.</div>';
+  if(body)body.querySelectorAll('tr.clk').forEach(tr=>{tr.onclick=()=>{const el=document.getElementById('crec_'+tr.dataset.rk);if(el)el.scrollIntoView({behavior:'smooth',block:'center'});};});
+};
 function renderGM(){
   const rows=APP.gm||[];
   const selSt=document.getElementById("gmStatus");
@@ -1207,7 +1305,7 @@ APP.render=function(){
   if(APP._raw){const ex=APP.excl;const f=a=>(ex&&ex.size)?a.filter(r=>!ex.has(r.d)):a;
     APP.val=f(APP._raw.val);APP.prof=f(APP._raw.prof);APP.profRows=f(APP._raw.profRows);APP.tutRows=f(APP._raw.tutRows);APP.actRows=f(APP._raw.actRows);APP.lc=f(APP._raw.lc);
     APP.sess=(ex&&ex.size)?APP._raw.sess.filter(r=>!ex.has(r.fe)):APP._raw.sess;}
-  document.querySelectorAll(".section").forEach(x=>x.style.display="block");renderContent();renderProfTut();if(APP.renderProfList)APP.renderProfList();if(APP.renderAcc)APP.renderAcc();renderLive();renderWorkshops();renderCRM();renderGM();activate(APP.cur||"contenido");
+  document.querySelectorAll(".section").forEach(x=>x.style.display="block");renderContent();renderProfTut();if(APP.renderProfList)APP.renderProfList();if(APP.renderAcc)APP.renderAcc();renderLive();renderWorkshops();renderCRM();renderGM();if(APP.renderClarity)APP.renderClarity();activate(APP.cur||"contenido");
   var exn=(APP.excl&&APP.excl.size)?" · sin: "+[...APP.excl].sort().join(", "):"";
   document.getElementById("frange").textContent="Rango: "+APP.from+" → "+APP.to+exn+" · todo (KPIs, gráficos y foco) se calcula en este rango";};
 function verify(){
