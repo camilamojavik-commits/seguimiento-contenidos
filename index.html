@@ -790,7 +790,12 @@ function renderContent(){const from=APP.from,to=APP.to,ag=prodAgg(from,to);
   for(const v of APP.val){if(!APP.matchedSet.has(v.pid)||v.d<from||v.d>to)continue;const o=br[v.tipo];if(!o)continue;if(v.isNew){o.nn++;o.ns+=v.rt;}else{o.vn++;o.vs+=v.rt;}}
   const fa=(o,k)=>o[k+"n"]?(o[k+"s"]/o[k+"n"]).toFixed(2):"—";
   document.getElementById("cBreak").innerHTML="Contenido = solo valoración de módulo. Nuevo "+fa(br.mod,"n")+" vs viejo "+fa(br.mod,"v")+" (n nuevo "+br.mod.nn+"). La actividad práctica de la clase en vivo no se cuenta como contenido. El nuevo todavía tiene poca muestra porque las comisiones recién arrancaron.";
-  const g=series(null,from,to);mk("chartG",{type:"line",data:{labels:g.labels,datasets:lineDs(g.newD,g.newN,g.oldD,g.oldN,ovN,ovV)},plugins:[refLines,lineLabels],options:lineOpts(3.4,5.05)});
+  const g=series(null,from,to);
+  // Eje Y adaptativo: si algún día (nuevo o viejo) baja de 3,4 — típico con muestras chicas del contenido
+  // nuevo — bajamos el mínimo para que esos puntos se vean igual. Si todo está alto, queda en 3,4.
+  const _gv=[...g.newD,...g.oldD].filter(x=>x!=null);
+  const _gmin=_gv.length?Math.max(1,Math.min(3.4,Math.floor(Math.min(..._gv)*10)/10-0.1)):3.4;
+  mk("chartG",{type:"line",data:{labels:g.labels,datasets:lineDs(g.newD,g.newN,g.oldD,g.oldN,ovN,ovV)},plugins:[refLines,lineLabels],options:lineOpts(_gmin,5.05)});
   // top10 ventas (solo los renovados con datos para el gráfico viejo→nuevo)
   const chartItems=TOP10.filter(t=>t.pid&&ag[t.pid]&&(ag[t.pid].nn||ag[t.pid].vn));
   const vie=chartItems.map(t=>{const o=ag[t.pid];return o.vn?+(o.vs/o.vn).toFixed(3):null;});
@@ -941,7 +946,9 @@ function buildSel(ag){const sel=document.getElementById("sel");const cur=sel.val
   if(cur&&[...sel.options].some(o=>o.value===cur))sel.value=cur;}
 function renderPerCourse(pid){const from=APP.from,to=APP.to;let s,base,nlab;
   if(pid==="-1"){s=series(null,from,to);base=s.oldAvg;}else{s=series(pid,from,to);base=s.oldAvg;}
-  mk("chartC",{type:"line",data:{labels:s.labels,datasets:lineDs(s.newD,s.newN,s.oldD,s.oldN,s.newAvg,s.oldAvg)},plugins:[refLines,lineLabels],options:lineOpts(3.2,5.08)});
+  const _cv=[...s.newD,...s.oldD].filter(x=>x!=null);
+  const _cmin=_cv.length?Math.max(1,Math.min(3.2,Math.floor(Math.min(..._cv)*10)/10-0.1)):3.2;
+  mk("chartC",{type:"line",data:{labels:s.labels,datasets:lineDs(s.newD,s.newN,s.oldD,s.oldN,s.newAvg,s.oldAvg)},plugins:[refLines,lineLabels],options:lineOpts(_cmin,5.08)});
   // detail
   if(pid==="-1"){document.getElementById("detail").innerHTML="";return;}
   const com={};for(const r of APP.lc){if(r.pid!==pid)continue;if(r.d&&(r.d<from||r.d>to))continue;const o=com[r.com]||(com[r.com]={s:0,n:0});o.s+=r.sc;o.n++;}
