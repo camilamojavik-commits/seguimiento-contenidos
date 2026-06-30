@@ -847,7 +847,7 @@ APP.tblTog=function(i){const d=document.getElementById("tbld"+i);if(d)d.style.di
 function hasName(cmt){const ns=APP.nameSet;if(!ns)return false;const w=(cmt||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").split(/[^a-z]+/);for(const t of w){if(t.length>=4&&ns.has(t))return true;}return false;}
 function modBreakdown(pid,base){
   const m={};const coms=[];
-  for(const v of APP.val){if(v.pid!==pid||!v.isNew||v.d<APP.from||v.d>APP.to)continue;const k=v.mod||"(sin módulo)";const o=m[k]||(m[k]={s:0,n:0,c:0,dcC:0,dcP:0,dcU:0});o.s+=v.rt;o.n++;if(v.dc==='clear')o.dcC++;else if(v.dc==='partial')o.dcP++;else if(v.dc==='unclear')o.dcU++;if(v.cm&&v.cm.trim().length>1&&!hasName(v.cm)){o.c++;coms.push({mod:k,rt:v.rt,cm:v.cm.trim(),com:v.com,dc:v.dc||''});}}
+  for(const v of APP.val){if(v.pid!==pid||!v.isNew||v.d<APP.from||v.d>APP.to)continue;const k=v.mod||"(sin módulo)";const o=m[k]||(m[k]={s:0,n:0,c:0,dcC:0,dcP:0,dcU:0});o.s+=v.rt;o.n++;if(v.dc==='clear')o.dcC++;else if(v.dc==='partial')o.dcP++;else if(v.dc==='unclear')o.dcU++;if(v.cm&&v.cm.trim().length>1&&!hasName(v.cm)){o.c++;coms.push({mod:k,rt:v.rt,cm:v.cm.trim(),com:v.com,dc:v.dc||'',d:v.d});}}
   let arr=Object.entries(m).map(([mod,o])=>{const nc=o.dcC+o.dcP+o.dcU,noc=o.dcP+o.dcU;return {mod,n:o.n,avg:o.s/o.n,c:o.c,nc,noc,dcP:o.dcP,dcU:o.dcU,clarity:nc?noc/nc:null};}).sort((a,b)=>a.avg-b.avg);
   if(!arr.length)return '<div class="mnote">Sin valoraciones del contenido nuevo en el rango.</div>';
   const bc=a=>a<base-0.15?"#dc2626":(a>=base+0.15?"#15a06b":"#e8954a");
@@ -873,7 +873,7 @@ function modBreakdown(pid,base){
   const CAP=10;
   let comHtml;
   if(!coms.length){comHtml='<div class="mnote">Sin comentarios escritos todavía en el contenido nuevo.</div>';}
-  else{comHtml=coms.slice(0,CAP).map(c=>{const bg=c.rt<=3?"#fde2dd":c.rt>=5?"#dcfce7":"#fef3cd",fg=c.rt<=3?"#b91c1c":c.rt>=5?"#166534":"#92400e";return '<div class="qc"><span class="qcr" style="background:'+bg+';color:'+fg+'">'+c.rt.toFixed(0)+'★</span><div class="qcb"><div class="qcm">“'+esc(c.cm).slice(0,260)+'”</div><div class="qcs">'+esc(c.mod)+(c.com?' · comisión #'+esc(c.com):'')+(c.dc&&c.dc!=='clear'?' · <span class="cflag">📋 consigna '+(c.dc==='unclear'?'no clara':'parcial')+'</span>':'')+'</div></div></div>';}).join("")+(coms.length>CAP?'<div class="mnote">+ '+(coms.length-CAP)+' comentarios más</div>':'');}
+  else{comHtml=coms.slice(0,CAP).map(c=>{const bg=c.rt<=3?"#fde2dd":c.rt>=5?"#dcfce7":"#fef3cd",fg=c.rt<=3?"#b91c1c":c.rt>=5?"#166534":"#92400e";return '<div class="qc"><span class="qcr" style="background:'+bg+';color:'+fg+'">'+c.rt.toFixed(0)+'★</span><div class="qcb"><div class="qcm">“'+esc(c.cm).slice(0,260)+'”</div><div class="qcs">'+esc(c.mod)+(c.com?' · comisión #'+esc(c.com):'')+(c.d?' · '+fmtW(c.d):'')+(c.dc&&c.dc!=='clear'?' · <span class="cflag">📋 consigna '+(c.dc==='unclear'?'no clara':'parcial')+'</span>':'')+'</div></div></div>';}).join("")+(coms.length>CAP?'<div class="mnote">+ '+(coms.length-CAP)+' comentarios más</div>':'');}
   const _tNc=arr.reduce((a,x)=>a+x.nc,0),_tNoc=arr.reduce((a,x)=>a+x.noc,0);
   const claNote=_tNc>0?'<div class="mnote">📋 Claridad de consigna (curso): <b>'+Math.round(_tNoc/_tNc*100)+'%</b> valoró la consigna poco clara ('+_tNoc+'/'+_tNc+' valoraciones con dato). Pregunta nueva en la encuesta desde el 08/06.</div>':'';
   return claNote+'<div class="mnote">Valoración del contenido nuevo por módulo (línea de base = viejo del curso: '+base.toFixed(2)+'), del más flojo al mejor.</div>'+
