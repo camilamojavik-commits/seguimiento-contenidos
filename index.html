@@ -681,8 +681,11 @@ APP.init=async function(){
   APP.nameSet=(function(){const s=new Set();for(const r of lc.slice(1)){[r[Hl["class_professor_name_1"]],r[Hl["tutor_name"]]].forEach(nm=>{_nrm(nm).replace(/[^a-z ]/g," ").split(/\s+/).forEach(t=>{if(t.length>=4)s.add(t);});});}
     ["claro","clara","claros","claras","buena","bueno","buenos","buenas","mejor","mejora","mejores","mejorar","justa","justo","sola","solo","fuente","fuentes","facil","real","ideal","clase","clases","tema","temas","nota","notas","practica","teoria","contenido","ejemplo","ejemplos","modulo","modulos","excelente","mala","malo","corta","largo","larga","nueva","nuevo","clase"].forEach(w=>s.delete(w));
     return s;})();
+  // Fuente de verdad nuevo/viejo: cc_nuevo_versions.json (program_version_id con cc_nuevo=TRUE).
+  // Refresca el set NEWVER en vivo desde el JSON del repo (misma lista que usa el backend BQ).
+  try{const _cc=await (await fetch("cc_nuevo_versions.json?_="+Date.now())).json();if(_cc&&Array.isArray(_cc.nuevo)&&_cc.nuevo.length){NEWVER.clear();_cc.nuevo.forEach(x=>NEWVER.add(String(x).toLowerCase()));}}catch(e){}
   const Hv={};vm[0].forEach((x,i)=>{if(Hv[x.trim()]===undefined)Hv[x.trim()]=i;});
-  for(const r of vm.slice(1)){const url=r[Hv["url"]];const pid=pidUrl(url);if(!rset.has(pid))continue;const rt=parseFloat(r[Hv["rating"]]);if(isNaN(rt))continue;const com=resolveCom(url,r[Hv["comision"]]);if(!com)continue;const d=day(r[Hv["timestamp"]]);if(!d)continue;const cmt=(r[Hv["comment"]]||"").trim();if(exclProf(cmt))continue;APP.val.push({pid:pid,cid:cohUrl(url),com:com,rt:rt,d:d,cm:cmt,mod:(r[Hv["module_name"]]||"").trim()||"(módulo s/d)",tipo:"mod",isNew:isNuevoVer(url)});}
+  for(const r of vm.slice(1)){const url=r[Hv["url"]];const pid=pidUrl(url);if(!rset.has(pid))continue;const rt=parseFloat(r[Hv["rating"]]);if(isNaN(rt)||rt<=0)continue;const com=resolveCom(url,r[Hv["comision"]]);if(!com)continue;const d=day(r[Hv["timestamp"]]);if(!d)continue;const cmt=(r[Hv["comment"]]||"").trim();if(exclProf(cmt))continue;APP.val.push({pid:pid,cid:cohUrl(url),com:com,rt:rt,d:d,cm:cmt,mod:(r[Hv["module_name"]]||"").trim()||"(módulo s/d)",tipo:"mod",isNew:isNuevoVer(url)});}
   // (Actividad práctica eliminada del contenido — antes se agregaba acá desde la hoja live class rating con tipo:"act".)
   // ranking de comisiones (clase en vivo: profe + actividad) — se mantiene aparte
   APP.lc=[];
